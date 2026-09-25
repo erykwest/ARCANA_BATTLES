@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ARCANA — Campal Battle Lab v0.82.5</title>
+<title>ARCANA — Campal Battle Lab v0.83.5</title>
 <style>
   :root{
     --bg:#11151b;
@@ -35,7 +35,7 @@
     position:absolute;
     left:50%;
     right:auto;
-    top:66px;
+    top:88px;
     transform:translateX(-50%);
     display:flex;
     gap:8px;
@@ -52,6 +52,86 @@
     outline:2px solid #f0d36f;
     background:#344152;
   }
+
+  #victoryBar{
+    position:absolute;
+    left:50%;
+    top:64px;
+    transform:translateX(-50%);
+    height:18px;
+    min-width:190px;
+    max-width:520px;
+    border:1px solid rgba(255,255,255,.55);
+    border-radius:6px;
+    overflow:hidden;
+    background:#111820;
+    box-shadow:0 3px 10px rgba(0,0,0,.42);
+    pointer-events:none;
+    z-index:1003;
+  }
+  #victoryBar .victory-half{
+    position:absolute;
+    top:0;
+    bottom:0;
+    width:50%;
+    overflow:hidden;
+  }
+  #victoryBar .victory-half.blue{
+    left:0;
+    background:rgba(63,121,216,.16);
+    border-right:1px solid rgba(255,255,255,.22);
+  }
+  #victoryBar .victory-half.red{
+    right:0;
+    background:rgba(207,77,77,.16);
+  }
+  #blueVictoryFill{
+    position:absolute;
+    top:0;
+    bottom:0;
+    right:0;
+    width:0%;
+    background:#3f79d8;
+    transition:width .18s linear;
+  }
+  #redVictoryFill{
+    position:absolute;
+    top:0;
+    bottom:0;
+    left:0;
+    width:0%;
+    background:#cf4d4d;
+    transition:width .18s linear;
+  }
+  #victoryCenter{
+    position:absolute;
+    left:50%;
+    top:0;
+    bottom:0;
+    width:2px;
+    transform:translateX(-1px);
+    background:rgba(255,255,255,.95);
+    z-index:3;
+  }
+  #victoryBlueLabel,#victoryRedLabel{
+    position:absolute;
+    top:0;
+    bottom:0;
+    display:flex;
+    align-items:center;
+    font-size:9px;
+    font-weight:900;
+    letter-spacing:.04em;
+    color:#fff;
+    text-shadow:0 1px 3px #000;
+    z-index:4;
+    white-space:nowrap;
+  }
+  #victoryBlueLabel{left:5px}
+  #victoryRedLabel{right:5px}
+  #victoryBar.blue-collapse{outline:2px solid #6aa4ff}
+  #victoryBar.red-collapse{outline:2px solid #ff6e6e}
+  body.deployment-active #victoryBar{opacity:.28}
   canvas{width:100%;height:100%;display:block;background:#0c120e;cursor:crosshair;touch-action:none}
   aside{
     position:absolute;top:0;right:0;bottom:0;width:var(--sidebar-w);
@@ -335,7 +415,8 @@
     header strong{font-size:12px}
     header span{display:none}
     #sideControls{top:56px}
-    #timeControls{top:56px;left:50%;right:auto;transform:translateX(-50%);gap:5px}
+    #victoryBar{top:56px;height:16px;min-width:180px}
+    #timeControls{top:78px;left:50%;right:auto;transform:translateX(-50%);gap:5px}
     #timeControls button{width:40px;height:38px;font-size:17px}
     #commandPanel{left:8px;bottom:8px}
     #sidebarRail{height:66px;width:32px}
@@ -351,7 +432,7 @@
 </head>
 <body>
 <header>
-  <strong>ARCANA — CAMPAL BATTLE LAB v0.82.5</strong>
+  <strong>ARCANA — CAMPAL BATTLE LAB v0.83.5</strong>
   <span>REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
 </header>
 
@@ -478,6 +559,13 @@
     <button id="chargeBtn" title="Carica: M1 ↔ M3">C<small>CARICA</small></button>
     <button id="retreatBtn" title="Ritirata: allontanati dal nemico fino ad almeno 11U">R<small>RITIRATA</small></button>
     <button id="fireBtn" title="Fuoco a volontà: automatico entro 15U, indipendente dalla stance">🎯<small>FUOCO<br>A VOLONTÀ</small></button>
+  </div>
+  <div id="victoryBar" title="Morale strategico: ogni lato arriva al 100% quando metà dei punti dell'esercito avversario è stata eliminata o è fuggita dal campo.">
+    <div class="victory-half blue"><div id="blueVictoryFill"></div></div>
+    <div class="victory-half red"><div id="redVictoryFill"></div></div>
+    <div id="victoryCenter"></div>
+    <span id="victoryBlueLabel">BLU 0%</span>
+    <span id="victoryRedLabel">0% ROSSO</span>
   </div>
   <div id="timeControls">
     <button id="pauseBtn" title="Pausa">⏸</button>
@@ -607,6 +695,11 @@
     sidebarRail: document.getElementById('sidebarRail'),
     sideBlueBtn: document.getElementById('sideBlueBtn'),
     sideRedBtn: document.getElementById('sideRedBtn'),
+    victoryBar: document.getElementById('victoryBar'),
+    blueVictoryFill: document.getElementById('blueVictoryFill'),
+    redVictoryFill: document.getElementById('redVictoryFill'),
+    victoryBlueLabel: document.getElementById('victoryBlueLabel'),
+    victoryRedLabel: document.getElementById('victoryRedLabel'),
     log: document.getElementById('log'),
     selectedInfo: document.getElementById('selectedInfo'),
     commandPanel: document.getElementById('commandPanel'),
@@ -671,6 +764,7 @@
     ABOUT_FACE_TIME: 2,
     ABOUT_FACE_THRESHOLD: 91 * Math.PI / 180,
     NAV_IN_PLACE_TURN_THRESHOLD: 60 * Math.PI / 180,
+    NAV_FLIP_THRESHOLD: 135 * Math.PI / 180,
     FORMATION_TRANSITION_TIME: 2,
     CONTACT_TOLERANCE_U: 0.35,
     MAGNET_SLIDE_U_S: 1.5,
@@ -719,6 +813,7 @@
     NAV_WAYPOINT_FRONT_RATIO: 0.50, // waypoint raggiunto entro 1/2 della larghezza frontale
     NAV_WAYPOINT_MIN_U: 0.50,
     COLLIDER_EPS_PX: 0.25,
+    TERRAIN_SOFT_EDGE_U: 0.75, // fascia visibile esterna: accidentata ma non collider duro
     FORMATIONS: Object.freeze({
       base:   Object.freeze({ label: 'BASE',    front: 3, depth: 2 }),
       column: Object.freeze({ label: 'COLONNA', front: 2, depth: 3 }),
@@ -758,7 +853,8 @@
       active: false,
       ended: false,
       result: null,
-      playerSide: 'blue'
+      playerSide: 'blue',
+      armyCollapse: { blue: false, red: false }
     },
     deployment: {
       active: false,
@@ -839,7 +935,8 @@
         chargeOverride: null,
         moving: false,
         turn: null,         // { kind:'flip'|'combat-flip', start, end, startAngle }
-        detour: null        // A* runtime path; NON modifica la command chain
+        detour: null,       // A* runtime path; NON modifica la command chain
+        terrainClearanceBoostUntil: 0
       },
       engagement: {
         outbound: null,     // { defenderId, slot }
@@ -2868,10 +2965,15 @@
 
     resolveMover(u, oldPose) {
       if (Terrain.placementBlocked(u)) {
-        u.pose.x = oldPose.x;
-        u.pose.y = oldPose.y;
+        const recovered = Terrain.recoverUnitFromBlockingTerrain(u, oldPose);
         u.motion.moving = false;
-        return 'blocked';
+
+        // Qualunque contatto col terreno invalida il corridoio corrente.
+        // Il prossimo tick ricalcola A* con clearance temporaneamente maggiore.
+        u.motion.detour = null;
+        u.motion.terrainClearanceBoostUntil = State.simTime + 1.25;
+
+        return recovered ? 'terrain-recovered' : 'blocked';
       }
       for (const other of State.units) {
         if (other.id === u.id || !other.status.alive || Engagements.pair(u, other)) continue;
@@ -2998,6 +3100,28 @@
       };
     },
 
+    smoothClosedBlob(points, subdivisions = 6) {
+      if (!Array.isArray(points) || points.length < 4) return points || [];
+      const out = [];
+      const n = points.length;
+      for (let i = 0; i < n; i++) {
+        const p0 = points[(i - 1 + n) % n];
+        const p1 = points[i];
+        const p2 = points[(i + 1) % n];
+        const p3 = points[(i + 2) % n];
+        for (let s = 0; s < subdivisions; s++) {
+          out.push(this.catmullRomPoint(p0, p1, p2, p3, s / subdivisions));
+        }
+      }
+      return out;
+    },
+
+    blobPoints(t) {
+      if (!t) return [];
+      if (!t.smoothBlob) t.smoothBlob = this.smoothClosedBlob(t.blob || [], 6);
+      return t.smoothBlob;
+    },
+
     sampleRoad(controlPoints, stepU = 0.45) {
       const pts = [];
       const ext = [controlPoints[0], ...controlPoints, controlPoints[controlPoints.length - 1]];
@@ -3059,7 +3183,7 @@
 
     terrainRadius(t) {
       if (t.type === 'pond' || t.type === 'forest') {
-        const pts = t.blob || [];
+        const pts = this.blobPoints(t);
         return pts.reduce((m,p) => Math.max(m, Math.hypot(p.x,p.y)), 0);
       }
       if (t.type === 'hill' || t.type === 'rough') return Math.max(t.rx, t.ry);
@@ -3095,7 +3219,7 @@
         return pts;
       }
       if (t.type === 'pond' || t.type === 'forest') {
-        for (const p of (t.blob||[])) pts.push(this.localToWorld(t,p));
+        for (const p of this.blobPoints(t)) pts.push(this.localToWorld(t,p));
         return pts;
       }
       return pts;
@@ -3246,6 +3370,28 @@
       return false;
     },
 
+    insideHardCore(t, point) {
+      if (!t || (t.type !== 'pond' && t.type !== 'forest')) {
+        return this.containsPoint(t, point, 0);
+      }
+      if (!this.containsPoint(t, point, 0)) return false;
+      return this.distanceToVisualBoundary(t, point) >= CFG.TERRAIN_SOFT_EDGE_U * CFG.U;
+    },
+
+    distanceToVisualBoundary(t, point) {
+      if (!t || (t.type !== 'pond' && t.type !== 'forest')) return Infinity;
+      const pts = this.blobPoints(t).map(p => this.localToWorld(t, p));
+      let best = Infinity;
+      for (let i = 0; i < pts.length; i++) {
+        best = Math.min(best, Geometry.pointSegmentDistance(point, pts[i], pts[(i + 1) % pts.length]));
+      }
+      return best;
+    },
+
+    unitTouchesVisualTerrain(u, t) {
+      return this.unitSamplePoints(u).some(p => this.containsPoint(t, p, 0));
+    },
+
     unitSamplePoints(u) {
       const pts=Geometry.corners(u), c=Geometry.center(u), mids=[];
       for (let i=0;i<pts.length;i++) { const a=pts[i],b=pts[(i+1)%pts.length]; mids.push({x:(a.x+b.x)/2,y:(a.y+b.y)/2}); }
@@ -3254,8 +3400,15 @@
 
     blocksUnit(u, t) {
       if (!u?.status?.alive || !t) return false;
-      if (t.type === 'pond' || t.type === 'wall') return this.unitSamplePoints(u).some(p=>this.containsPoint(t,p,0));
-      if (t.type === 'forest' && u.type === 'cavalry') return this.unitSamplePoints(u).some(p=>this.containsPoint(t,p,0));
+      if (t.type === 'wall') {
+        return this.unitSamplePoints(u).some(p => this.containsPoint(t, p, 0));
+      }
+      if (t.type === 'pond') {
+        return this.unitSamplePoints(u).some(p => this.insideHardCore(t, p));
+      }
+      if (t.type === 'forest' && u.type === 'cavalry') {
+        return this.unitSamplePoints(u).some(p => this.insideHardCore(t, p));
+      }
       return false;
     },
 
@@ -3270,14 +3423,22 @@
       }
 
       if (t.type === 'pond' || t.type === 'forest') {
-        if (this.containsPoint(t, point, 0)) return 0;
-        const pts = (t.blob || []).map(p => this.localToWorld(t, p));
-        let best = Infinity;
+        const pts = this.blobPoints(t).map(p => this.localToWorld(t, p));
+        let boundaryDist = Infinity;
         for (let i = 0; i < pts.length; i++) {
           const a = pts[i], b = pts[(i + 1) % pts.length];
-          best = Math.min(best, Geometry.pointSegmentDistance(point, a, b));
+          boundaryDist = Math.min(boundaryDist, Geometry.pointSegmentDistance(point, a, b));
         }
-        return best;
+
+        const inside = this.polygonContains(t, point.x, point.y, 0);
+        const inset = CFG.TERRAIN_SOFT_EDGE_U * CFG.U;
+
+        // Hard core = spline visibile arretrata verso l'interno.
+        // Fuori: la distanza dal core è bordo + inset.
+        // Nella fascia morbida: inset - profondità dentro il bordo.
+        // Nel core: 0.
+        if (!inside) return boundaryDist + inset;
+        return boundaryDist >= inset ? 0 : inset - boundaryDist;
       }
 
       return Infinity;
@@ -3304,16 +3465,170 @@
 
     placementBlocked(u) { return State.terrain.some(t=>this.blocksUnit(u,t)); },
 
+    poseFitsBounds(u) {
+      const b = Geometry.boundsFor(u);
+      return Geometry.corners(u).every(p =>
+        p.x >= b.minX && p.x <= b.maxX &&
+        p.y >= b.minY && p.y <= b.maxY
+      );
+    },
+
+    poseClearOfUnits(u) {
+      return !State.units.some(o =>
+        o.id !== u.id &&
+        o.status.alive &&
+        !Engagements.pair(u, o) &&
+        Geometry.overlapOBB(u, o)
+      );
+    },
+
+    candidatePoseFree(u, x, y) {
+      const saved = { x:u.pose.x, y:u.pose.y };
+      u.pose.x = x;
+      u.pose.y = y;
+      const free =
+        !this.placementBlocked(u) &&
+        this.poseFitsBounds(u) &&
+        this.poseClearOfUnits(u);
+      u.pose.x = saved.x;
+      u.pose.y = saved.y;
+      return free;
+    },
+
+    recoverUnitFromBlockingTerrain(u, oldPose = null) {
+      if (!u?.status?.alive) return false;
+
+      const current = { x:u.pose.x, y:u.pose.y };
+
+      // Caso normale: il nuovo frame ha penetrato il terreno ma la posa
+      // precedente era ancora valida. Torna semplicemente indietro.
+      if (oldPose && this.candidatePoseFree(u, oldPose.x, oldPose.y)) {
+        u.pose.x = oldPose.x;
+        u.pose.y = oldPose.y;
+        return true;
+      }
+
+      // Caso "stuck": anche oldPose è già penetrata. Cerca la minima
+      // traslazione libera attorno alla posa corrente, senza cambiare angolo.
+      // Step piccoli per correggere anche intrusioni di pochi pixel.
+      const step = 0.20 * CFG.U;
+      const maxRadius = 4.0 * CFG.U;
+      const directions = 32;
+
+      for (let r = step; r <= maxRadius + 1e-6; r += step) {
+        for (let i = 0; i < directions; i++) {
+          const a = (Math.PI * 2 * i) / directions;
+          const x = current.x + Math.cos(a) * r;
+          const y = current.y + Math.sin(a) * r;
+          if (!this.candidatePoseFree(u, x, y)) continue;
+
+          u.pose.x = x;
+          u.pose.y = y;
+          Log.add(`${u.name}: TERRAIN UNSTUCK ${(r / CFG.U).toFixed(1)}U`);
+          return true;
+        }
+      }
+
+      // Ultimo fallback: se non trova nulla entro 4U, torna alla posa
+      // precedente anche se non perfetta. Non teletrasportiamo più lontano.
+      if (oldPose) {
+        u.pose.x = oldPose.x;
+        u.pose.y = oldPose.y;
+      }
+      return false;
+    },
+
+    routHeadingClear(u, angle, probeU = 3.5) {
+      const saved = { x:u.pose.x, y:u.pose.y, angle:u.pose.angle };
+      const stepU = 0.20;
+      let clear = true;
+
+      // Verifica anche la sola rotazione nella nuova direzione:
+      // un reparto lungo può urtare il core pur senza traslare.
+      u.pose.angle = angle;
+      if (this.placementBlocked(u) || !this.poseFitsBounds(u) || !this.poseClearOfUnits(u)) {
+        clear = false;
+      }
+
+      if (clear) {
+        for (let dU = stepU; dU <= probeU + 1e-6; dU += stepU) {
+          u.pose.x = saved.x + Math.cos(angle) * dU * CFG.U;
+          u.pose.y = saved.y + Math.sin(angle) * dU * CFG.U;
+          if (this.placementBlocked(u) || !this.poseFitsBounds(u) || !this.poseClearOfUnits(u)) {
+            clear = false;
+            break;
+          }
+        }
+      }
+
+      u.pose.x = saved.x;
+      u.pose.y = saved.y;
+      u.pose.angle = saved.angle;
+      return clear;
+    },
+
+    findRoutDeflection(u, preferredAngle) {
+      // Cerca prima piccole deviazioni, poi vere tangenti e infine
+      // una fuga quasi opposta. Ogni candidato deve essere libero
+      // lungo TUTTO il tratto, non soltanto al punto finale.
+      const offsetsDeg = [
+        0, 15, -15, 30, -30, 45, -45,
+        60, -60, 75, -75, 90, -90,
+        105, -105, 120, -120, 135, -135, 150, -150
+      ];
+
+      const saved = { x:u.pose.x, y:u.pose.y, angle:u.pose.angle };
+
+      // Se è già tangente al core potrebbe non avere spazio nemmeno per ruotare.
+      // In quel caso crea una piccola camera di manovra arretrando rispetto
+      // alla direttrice di fuga e riprova.
+      const backStepsU = [0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
+
+      for (const backU of backStepsU) {
+        u.pose.x = saved.x - Math.cos(preferredAngle) * backU * CFG.U;
+        u.pose.y = saved.y - Math.sin(preferredAngle) * backU * CFG.U;
+        u.pose.angle = saved.angle;
+
+        if (this.placementBlocked(u) || !this.poseFitsBounds(u) || !this.poseClearOfUnits(u)) {
+          continue;
+        }
+
+        for (const deg of offsetsDeg) {
+          const a = Geometry.normalizeAngle(preferredAngle + deg * Math.PI / 180);
+          if (this.routHeadingClear(u, a, 3.5)) {
+            if (backU > 0) {
+              Log.add(`${u.name}: ROUT crea spazio di manovra ${backU.toFixed(2)}U`);
+            }
+            return a;
+          }
+        }
+      }
+
+      // Nessuna soluzione: ripristina esattamente la posa iniziale.
+      u.pose.x = saved.x;
+      u.pose.y = saved.y;
+      u.pose.angle = saved.angle;
+      return preferredAngle;
+    },
+
     movementMultiplier(u) {
       if (!u?.status?.alive) return 1;
-      const c=Geometry.center(u); let mult=1, road=false;
+      const c = Geometry.center(u);
+      let mult = 1, road = false;
+
       for (const t of State.terrain) {
-        if (!this.containsPoint(t,c,0)) continue;
-        if (t.type==='rough') mult=Math.min(mult,0.65);
-        else if (t.type==='forest') mult=Math.min(mult,0.5);
-        else if (t.type==='road') road=true;
+        if (t.type === 'pond' || t.type === 'forest') {
+          // La fascia esterna visibile non blocca: è terreno molto accidentato.
+          if (this.unitTouchesVisualTerrain(u, t)) mult = Math.min(mult, 0.5);
+          continue;
+        }
+
+        if (!this.containsPoint(t, c, 0)) continue;
+        if (t.type === 'rough') mult = Math.min(mult, 0.65);
+        else if (t.type === 'road') road = true;
       }
-      if (road) mult+=0.5;
+
+      if (road) mult += 0.5;
       return mult;
     },
 
@@ -3354,8 +3669,12 @@
     },
 
     drawShapeBlob(t) {
-      const pts=t.blob||[];
-      pts.forEach((p,i)=>{const w=this.localToWorld(t,p);if(i===0)ctx.moveTo(w.x,w.y);else ctx.lineTo(w.x,w.y);});
+      const pts = this.blobPoints(t);
+      pts.forEach((p,i) => {
+        const w = this.localToWorld(t,p);
+        if (i === 0) ctx.moveTo(w.x,w.y);
+        else ctx.lineTo(w.x,w.y);
+      });
       ctx.closePath();
     },
 
@@ -3415,7 +3734,14 @@
       // Per ostacoli fissi il planner deve garantire che TUTTO il footprint
       // possa ruotare e passare. Usiamo il raggio del rettangolo dal front-pivot
       // solo contro terreno, senza reintrodurre il vecchio collider enorme fra unità.
-      return Math.hypot(d.depth, d.front / 2) + 0.12 * CFG.U;
+      const base = Math.hypot(d.depth, d.front / 2) + 0.12 * CFG.U;
+
+      // Dopo una collisione reale col terreno allarga temporaneamente il corridoio:
+      // evita che A* scelga di nuovo lo stesso waypoint tangente che ha causato lo stuck.
+      const boost = State.simTime < (u.motion.terrainClearanceBoostUntil || 0)
+        ? 0.85 * CFG.U
+        : 0;
+      return base + boost;
     },
 
     excludedObstacle(u, other) {
@@ -3671,10 +3997,14 @@
     advance(u) {
       const d = u.motion.detour;
       if (!d) return false;
-      d.index += 1;
-      if (d.index < d.waypoints.length) return true;
+
+      // Un waypoint A* non è più parte di una polyline "congelata".
+      // Appena raggiunto viene scartato tutto il vecchio percorso:
+      // il prossimo tick ricalcola A* dalla posa reale corrente verso
+      // il target finale, tenendo conto di unità, terreno e orientamento aggiornati.
+      const hadMore = d.index + 1 < d.waypoints.length;
       u.motion.detour = null;
-      return false;
+      return hadMore;
     }
   };
 
@@ -3697,11 +4027,28 @@
     },
 
     prepareTurnForCurrentTarget(u) {
-      // v0.71: il FLIP automatico è rimosso dalla navigazione.
-      // A*, waypoint, lock e pursuit non possono più spostare il front-pivot
-      // tramite un about-face. Il cambio direzione è gestito in update() con
-      // una rotazione sul posto quando l'errore angolare è grande.
-      return;
+      // FLIP reintrodotto SOLO come manovra di navigazione molto conservativa.
+      // Esclusi attack approach, pursuit, retreat, rout e ranged approach:
+      // sono proprio i casi in cui il vecchio flip interferiva con target,
+      // slot e inseguimenti.
+      if (!u?.status?.alive ||
+          u.status.routing ||
+          Engagements.hasAny(u) ||
+          u.order.kind === 'retreat' ||
+          u.order.pursuit?.enemyId ||
+          u.order.approach ||
+          u.ranged?.approachTargetId ||
+          u.motion.turn) return false;
+
+      const target = Pathfinder.currentWaypoint(u) || u.order.target;
+      if (!target) return false;
+
+      const desired = Math.atan2(target.y - u.pose.y, target.x - u.pose.x);
+      const delta = Geometry.shortestDelta(u.pose.angle, desired);
+
+      // Solo vera inversione: sotto 135° continua a ruotare/curvare normalmente.
+      if (Math.abs(delta) < CFG.NAV_FLIP_THRESHOLD) return false;
+      return this.beginFlip(u);
     },
 
     canFlipSafely(u) {
@@ -3719,9 +4066,15 @@
         }
       };
 
-      const { w, h } = worldPx();
+      const b = Geometry.boundsFor(u);
       const pts = Geometry.corners(test);
-      if (pts.some(p => p.x < 0 || p.x > w || p.y < 0 || p.y > h)) return false;
+      if (pts.some(p =>
+        p.x < b.minX || p.x > b.maxX ||
+        p.y < b.minY || p.y > b.maxY
+      )) return false;
+
+      // Il flip deve essere valido anche rispetto al terreno reale.
+      if (Terrain.placementBlocked(test)) return false;
 
       for (const other of State.units) {
         if (!other.status.alive || other.id === u.id) continue;
@@ -3731,7 +4084,7 @@
     },
 
     beginFlip(u) {
-      if (!this.canFlipSafely(u)) return false;
+      if (u.motion.turn || !this.canFlipSafely(u)) return false;
       u.motion.turn = {
         kind: 'flip',
         start: State.simTime,
@@ -3788,7 +4141,16 @@
         }
       }
 
-      Collision.resolveMover(u, old);
+      const terrainResult = Collision.resolveMover(u, old);
+      if (terrainResult === 'terrain-recovered' || terrainResult === 'blocked') {
+        const oldAngle = u.status.routAngle;
+        const newAngle = Terrain.findRoutDeflection(u, oldAngle);
+        if (Math.abs(Geometry.shortestDelta(oldAngle, newAngle)) > 0.01) {
+          u.status.routAngle = newAngle;
+          u.pose.angle = newAngle;
+          Log.add(`${u.name}: ROUT devia attorno al terreno`);
+        }
+      }
     },
 
     update(u, dt) {
@@ -3798,6 +4160,13 @@
         this.updateRout(u, dt);
         return;
       }
+
+      // FLIP di navigazione atomico: durante i 2s non vengono eseguiti
+      // steering, A* o collision solve. Al termine riprende dal target reale.
+      if (u.motion.turn?.kind === 'flip') {
+        if (this.updateFlip(u)) return;
+      }
+
       if (u.stats.energy <= 0.0001 || Engagements.hasAny(u) || !u.order.target) return;
 
       // ATTACK APPROACH v0.75 — CONTINUOUS STEERING
@@ -3831,9 +4200,9 @@
         // Waypoint A*: tolleranza legata alla larghezza, come nella navigazione.
         if (u.motion.detour &&
             Math.hypot(moveTarget.x - u.pose.x, moveTarget.y - u.pose.y) <= this.navigationReachTolerance(u)) {
-          const hasNext = Pathfinder.advance(u);
+          Pathfinder.advance(u);
           u.motion.moving = false;
-          if (!hasNext) Log.add(`${u.name}: A* ATTACK → corridoio libero, riprende ATT`);
+          Log.add(`${u.name}: A* ATTACK WAYPOINT → REPLAN`);
           return;
         }
 
@@ -3892,7 +4261,7 @@
         }
 
         const collisionResult = Collision.resolveMover(u, old);
-        if (collisionResult === 'blocked' && u.motion.detour) {
+        if ((collisionResult === 'blocked' || collisionResult === 'terrain-recovered') && u.motion.detour) {
           u.motion.detour = null;
         }
         return;
@@ -3904,6 +4273,10 @@
       const target = this.currentTarget(u);
       if (!target) return;
 
+      // Se il nuovo corridoio A* mette il prossimo waypoint realmente dietro,
+      // valuta qui il flip sicuro. Se non è possibile, resta la rotazione sul posto.
+      if (this.prepareTurnForCurrentTarget(u)) return;
+
       const dx = target.x - u.pose.x;
       const dy = target.y - u.pose.y;
       const dist = Math.hypot(dx, dy);
@@ -3913,14 +4286,15 @@
         dist <= this.navigationReachTolerance(u);
 
       if (detourReached) {
-        const hasNext = Pathfinder.advance(u);
-        // Non cancellare mai un FLIP atomico durante il cambio waypoint.
+        Pathfinder.advance(u);
+        // Il waypoint raggiunto invalida l'intera vecchia polyline.
+        // Il prossimo frame Pathfinder.ensure() ricostruisce il percorso
+        // dalla posizione reale attuale verso il target finale.
         if (u.motion.turn?.kind !== 'flip' && u.motion.turn?.kind !== 'combat-flip') {
           u.motion.turn = null;
         }
         u.motion.moving = false;
-        if (!hasNext) Log.add(`${u.name}: A* PATH → corridoio libero, riprende il target`);
-        this.prepareTurnForCurrentTarget(u);
+        Log.add(`${u.name}: A* WAYPOINT → REPLAN`);
         return;
       }
 
@@ -3993,7 +4367,7 @@
         if (travelledU > 0.01) u.order.pursuit.lastProgressAt = State.simTime;
       }
 
-      if (collisionResult === 'blocked' && u.motion.detour) {
+      if ((collisionResult === 'blocked' || collisionResult === 'terrain-recovered') && u.motion.detour) {
         // The chosen side was itself obstructed: allow a fresh local detour next frame.
         u.motion.detour = null;
       }
@@ -4008,7 +4382,87 @@
       State.battle.active = !!active;
       State.battle.ended = false;
       State.battle.result = null;
+      State.battle.armyCollapse = { blue: false, red: false };
       this.hideResult();
+      this.updateVictoryBar();
+    },
+
+    unitPoints(u) {
+      return Number(u?.deployCost || Deployment?.spec?.(u?.type)?.cost || 0);
+    },
+
+    initialPoints(side) {
+      return State.units
+        .filter(u => u.side === side)
+        .reduce((sum, u) => sum + this.unitPoints(u), 0);
+    },
+
+    lostPoints(side) {
+      return State.units
+        .filter(u =>
+          u.side === side &&
+          !u.status.alive &&
+          (u.status.exitReason === 'destroyed' || u.status.exitReason === 'rout')
+        )
+        .reduce((sum, u) => sum + this.unitPoints(u), 0);
+    },
+
+    victoryProgress() {
+      const blueTotal = this.initialPoints('blue');
+      const redTotal = this.initialPoints('red');
+      const blueLost = this.lostPoints('blue');
+      const redLost = this.lostPoints('red');
+
+      // La metà dei punti iniziali = 100%.
+      // BLU avanza quando perde punti il ROSSO; ROSSO viceversa.
+      const blue = redTotal > 0 ? Math.min(1, redLost / (redTotal * 0.5)) : 0;
+      const red = blueTotal > 0 ? Math.min(1, blueLost / (blueTotal * 0.5)) : 0;
+      return { blue, red, blueTotal, redTotal, blueLost, redLost };
+    },
+
+    updateVictoryBar() {
+      if (!DOM.victoryBar) return;
+      const p = this.victoryProgress();
+      DOM.blueVictoryFill.style.width = `${(p.blue * 100).toFixed(2)}%`;
+      DOM.redVictoryFill.style.width = `${(p.red * 100).toFixed(2)}%`;
+      DOM.victoryBlueLabel.textContent = `BLU ${Math.round(p.blue * 100)}%`;
+      DOM.victoryRedLabel.textContent = `${Math.round(p.red * 100)}% ROSSO`;
+      DOM.victoryBar.classList.toggle('blue-collapse', p.blue >= 1);
+      DOM.victoryBar.classList.toggle('red-collapse', p.red >= 1);
+      DOM.victoryBar.title =
+        `BLU: ${p.redLost}/${Math.round(p.redTotal * 0.5)} PT ROSSI annientati · ` +
+        `ROSSO: ${p.blueLost}/${Math.round(p.blueTotal * 0.5)} PT BLU annientati`;
+    },
+
+    forceArmyRout(side) {
+      if (State.battle.armyCollapse?.[side]) return false;
+      if (!State.battle.armyCollapse) State.battle.armyCollapse = { blue:false, red:false };
+      State.battle.armyCollapse[side] = true;
+
+      const label = side === 'blue' ? 'BLU' : 'ROSSO';
+      const survivors = Units.alive(side);
+      for (const u of survivors) {
+        u.stats.brain = 0;
+        if (!u.status.routing) Orders.startRout(u, null);
+        u.status.permanentRout = true;
+        u.status.routedById = null; // collasso d'armata: nessun singolo killer riceve il ROUT OUT
+        u.order.kind = 'rout';
+      }
+      Log.add(`☠ COLLASSO ${label}: perduto almeno il 50% dei punti → ROUT PERMANENTE DI TUTTO L'ESERCITO`);
+      return true;
+    },
+
+    checkArmyCollapse() {
+      if (!State.battle.active || State.battle.ended || State.deployment.active) return;
+      const p = this.victoryProgress();
+
+      // 100% BLU = metà del valore ROSSO eliminato/fuggito → crolla il ROSSO.
+      if (p.blue >= 1) this.forceArmyRout('red');
+
+      // 100% ROSSO = metà del valore BLU eliminato/fuggito → crolla il BLU.
+      if (p.red >= 1) this.forceArmyRout('blue');
+
+      this.updateVictoryBar();
     },
 
     recordDamage(attacker, victim, hpLoss = 0, brainLoss = 0) {
@@ -4137,6 +4591,7 @@
       Orders.clear(u);
       Selection.remove(u.id);
       Log.add(`↗ ${u.name}: ROUT oltre il bordo esterno → RIMOSSA DALLA BATTAGLIA`);
+      this.updateVictoryBar();
     },
 
     checkOutcome() {
@@ -4339,6 +4794,7 @@
       Engagements.breakAll(u);
       Selection.remove(u.id);
       Log.add(`★ ${u.name} DISTRUTTA`);
+      Battle.updateVictoryBar();
     },
 
     resolvePair(a, b) {
@@ -4986,11 +5442,16 @@
 
     resize() {
       const { w, h } = worldPx();
+      const stageW = Math.max(1, DOM.stage?.clientWidth || 0);
+      const stageH = Math.max(1, DOM.stage?.clientHeight || 0);
+      const drawW = Math.max(w, stageW);
+      const drawH = Math.max(h, stageH);
       const dpr = Math.max(1, window.devicePixelRatio || 1);
-      DOM.canvas.width = Math.floor(w * dpr);
-      DOM.canvas.height = Math.floor(h * dpr);
-      DOM.canvas.style.width = `${w}px`;
-      DOM.canvas.style.height = `${h}px`;
+      DOM.canvas.width = Math.floor(drawW * dpr);
+      DOM.canvas.height = Math.floor(drawH * dpr);
+      DOM.canvas.style.width = `${drawW}px`;
+      DOM.canvas.style.height = `${drawH}px`;
+      if (DOM.victoryBar) DOM.victoryBar.style.width = `${Math.max(190, drawW * 0.20)}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     },
 
@@ -6331,7 +6792,7 @@
       State.view = { scale: 1, x: 0, y: 0 };
       Battle.reset(restoredDeployment);
       UI.setTimeScale(1);
-      DOM.log.textContent = `${restoredDeployment ? 'Battaglia resettata dallo schieramento.' : 'Battaglia 3 vs 3 resettata.'}\nARCHITETTURA v0.82.5: ${State.battleSetup.points} PT · Mirror Army ${State.battleSetup.mirrorArmy ? 'ON' : 'OFF'} · Mirror Deployment ${State.battleSetup.mirrorDeployment ? 'ON' : 'OFF'} · campo 90×60U + bordocampo 10U · deployment sui lati lunghi · terreni random al centro (laghetto, muro, altura, bosco, strada, terreno difficile).`;
+      DOM.log.textContent = `${restoredDeployment ? 'Battaglia resettata dallo schieramento.' : 'Battaglia 3 vs 3 resettata.'}\nARCHITETTURA v0.83: ${State.battleSetup.points} PT · Mirror Army ${State.battleSetup.mirrorArmy ? 'ON' : 'OFF'} · Mirror Deployment ${State.battleSetup.mirrorDeployment ? 'ON' : 'OFF'} · campo 90×60U + bordocampo 10U · deployment sui lati lunghi · terreni random al centro (laghetto, muro, altura, bosco, strada, terreno difficile).`;
       UI.updateSelectedInfo();
     },
 
@@ -6408,6 +6869,7 @@
         Resources.update(u, dt);
       }
       Combat.update(dt);
+      Battle.checkArmyCollapse();
       Battle.checkOutcome();
     },
 
@@ -6418,6 +6880,7 @@
       State.simTime += dt;
       if (dt > 0) Simulation.update(dt);
       UI.updateSelectedInfo();
+      Battle.updateVictoryBar();
       Renderer.draw();
       requestAnimationFrame(Simulation.frame);
     }
