@@ -1,0 +1,144 @@
++      const b = Geometry.boundsFor(u);
+       const pts = Geometry.corners(test);
+-      if (pts.some(p => p.x < 0 || p.x > w || p.y < 0 || p.y > h)) return false;
++      if (pts.some(p =>
++        p.x < b.minX || p.x > b.maxX ||
++        p.y < b.minY || p.y > b.maxY
++      )) return false;
++
++      // Il flip deve essere valido anche rispetto al terreno reale.
++      if (Terrain.placementBlocked(test)) return false;
+ 
+       for (const other of State.units) {
+         if (!other.status.alive || other.id === u.id) continue;
+@@ -3731,7 +4084,7 @@
+     },
+ 
+     beginFlip(u) {
+-      if (!this.canFlipSafely(u)) return false;
++      if (u.motion.turn || !this.canFlipSafely(u)) return false;
+       u.motion.turn = {
+         kind: 'flip',
+         start: State.simTime,
+@@ -3788,7 +4141,16 @@
+         }
+       }
+ 
+-      Collision.resolveMover(u, old);
++      const terrainResult = Collision.resolveMover(u, old);
++      if (terrainResult === 'terrain-recovered' || terrainResult === 'blocked') {
++        const oldAngle = u.status.routAngle;
++        const newAngle = Terrain.findRoutDeflection(u, oldAngle);
++        if (Math.abs(Geometry.shortestDelta(oldAngle, newAngle)) > 0.01) {
++          u.status.routAngle = newAngle;
++          u.pose.angle = newAngle;
++          Log.add(`${u.name}: ROUT devia attorno al terreno`);
++        }
++      }
+     },
+ 
+     update(u, dt) {
+@@ -3798,6 +4160,13 @@
+         this.updateRout(u, dt);
+         return;
+       }
++
++      // FLIP di navigazione atomico: durante i 2s non vengono eseguiti
++      // steering, A* o collision solve. Al termine riprende dal target reale.
++      if (u.motion.turn?.kind === 'flip') {
++        if (this.updateFlip(u)) return;
++      }
++
+       if (u.stats.energy <= 0.0001 || Engagements.hasAny(u) || !u.order.target) return;
+ 
+       // ATTACK APPROACH v0.75 — CONTINUOUS STEERING
+@@ -3831,9 +4200,9 @@
+         // Waypoint A*: tolleranza legata alla larghezza, come nella navigazione.
+         if (u.motion.detour &&
+             Math.hypot(moveTarget.x - u.pose.x, moveTarget.y - u.pose.y) <= this.navigationReachTolerance(u)) {
+-          const hasNext = Pathfinder.advance(u);
++          Pathfinder.advance(u);
+           u.motion.moving = false;
+-          if (!hasNext) Log.add(`${u.name}: A* ATTACK → corridoio libero, riprende ATT`);
++          Log.add(`${u.name}: A* ATTACK WAYPOINT → REPLAN`);
+           return;
+         }
+ 
+@@ -3892,7 +4261,7 @@
+         }
+ 
+         const collisionResult = Collision.resolveMover(u, old);
+-        if (collisionResult === 'blocked' && u.motion.detour) {
++        if ((collisionResult === 'blocked' || collisionResult === 'terrain-recovered') && u.motion.detour) {
+           u.motion.detour = null;
+         }
+         return;
+@@ -3904,6 +4273,10 @@
+       const target = this.currentTarget(u);
+       if (!target) return;
+ 
++      // Se il nuovo corridoio A* mette il prossimo waypoint realmente dietro,
++      // valuta qui il flip sicuro. Se non è possibile, resta la rotazione sul posto.
++      if (this.prepareTurnForCurrentTarget(u)) return;
++
+       const dx = target.x - u.pose.x;
+       const dy = target.y - u.pose.y;
+       const dist = Math.hypot(dx, dy);
+@@ -3913,14 +4286,15 @@
+         dist <= this.navigationReachTolerance(u);
+ 
+       if (detourReached) {
+-        const hasNext = Pathfinder.advance(u);
+-        // Non cancellare mai un FLIP atomico durante il cambio waypoint.
++        Pathfinder.advance(u);
++        // Il waypoint raggiunto invalida l'intera vecchia polyline.
++        // Il prossimo frame Pathfinder.ensure() ricostruisce il percorso
++        // dalla posizione reale attuale verso il target finale.
+         if (u.motion.turn?.kind !== 'flip' && u.motion.turn?.kind !== 'combat-flip') {
+           u.motion.turn = null;
+         }
+         u.motion.moving = false;
+-        if (!hasNext) Log.add(`${u.name}: A* PATH → corridoio libero, riprende il target`);
+-        this.prepareTurnForCurrentTarget(u);
++        Log.add(`${u.name}: A* WAYPOINT → REPLAN`);
+         return;
+       }
+ 
+@@ -3993,7 +4367,7 @@
+         if (travelledU > 0.01) u.order.pursuit.lastProgressAt = State.simTime;
+       }
+ 
+-      if (collisionResult === 'blocked' && u.motion.detour) {
++      if ((collisionResult === 'blocked' || collisionResult === 'terrain-recovered') && u.motion.detour) {
+         // The chosen side was itself obstructed: allow a fresh local detour next frame.
+         u.motion.detour = null;
+       }
+@@ -4008,7 +4382,87 @@
+       State.battle.active = !!active;
+       State.battle.ended = false;
+       State.battle.result = null;
++      State.battle.armyCollapse = { blue: false, red: false };
+       this.hideResult();
++      this.updateVictoryBar();
++    },
++
++    unitPoints(u) {
++      return Number(u?.deployCost || Deployment?.spec?.(u?.type)?.cost || 0);
++    },
++
++    initialPoints(side) {
++      return State.units
++        .filter(u => u.side === side)
++        .reduce((sum, u) => sum + this.unitPoints(u), 0);
++    },
++
++    lostPoints(side) {
++      return State.units
++        .filter(u =>
++          u.side === side &&
++          !u.status.alive &&
++          (u.status.exitReason === 'destroyed' || u.status.exitReason === 'rout')
++        )
++        .reduce((sum, u) => sum + this.unitPoints(u), 0);
++    },
++
