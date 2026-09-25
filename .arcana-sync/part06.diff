@@ -1,0 +1,121 @@
++    victoryProgress() {
++      const blueTotal = this.initialPoints('blue');
++      const redTotal = this.initialPoints('red');
++      const blueLost = this.lostPoints('blue');
++      const redLost = this.lostPoints('red');
++
++      // La metà dei punti iniziali = 100%.
++      // BLU avanza quando perde punti il ROSSO; ROSSO viceversa.
++      const blue = redTotal > 0 ? Math.min(1, redLost / (redTotal * 0.5)) : 0;
++      const red = blueTotal > 0 ? Math.min(1, blueLost / (blueTotal * 0.5)) : 0;
++      return { blue, red, blueTotal, redTotal, blueLost, redLost };
++    },
++
++    updateVictoryBar() {
++      if (!DOM.victoryBar) return;
++      const p = this.victoryProgress();
++      DOM.blueVictoryFill.style.width = `${(p.blue * 100).toFixed(2)}%`;
++      DOM.redVictoryFill.style.width = `${(p.red * 100).toFixed(2)}%`;
++      DOM.victoryBlueLabel.textContent = `BLU ${Math.round(p.blue * 100)}%`;
++      DOM.victoryRedLabel.textContent = `${Math.round(p.red * 100)}% ROSSO`;
++      DOM.victoryBar.classList.toggle('blue-collapse', p.blue >= 1);
++      DOM.victoryBar.classList.toggle('red-collapse', p.red >= 1);
++      DOM.victoryBar.title =
++        `BLU: ${p.redLost}/${Math.round(p.redTotal * 0.5)} PT ROSSI annientati · ` +
++        `ROSSO: ${p.blueLost}/${Math.round(p.blueTotal * 0.5)} PT BLU annientati`;
++    },
++
++    forceArmyRout(side) {
++      if (State.battle.armyCollapse?.[side]) return false;
++      if (!State.battle.armyCollapse) State.battle.armyCollapse = { blue:false, red:false };
++      State.battle.armyCollapse[side] = true;
++
++      const label = side === 'blue' ? 'BLU' : 'ROSSO';
++      const survivors = Units.alive(side);
++      for (const u of survivors) {
++        u.stats.brain = 0;
++        if (!u.status.routing) Orders.startRout(u, null);
++        u.status.permanentRout = true;
++        u.status.routedById = null; // collasso d'armata: nessun singolo killer riceve il ROUT OUT
++        u.order.kind = 'rout';
++      }
++      Log.add(`☠ COLLASSO ${label}: perduto almeno il 50% dei punti → ROUT PERMANENTE DI TUTTO L'ESERCITO`);
++      return true;
++    },
++
++    checkArmyCollapse() {
++      if (!State.battle.active || State.battle.ended || State.deployment.active) return;
++      const p = this.victoryProgress();
++
++      // 100% BLU = metà del valore ROSSO eliminato/fuggito → crolla il ROSSO.
++      if (p.blue >= 1) this.forceArmyRout('red');
++
++      // 100% ROSSO = metà del valore BLU eliminato/fuggito → crolla il BLU.
++      if (p.red >= 1) this.forceArmyRout('blue');
++
++      this.updateVictoryBar();
+     },
+ 
+     recordDamage(attacker, victim, hpLoss = 0, brainLoss = 0) {
+@@ -4137,6 +4591,7 @@
+       Orders.clear(u);
+       Selection.remove(u.id);
+       Log.add(`↗ ${u.name}: ROUT oltre il bordo esterno → RIMOSSA DALLA BATTAGLIA`);
++      this.updateVictoryBar();
+     },
+ 
+     checkOutcome() {
+@@ -4339,6 +4794,7 @@
+       Engagements.breakAll(u);
+       Selection.remove(u.id);
+       Log.add(`★ ${u.name} DISTRUTTA`);
++      Battle.updateVictoryBar();
+     },
+ 
+     resolvePair(a, b) {
+@@ -4986,11 +5442,16 @@
+ 
+     resize() {
+       const { w, h } = worldPx();
++      const stageW = Math.max(1, DOM.stage?.clientWidth || 0);
++      const stageH = Math.max(1, DOM.stage?.clientHeight || 0);
++      const drawW = Math.max(w, stageW);
++      const drawH = Math.max(h, stageH);
+       const dpr = Math.max(1, window.devicePixelRatio || 1);
+-      DOM.canvas.width = Math.floor(w * dpr);
+-      DOM.canvas.height = Math.floor(h * dpr);
+-      DOM.canvas.style.width = `${w}px`;
+-      DOM.canvas.style.height = `${h}px`;
++      DOM.canvas.width = Math.floor(drawW * dpr);
++      DOM.canvas.height = Math.floor(drawH * dpr);
++      DOM.canvas.style.width = `${drawW}px`;
++      DOM.canvas.style.height = `${drawH}px`;
++      if (DOM.victoryBar) DOM.victoryBar.style.width = `${Math.max(190, drawW * 0.20)}px`;
+       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+     },
+ 
+@@ -6331,7 +6792,7 @@
+       State.view = { scale: 1, x: 0, y: 0 };
+       Battle.reset(restoredDeployment);
+       UI.setTimeScale(1);
+-      DOM.log.textContent = `${restoredDeployment ? 'Battaglia resettata dallo schieramento.' : 'Battaglia 3 vs 3 resettata.'}\nARCHITETTURA v0.82.5: ${State.battleSetup.points} PT · Mirror Army ${State.battleSetup.mirrorArmy ? 'ON' : 'OFF'} · Mirror Deployment ${State.battleSetup.mirrorDeployment ? 'ON' : 'OFF'} · campo 90×60U + bordocampo 10U · deployment sui lati lunghi · terreni random al centro (laghetto, muro, altura, bosco, strada, terreno difficile).`;
++      DOM.log.textContent = `${restoredDeployment ? 'Battaglia resettata dallo schieramento.' : 'Battaglia 3 vs 3 resettata.'}\nARCHITETTURA v0.83: ${State.battleSetup.points} PT · Mirror Army ${State.battleSetup.mirrorArmy ? 'ON' : 'OFF'} · Mirror Deployment ${State.battleSetup.mirrorDeployment ? 'ON' : 'OFF'} · campo 90×60U + bordocampo 10U · deployment sui lati lunghi · terreni random al centro (laghetto, muro, altura, bosco, strada, terreno difficile).`;
+       UI.updateSelectedInfo();
+     },
+ 
+@@ -6408,6 +6869,7 @@
+         Resources.update(u, dt);
+       }
+       Combat.update(dt);
++      Battle.checkArmyCollapse();
+       Battle.checkOutcome();
+     },
+ 
+@@ -6418,6 +6880,7 @@
+       State.simTime += dt;
+       if (dt > 0) Simulation.update(dt);
+       UI.updateSelectedInfo();
++      Battle.updateVictoryBar();
+       Renderer.draw();
+       requestAnimationFrame(Simulation.frame);
+     }
