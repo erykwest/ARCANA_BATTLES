@@ -1,11 +1,36 @@
 name: Temporary ARCANA sync
+
 on:
   push:
     branches: [main]
     paths:
       - .github/workflows/temp-sync.yml
+
+permissions:
+  contents: write
+
 jobs:
-  check:
+  sync:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "ARCANA sync bootstrap"
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply standalone HTML update
+        shell: bash
+        run: |
+          cat .arcana-sync/part*.diff > /tmp/arcana.patch
+          git apply --check /tmp/arcana.patch
+          git apply /tmp/arcana.patch
+          test "$(git hash-object ARCANA_BATTLES.html)" = "07b0269d60d8b002928195ab3a419362cdb79d8a"
+
+      - name: Commit and push
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ARCANA_BATTLES.html
+          git commit -m "Update ARCANA Battles to v0.83.5"
+          git push origin main
