@@ -1,0 +1,11 @@
+name: Temporary ARCANA sync
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/temp-sync.yml
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "ARCANA sync bootstrap"
