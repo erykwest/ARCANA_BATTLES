@@ -1,0 +1,137 @@
+     NAV_WAYPOINT_FRONT_RATIO: 0.50, // waypoint raggiunto entro 1/2 della larghezza frontale
+     NAV_WAYPOINT_MIN_U: 0.50,
+     COLLIDER_EPS_PX: 0.25,
++    TERRAIN_SOFT_EDGE_U: 0.75, // fascia visibile esterna: accidentata ma non collider duro
+     FORMATIONS: Object.freeze({
+       base:   Object.freeze({ label: 'BASE',    front: 3, depth: 2 }),
+       column: Object.freeze({ label: 'COLONNA', front: 2, depth: 3 }),
+@@ -758,7 +853,8 @@
+       active: false,
+       ended: false,
+       result: null,
+-      playerSide: 'blue'
++      playerSide: 'blue',
++      armyCollapse: { blue: false, red: false }
+     },
+     deployment: {
+       active: false,
+@@ -839,7 +935,8 @@
+         chargeOverride: null,
+         moving: false,
+         turn: null,         // { kind:'flip'|'combat-flip', start, end, startAngle }
+-        detour: null        // A* runtime path; NON modifica la command chain
++        detour: null,       // A* runtime path; NON modifica la command chain
++        terrainClearanceBoostUntil: 0
+       },
+       engagement: {
+         outbound: null,     // { defenderId, slot }
+@@ -2868,10 +2965,15 @@
+ 
+     resolveMover(u, oldPose) {
+       if (Terrain.placementBlocked(u)) {
+-        u.pose.x = oldPose.x;
+-        u.pose.y = oldPose.y;
++        const recovered = Terrain.recoverUnitFromBlockingTerrain(u, oldPose);
+         u.motion.moving = false;
+-        return 'blocked';
++
++        // Qualunque contatto col terreno invalida il corridoio corrente.
++        // Il prossimo tick ricalcola A* con clearance temporaneamente maggiore.
++        u.motion.detour = null;
++        u.motion.terrainClearanceBoostUntil = State.simTime + 1.25;
++
++        return recovered ? 'terrain-recovered' : 'blocked';
+       }
+       for (const other of State.units) {
+         if (other.id === u.id || !other.status.alive || Engagements.pair(u, other)) continue;
+@@ -2998,6 +3100,28 @@
+       };
+     },
+ 
++    smoothClosedBlob(points, subdivisions = 6) {
++      if (!Array.isArray(points) || points.length < 4) return points || [];
++      const out = [];
++      const n = points.length;
++      for (let i = 0; i < n; i++) {
++        const p0 = points[(i - 1 + n) % n];
++        const p1 = points[i];
++        const p2 = points[(i + 1) % n];
++        const p3 = points[(i + 2) % n];
++        for (let s = 0; s < subdivisions; s++) {
++          out.push(this.catmullRomPoint(p0, p1, p2, p3, s / subdivisions));
++        }
++      }
++      return out;
++    },
++
++    blobPoints(t) {
++      if (!t) return [];
++      if (!t.smoothBlob) t.smoothBlob = this.smoothClosedBlob(t.blob || [], 6);
++      return t.smoothBlob;
++    },
++
+     sampleRoad(controlPoints, stepU = 0.45) {
+       const pts = [];
+       const ext = [controlPoints[0], ...controlPoints, controlPoints[controlPoints.length - 1]];
+@@ -3059,7 +3183,7 @@
+ 
+     terrainRadius(t) {
+       if (t.type === 'pond' || t.type === 'forest') {
+-        const pts = t.blob || [];
++        const pts = this.blobPoints(t);
+         return pts.reduce((m,p) => Math.max(m, Math.hypot(p.x,p.y)), 0);
+       }
+       if (t.type === 'hill' || t.type === 'rough') return Math.max(t.rx, t.ry);
+@@ -3095,7 +3219,7 @@
+         return pts;
+       }
+       if (t.type === 'pond' || t.type === 'forest') {
+-        for (const p of (t.blob||[])) pts.push(this.localToWorld(t,p));
++        for (const p of this.blobPoints(t)) pts.push(this.localToWorld(t,p));
+         return pts;
+       }
+       return pts;
+@@ -3246,6 +3370,28 @@
+       return false;
+     },
+ 
++    insideHardCore(t, point) {
++      if (!t || (t.type !== 'pond' && t.type !== 'forest')) {
++        return this.containsPoint(t, point, 0);
++      }
++      if (!this.containsPoint(t, point, 0)) return false;
++      return this.distanceToVisualBoundary(t, point) >= CFG.TERRAIN_SOFT_EDGE_U * CFG.U;
++    },
++
++    distanceToVisualBoundary(t, point) {
++      if (!t || (t.type !== 'pond' && t.type !== 'forest')) return Infinity;
++      const pts = this.blobPoints(t).map(p => this.localToWorld(t, p));
++      let best = Infinity;
++      for (let i = 0; i < pts.length; i++) {
++        best = Math.min(best, Geometry.pointSegmentDistance(point, pts[i], pts[(i + 1) % pts.length]));
++      }
++      return best;
++    },
++
++    unitTouchesVisualTerrain(u, t) {
++      return this.unitSamplePoints(u).some(p => this.containsPoint(t, p, 0));
++    },
++
+     unitSamplePoints(u) {
+       const pts=Geometry.corners(u), c=Geometry.center(u), mids=[];
+       for (let i=0;i<pts.length;i++) { const a=pts[i],b=pts[(i+1)%pts.length]; mids.push({x:(a.x+b.x)/2,y:(a.y+b.y)/2}); }
+@@ -3254,8 +3400,15 @@
+ 
+     blocksUnit(u, t) {
+       if (!u?.status?.alive || !t) return false;
+-      if (t.type === 'pond' || t.type === 'wall') return this.unitSamplePoints(u).some(p=>this.containsPoint(t,p,0));
+-      if (t.type === 'forest' && u.type === 'cavalry') return this.unitSamplePoints(u).some(p=>this.containsPoint(t,p,0));
++      if (t.type === 'wall') {
++        return this.unitSamplePoints(u).some(p => this.containsPoint(t, p, 0));
++      }
++      if (t.type === 'pond') {
++        return this.unitSamplePoints(u).some(p => this.insideHardCore(t, p));
++      }
++      if (t.type === 'forest' && u.type === 'cavalry') {
++        return this.unitSamplePoints(u).some(p => this.insideHardCore(t, p));
++      }
