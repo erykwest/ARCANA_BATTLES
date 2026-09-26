@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ARCANA — Campal Battle Lab v0.83.5</title>
+<title>ARCANA — Campal Battle Lab v0.84.0</title>
 <style>
   :root{
     --bg:#11151b;
@@ -280,6 +280,11 @@
   .point-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
   .point-presets button{height:46px;padding:0;font-size:14px}
   .point-presets button.active{outline:2px solid #f0d36f;background:#344152;color:#fff}
+  .setup-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .setup-modes button{height:58px;padding:6px 8px;font-size:12px;letter-spacing:.06em}
+  .setup-modes button small{display:block;margin-top:4px;font-size:9px;font-weight:500;letter-spacing:0;color:var(--muted);line-height:1.15}
+  .setup-modes button.active{outline:2px solid #f0d36f;background:#344152;color:#fff}
+  .setup-mode-note{margin-top:9px;font-size:10px;line-height:1.4;color:var(--muted)}
   .custom-points{display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:center;margin-top:10px}
   .custom-points label{font-size:12px;color:var(--muted)}
   .custom-points input{
@@ -432,7 +437,7 @@
 </head>
 <body>
 <header>
-  <strong>ARCANA — CAMPAL BATTLE LAB v0.83.5</strong>
+  <strong>ARCANA — CAMPAL BATTLE LAB v0.84.0</strong>
   <span>REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
 </header>
 
@@ -457,35 +462,21 @@
     </div>
 
     <div class="setup-section">
-      <span class="setup-label">SIMMETRIA</span>
-      <div class="setup-toggle">
-        <div class="toggle-copy">
-          <b>Mirror Army · ROSSO</b>
-          <span>Il ROSSO usa automaticamente la stessa composizione del BLU.</span>
-        </div>
-        <label class="switch" title="Mirror Army">
-          <input id="mirrorArmyInput" type="checkbox" checked />
-          <span class="switch-track"></span>
-        </label>
+      <span class="setup-label">MODALITÀ ESERCITI</span>
+      <div class="setup-modes" id="setupModes">
+        <button type="button" data-mode="auto" class="active">AUTO<small>composizione + dottrina + schieramento</small></button>
+        <button type="button" data-mode="mirrored">MIRRORED<small>costruisci BLU, ROSSO specchiato</small></button>
+        <button type="button" data-mode="custom">CUSTOM<small>costruisci entrambi gli eserciti</small></button>
       </div>
-      <div class="setup-toggle">
-        <div class="toggle-copy">
-          <b>Mirror Deployment</b>
-          <span>Specchia anche posizione, orientamento e formazione iniziale.</span>
-        </div>
-        <label class="switch" title="Mirror Deployment">
-          <input id="mirrorDeploymentInput" type="checkbox" checked />
-          <span class="switch-track"></span>
-        </label>
-      </div>
+      <div class="setup-mode-note" id="setupModeNote">AUTO usa Doctrine Engine: genera prima le unità, poi sceglie la dottrina in base a composizione, campo e ruolo ATT/DEF.</div>
     </div>
 
     <div class="setup-summary">
-      <span>Setup scenario</span>
+      <span id="setupModeSummary">AUTO · Doctrine Engine</span>
       <strong id="setupPointsSummary">1000 PT</strong>
     </div>
     <button id="createBattleBtn" type="button">VAI ALLO SCHIERAMENTO</button>
-    <div class="setup-footnote">v0.79 · Step 1/3 — dopo il budget entri direttamente nel Deployment Builder.</div>
+    <div class="setup-footnote">v0.84 · Step 1/3 — AUTO usa Doctrine Engine; MIRRORED e CUSTOM aprono il Deployment Builder.</div>
   </div>
 </div>
 
@@ -727,8 +718,9 @@
     battleSetupOverlay: document.getElementById('battleSetupOverlay'),
     pointPresets: document.getElementById('pointPresets'),
     customPointsInput: document.getElementById('customPointsInput'),
-    mirrorArmyInput: document.getElementById('mirrorArmyInput'),
-    mirrorDeploymentInput: document.getElementById('mirrorDeploymentInput'),
+    setupModes: document.getElementById('setupModes'),
+    setupModeNote: document.getElementById('setupModeNote'),
+    setupModeSummary: document.getElementById('setupModeSummary'),
     setupPointsSummary: document.getElementById('setupPointsSummary'),
     createBattleBtn: document.getElementById('createBattleBtn'),
     deploymentUI: document.getElementById('deploymentUI'),
@@ -845,9 +837,17 @@
     projectiles: [],
     battleSetup: {
       points: 1000,
-      mirrorArmy: true,
-      mirrorDeployment: true,
+      mode: 'auto',
+      mirrorArmy: false,
+      mirrorDeployment: false,
       configured: false
+    },
+    doctrine: {
+      roles: { blue: null, red: null },
+      selected: { blue: null, red: null },
+      scores: { blue: [], red: [] },
+      terrain: { blue: null, red: null },
+      compositions: { blue: [], red: [] }
     },
     battle: {
       active: false,
@@ -5842,9 +5842,18 @@
 
   const Deployment = {
     catalog: Object.freeze({
-      infantry: Object.freeze({ label: 'Fanteria', cost: 100 }),
-      archer: Object.freeze({ label: 'Arcieri', cost: 110 }),
-      cavalry: Object.freeze({ label: 'Cavalleria', cost: 180 })
+      infantry: Object.freeze({
+        label: 'Fanteria', cost: 100,
+        roles: Object.freeze({ line: 1.0, reserve: 0.6 })
+      }),
+      archer: Object.freeze({
+        label: 'Arcieri', cost: 110,
+        roles: Object.freeze({ ranged: 1.0, screen: 0.5 })
+      }),
+      cavalry: Object.freeze({
+        label: 'Cavalleria', cost: 180,
+        roles: Object.freeze({ mobile: 1.0, shock: 0.9, reserve: 0.4 })
+      })
     }),
 
     zone(side) {
@@ -6216,6 +6225,344 @@
     }
   };
 
+  // ============================================================
+  // DOCTRINE ENGINE v0.1
+  // Composition -> ATT/DEF -> terrain reading -> weighted doctrine -> deployment.
+  // Orders intentionally excluded: units remain in HOLD after deployment.
+  // ============================================================
+  const DoctrineEngine = {
+    roles: Object.freeze(['line', 'ranged', 'shock', 'mobile', 'screen', 'reserve']),
+
+    doctrines: Object.freeze({
+      center_wings: Object.freeze({
+        label: 'Centro forte / ali mobili',
+        army:  Object.freeze({ line:2, ranged:1, shock:1, mobile:2, screen:0, reserve:1 }),
+        terrain:Object.freeze({ open:2, hill:1, forest:-1, rough:-1, obstacle:-1, wall:0, road:1 }),
+        battleRole:Object.freeze({ attack:1, defend:1 })
+      }),
+      line_reserve: Object.freeze({
+        label: 'Linea difensiva + riserva',
+        army:  Object.freeze({ line:2, ranged:1, shock:0, mobile:0, screen:1, reserve:2 }),
+        terrain:Object.freeze({ open:0, hill:2, forest:1, rough:1, obstacle:1, wall:2, road:0 }),
+        battleRole:Object.freeze({ attack:-1, defend:2 })
+      }),
+      wing_concentration: Object.freeze({
+        label: 'Concentrazione su un’ala',
+        army:  Object.freeze({ line:1, ranged:0, shock:2, mobile:1, screen:0, reserve:1 }),
+        terrain:Object.freeze({ open:1, hill:1, forest:0, rough:0, obstacle:1, wall:0, road:1 }),
+        battleRole:Object.freeze({ attack:2, defend:0 })
+      }),
+      double_envelopment: Object.freeze({
+        label: 'Doppio avvolgimento',
+        army:  Object.freeze({ line:0, ranged:0, shock:1, mobile:2, screen:1, reserve:0 }),
+        terrain:Object.freeze({ open:2, hill:0, forest:-2, rough:-2, obstacle:-2, wall:-1, road:0 }),
+        battleRole:Object.freeze({ attack:2, defend:-1 })
+      }),
+      oblique: Object.freeze({
+        label: 'Linea obliqua',
+        army:  Object.freeze({ line:2, ranged:0, shock:1, mobile:1, screen:0, reserve:1 }),
+        terrain:Object.freeze({ open:1, hill:1, forest:0, rough:0, obstacle:1, wall:1, road:1 }),
+        battleRole:Object.freeze({ attack:2, defend:0 })
+      }),
+      cavalry_flanks: Object.freeze({
+        label: 'Cavalleria sui fianchi',
+        army:  Object.freeze({ line:1, ranged:1, shock:1, mobile:2, screen:0, reserve:0 }),
+        terrain:Object.freeze({ open:2, hill:0, forest:-2, rough:-2, obstacle:-2, wall:-1, road:1 }),
+        battleRole:Object.freeze({ attack:1, defend:1 })
+      }),
+      defense_depth: Object.freeze({
+        label: 'Difesa in profondità',
+        army:  Object.freeze({ line:2, ranged:1, shock:0, mobile:-1, screen:1, reserve:2 }),
+        terrain:Object.freeze({ open:-1, hill:2, forest:1, rough:2, obstacle:2, wall:2, road:0 }),
+        battleRole:Object.freeze({ attack:-2, defend:2 })
+      })
+    }),
+
+    rand(min, max) { return min + Math.random() * (max - min); },
+    clamp01(v) { return Math.max(0, Math.min(1, v)); },
+
+    weightedPick(items, weightFn) {
+      if (!items.length) return null;
+      const weights = items.map(x => Math.max(0, Number(weightFn(x)) || 0));
+      const total = weights.reduce((a,b) => a+b, 0);
+      if (total <= 0) return items[Math.floor(Math.random() * items.length)];
+      let r = Math.random() * total;
+      for (let i = 0; i < items.length; i++) {
+        r -= weights[i];
+        if (r <= 0) return items[i];
+      }
+      return items.at(-1);
+    },
+
+    roleValue(spec, role) { return Number(spec?.roles?.[role] || 0); },
+
+    compositionRoleVector(types) {
+      const vector = Object.fromEntries(this.roles.map(r => [r, 0]));
+      let total = 0;
+      for (const type of types) {
+        const spec = Deployment.spec(type);
+        total += spec.cost;
+        for (const role of this.roles) vector[role] += spec.cost * this.roleValue(spec, role);
+      }
+      if (total > 0) for (const role of this.roles) vector[role] /= total;
+      return { vector, total };
+    },
+
+    generateComposition(budget) {
+      const entries = Object.entries(Deployment.catalog).map(([type, spec]) => ({ type, spec }));
+      let best = null;
+
+      for (let attempt = 0; attempt < 60; attempt++) {
+        const bias = Object.fromEntries(this.roles.map(r => [r, this.rand(0.55, 1.45)]));
+        const types = [];
+        const roleSpend = Object.fromEntries(this.roles.map(r => [r, 0]));
+        let spent = 0;
+
+        while (types.length < 32) {
+          let candidates = entries.filter(({spec}) => spent + spec.cost <= budget);
+          if (!candidates.length) break;
+
+          // Structural floor: at least ~25% of the budget must be able to hold a line.
+          if (roleSpend.line < budget * 0.25) {
+            const line = candidates.filter(({spec}) => this.roleValue(spec, 'line') >= 0.5);
+            if (line.length) candidates = line;
+          }
+
+          const limited = candidates.filter(({spec}) => {
+            const ranged = roleSpend.ranged + spec.cost * this.roleValue(spec, 'ranged');
+            const mobile = roleSpend.mobile + spec.cost * this.roleValue(spec, 'mobile');
+            return ranged <= budget * 0.48 && mobile <= budget * 0.48;
+          });
+          if (limited.length) candidates = limited;
+
+          const pick = this.weightedPick(candidates, ({spec}) => {
+            let w = 0.18;
+            for (const role of this.roles) w += this.roleValue(spec, role) * bias[role];
+            return w;
+          });
+          if (!pick) break;
+
+          types.push(pick.type);
+          spent += pick.spec.cost;
+          for (const role of this.roles) roleSpend[role] += pick.spec.cost * this.roleValue(pick.spec, role);
+        }
+
+        const lineShare = spent ? roleSpend.line / spent : 0;
+        const spendRatio = budget ? spent / budget : 0;
+        const quality = spendRatio * 10 + Math.min(1, lineShare / 0.25) * 2 + Math.random() * 0.08;
+        if (!best || quality > best.quality) best = { types, spent, quality };
+      }
+
+      return best || { types:['infantry'], spent:Deployment.spec('infantry').cost, quality:0 };
+    },
+
+    openLaneRatio(side) {
+      const b = battlefieldPx();
+      const midY = b.y + b.h / 2;
+      const ownFrontY = side === 'blue'
+        ? b.y + b.h - CFG.DEPLOYMENT_DEPTH_U * CFG.U
+        : b.y + CFG.DEPLOYMENT_DEPTH_U * CFG.U;
+      let clear = 0, total = 0;
+      for (let xi = 1; xi <= 9; xi++) {
+        const x = b.x + b.w * xi / 10;
+        for (let yi = 0; yi <= 8; yi++) {
+          const q = yi / 8;
+          const y = ownFrontY + (midY - ownFrontY) * q;
+          const blocked = State.terrain.some(t =>
+            ['forest','rough','pond','wall'].includes(t.type) && Terrain.containsPoint(t, {x,y}, 0)
+          );
+          clear += blocked ? 0 : 1;
+          total += 1;
+        }
+      }
+      return total ? clear / total : 1;
+    },
+
+    terrainVector(side) {
+      const b = battlefieldPx();
+      const midY = b.y + b.h / 2;
+      const halfH = b.h / 2;
+      const result = { open:this.openLaneRatio(side), hill:0, forest:0, rough:0, obstacle:0, wall:0, road:0 };
+      const counts = { hill:0, forest:0, rough:0, obstacle:0, wall:0, road:0 };
+
+      for (const t of State.terrain) {
+        const key = t.type === 'pond' ? 'obstacle' : t.type;
+        if (!(key in counts)) continue;
+        let c;
+        if (t.type === 'road') {
+          const pts = t.samples || [];
+          c = pts.length ? pts[Math.floor(pts.length / 2)] : {x:b.x+b.w/2,y:midY};
+        } else c = Terrain.terrainCenter(t);
+
+        const longitudinal = 1 - this.clamp01(Math.abs(c.y - midY) / Math.max(1, halfH));
+        const lateral = this.clamp01(Math.abs(c.x - (b.x + b.w/2)) / Math.max(1, b.w/2));
+        const influence = this.clamp01(0.45 + longitudinal * 0.40 + lateral * 0.15);
+        result[key] += influence;
+        counts[key] += 1;
+      }
+
+      for (const key of Object.keys(counts)) {
+        if (counts[key]) result[key] /= counts[key];
+      }
+      return result;
+    },
+
+    scoreDoctrines(types, side, battleRole) {
+      const { vector } = this.compositionRoleVector(types);
+      const terrain = this.terrainVector(side);
+      State.doctrine.terrain[side] = terrain;
+
+      return Object.entries(this.doctrines).map(([id, d]) => {
+        const armyRaw = this.roles.reduce((sum, role) => sum + vector[role] * (d.army[role] || 0), 0);
+        const terrainRaw = Object.entries(terrain).reduce((sum, [key, value]) => sum + value * (d.terrain[key] || 0), 0);
+        const roleRaw = d.battleRole[battleRole] || 0;
+        const total = armyRaw * 2 + terrainRaw + roleRaw * 2;
+        return { id, label:d.label, total, army:armyRaw, terrain:terrainRaw, role:roleRaw };
+      }).sort((a,b) => b.total - a.total);
+    },
+
+    chooseDoctrine(types, side, battleRole) {
+      const ranked = this.scoreDoctrines(types, side, battleRole);
+      State.doctrine.scores[side] = ranked;
+      const pool = ranked.slice(0, 3);
+      const best = pool[0]?.total || 0;
+      const chosen = this.weightedPick(pool, x => Math.exp((x.total - best) * 0.85)) || ranked[0];
+      State.doctrine.selected[side] = chosen;
+      return chosen;
+    },
+
+    gridSlots(side) {
+      const z = Deployment.zone(side);
+      const xs = [0.08,0.18,0.28,0.38,0.50,0.62,0.72,0.82,0.92];
+      const depths = [0.88,0.58,0.28]; // 1 = verso il centro del campo
+      const margin = 2.8 * CFG.U;
+      return depths.flatMap((frontness, row) => xs.map((xf, col) => {
+        const x = z.x + margin + (z.w - margin * 2) * xf;
+        const rearY = side === 'blue' ? z.y + z.h - margin : z.y + margin;
+        const frontY = side === 'blue' ? z.y + margin : z.y + z.h - margin;
+        const y = rearY + (frontY - rearY) * frontness;
+        return { x, y, xf, frontness, row, col, key:`${row}:${col}` };
+      }));
+    },
+
+    slotScore(doctrineId, spec, slot, strongFlank) {
+      const r = spec.roles || {};
+      const x = slot.xf;
+      const f = slot.frontness;
+      const center = this.clamp01(1 - Math.abs(x - 0.5) * 2);
+      const edge = 1 - center;
+      const rear = 1 - f;
+      const strong = strongFlank === 'left' ? (1 - x) : x;
+      let score =
+        (r.line || 0) * (1.45*f + 0.55*center) +
+        (r.ranged || 0) * (1.65*rear + 0.65*center) +
+        (r.mobile || 0) * (1.25*edge + 0.45*f) +
+        (r.shock || 0) * (0.85*f + 0.80*edge) +
+        (r.screen || 0) * (0.70*f + 0.55*edge) +
+        (r.reserve || 0) * (1.25*rear + 0.45*center);
+
+      if (doctrineId === 'center_wings') score += (r.line||0)*center*1.25 + (r.mobile||0)*edge*1.70 + (r.shock||0)*edge;
+      if (doctrineId === 'line_reserve') score += (r.line||0)*f*1.35 + (r.reserve||0)*rear*1.70 + (r.ranged||0)*rear*0.70;
+      if (doctrineId === 'wing_concentration') score += strong * (1.0 + (r.mobile||0)*1.2 + (r.shock||0)*1.35 + (r.line||0)*0.45);
+      if (doctrineId === 'double_envelopment') score += (r.mobile||0)*edge*2.15 + (r.shock||0)*edge*1.35 + (r.line||0)*center*0.75;
+      if (doctrineId === 'cavalry_flanks') score += (r.mobile||0)*edge*2.55 + (r.line||0)*center*0.75 + (r.ranged||0)*rear*0.60;
+      if (doctrineId === 'defense_depth') score += (r.reserve||0)*rear*2.0 + (r.ranged||0)*rear + (r.line||0)*(0.65 + 0.35*center);
+      if (doctrineId === 'oblique') {
+        const desiredFront = strongFlank === 'left' ? 0.22 + (1-x)*0.68 : 0.22 + x*0.68;
+        const echelon = 1 - Math.abs(f - desiredFront);
+        score += echelon * (0.9 + (r.line||0)*0.8 + (r.shock||0)*0.8) + strong*(r.mobile||0)*0.65;
+      }
+
+      // Defender starts slightly deeper; attacker slightly closer to the engagement line.
+      return score;
+    },
+
+    deployComposition(side, types, chosen, battleRole) {
+      const strongFlank = Math.random() < 0.5 ? 'left' : 'right';
+      const slots = this.gridSlots(side);
+      const used = new Set();
+      const sorted = [...types].sort((a,b) => {
+        const ra = Deployment.spec(a).roles || {}, rb = Deployment.spec(b).roles || {};
+        const pa = (ra.line||0)*3 + (ra.mobile||0)*2 + (ra.shock||0)*1.5 + (ra.ranged||0);
+        const pb = (rb.line||0)*3 + (rb.mobile||0)*2 + (rb.shock||0)*1.5 + (rb.ranged||0);
+        return pb - pa;
+      });
+
+      for (const type of sorted) {
+        const spec = Deployment.spec(type);
+        const u = Deployment.makeDeployUnit(side, type, 0, 0);
+        const baseAngle = side === 'blue' ? -Math.PI/2 : Math.PI/2;
+        const ranked = slots
+          .filter(slot => !used.has(slot.key))
+          .map(slot => {
+            const roleDepthBias = battleRole === 'attack' ? slot.frontness * 0.20 : (1-slot.frontness) * 0.20;
+            return { slot, score:this.slotScore(chosen.id, spec, slot, strongFlank) + roleDepthBias + Math.random()*0.03 };
+          })
+          .sort((a,b) => b.score - a.score);
+
+        let placed = false;
+        for (const {slot} of ranked) {
+          u.pose = { x:slot.x, y:slot.y, angle:baseAngle };
+          if (!Deployment.validPlacement(u)) continue;
+          used.add(slot.key);
+          placed = true;
+          break;
+        }
+
+        if (!placed) {
+          const fallback = Deployment.stagingPose(side, type);
+          if (fallback) {
+            u.pose = { ...fallback };
+            placed = Deployment.validPlacement(u);
+          }
+        }
+
+        if (placed) State.units.push(u);
+        else State.deployment.counters[side] -= 1;
+      }
+    },
+
+    autoSetup() {
+      State.units = [];
+      State.deployment.spent = { blue:0, red:0 };
+      State.deployment.counters = { blue:0, red:0 };
+      State.selectedIds.clear();
+      State.primaryId = null;
+
+      const attacker = Math.random() < 0.5 ? 'blue' : 'red';
+      State.doctrine.roles = {
+        blue: attacker === 'blue' ? 'attack' : 'defend',
+        red: attacker === 'red' ? 'attack' : 'defend'
+      };
+
+      for (const side of ['blue','red']) {
+        const composition = this.generateComposition(State.battleSetup.points);
+        State.doctrine.compositions[side] = [...composition.types];
+        const chosen = this.chooseDoctrine(composition.types, side, State.doctrine.roles[side]);
+        this.deployComposition(side, composition.types, chosen, State.doctrine.roles[side]);
+      }
+
+      Deployment.recount();
+      State.selectedSide = 'blue';
+      const first = State.units.find(u => u.side === 'blue') || null;
+      State.selectedIds = new Set(first ? [first.id] : []);
+      State.primaryId = first?.id || null;
+      Deployment.updateUI();
+      UI.updateSelectedInfo();
+
+      for (const side of ['blue','red']) {
+        const role = State.doctrine.roles[side].toUpperCase();
+        const d = State.doctrine.selected[side];
+        const spent = State.deployment.spent[side];
+        Log.add(`DOCTRINE ${side.toUpperCase()} [${role}] → ${d.label} | ${spent}/${State.battleSetup.points} PT | score ${d.total.toFixed(2)} (army ${d.army.toFixed(2)} · terrain ${d.terrain.toFixed(2)} · role ${d.role.toFixed(0)})`);
+      }
+
+      const blueD = State.doctrine.selected.blue?.label || '—';
+      const redD = State.doctrine.selected.red?.label || '—';
+      DOM.deployHint.textContent = `AUTO · BLU ${State.doctrine.roles.blue.toUpperCase()}: ${blueD} · ROSSO ${State.doctrine.roles.red.toUpperCase()}: ${redD}. Schieramento generato; nessun ordine iniziale applicato (unità in Hold).`;
+    }
+  };
+
   const BattleSetup = {
     previousTimeScale: 1,
 
@@ -6224,15 +6571,43 @@
       return Math.max(100, Math.min(10000, n));
     },
 
+    modeCopy(mode) {
+      if (mode === 'mirrored') return {
+        summary:'MIRRORED',
+        note:'MIRRORED: costruisci il BLU; composizione, posizione e orientamento del ROSSO vengono specchiati.'
+      };
+      if (mode === 'custom') return {
+        summary:'CUSTOM',
+        note:'CUSTOM: costruisci e schiera liberamente entrambi gli eserciti entro lo stesso budget.'
+      };
+      return {
+        summary:'AUTO · Doctrine Engine',
+        note:'AUTO usa Doctrine Engine: genera prima le unità, poi sceglie la dottrina in base a composizione, campo e ruolo ATT/DEF.'
+      };
+    },
+
+    setMode(mode) {
+      if (!['auto','mirrored','custom'].includes(mode)) mode = 'auto';
+      State.battleSetup.mode = mode;
+      State.battleSetup.mirrorArmy = mode === 'mirrored';
+      State.battleSetup.mirrorDeployment = mode === 'mirrored';
+      this.sync();
+    },
+
     sync() {
       const points = this.sanitizePoints(State.battleSetup.points);
       State.battleSetup.points = points;
       DOM.setupPointsSummary.textContent = `${points} PT`;
-      DOM.mirrorArmyInput.checked = !!State.battleSetup.mirrorArmy;
-      DOM.mirrorDeploymentInput.checked = !!State.battleSetup.mirrorDeployment;
+      const copy = this.modeCopy(State.battleSetup.mode);
+      DOM.setupModeSummary.textContent = copy.summary;
+      DOM.setupModeNote.textContent = copy.note;
+      DOM.setupModes.querySelectorAll('[data-mode]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.mode === State.battleSetup.mode);
+      });
       DOM.pointPresets.querySelectorAll('[data-points]').forEach(btn => {
         btn.classList.toggle('active', Number(btn.dataset.points) === points && !DOM.customPointsInput.value);
       });
+      DOM.createBattleBtn.textContent = State.battleSetup.mode === 'auto' ? 'GENERA SCHIERAMENTO' : 'VAI ALLO SCHIERAMENTO';
     },
 
     selectPreset(points) {
@@ -6252,18 +6627,24 @@
       State.battleSetup.points = this.sanitizePoints(
         DOM.customPointsInput.value ? DOM.customPointsInput.value : State.battleSetup.points
       );
-      State.battleSetup.mirrorArmy = DOM.mirrorArmyInput.checked;
-      State.battleSetup.mirrorDeployment = DOM.mirrorDeploymentInput.checked;
       State.battleSetup.configured = true;
       DOM.battleSetupOverlay.classList.remove('open');
 
       Deployment.start();
-      Log.add(`SETUP: ${State.battleSetup.points} PT | Mirror Army ${State.battleSetup.mirrorArmy ? 'ON' : 'OFF'} | Mirror Deployment ${State.battleSetup.mirrorDeployment ? 'ON' : 'OFF'}`);
+      if (State.battleSetup.mode === 'auto') DoctrineEngine.autoSetup();
+      else DOM.deployHint.textContent = State.battleSetup.mode === 'mirrored'
+        ? 'MIRRORED · Trascina le unità BLU: il ROSSO replica automaticamente composizione, posizione e orientamento.'
+        : 'CUSTOM · Trascina e posiziona liberamente entrambi gli eserciti entro il budget.';
+
+      Log.add(`SETUP: ${State.battleSetup.points} PT | mode ${State.battleSetup.mode.toUpperCase()}`);
     },
 
     bind() {
       DOM.pointPresets.querySelectorAll('[data-points]').forEach(btn => {
         btn.addEventListener('click', () => this.selectPreset(Number(btn.dataset.points)));
+      });
+      DOM.setupModes.querySelectorAll('[data-mode]').forEach(btn => {
+        btn.addEventListener('click', () => this.setMode(btn.dataset.mode));
       });
       DOM.customPointsInput.addEventListener('input', () => {
         if (!DOM.customPointsInput.value) {
@@ -6273,19 +6654,6 @@
         State.battleSetup.points = this.sanitizePoints(DOM.customPointsInput.value);
         DOM.setupPointsSummary.textContent = `${State.battleSetup.points} PT`;
         DOM.pointPresets.querySelectorAll('[data-points]').forEach(btn => btn.classList.remove('active'));
-      });
-      DOM.mirrorArmyInput.addEventListener('change', () => {
-        State.battleSetup.mirrorArmy = DOM.mirrorArmyInput.checked;
-      });
-      DOM.mirrorDeploymentInput.addEventListener('change', () => {
-        State.battleSetup.mirrorDeployment = DOM.mirrorDeploymentInput.checked;
-        if (State.battleSetup.mirrorDeployment && State.battleSetup.mirrorArmy && State.deployment.active) {
-          for (const blue of State.units.filter(u => u.side === 'blue' && u.deployPairId)) {
-            const red = Units.byId(blue.deployPairId);
-            if (red) red.pose = Deployment.mirrorPose(blue.pose);
-          }
-          Deployment.updateUI();
-        }
       });
       DOM.createBattleBtn.addEventListener('click', () => this.closeAndCreate());
       DOM.newBattleBtn.addEventListener('click', () => this.open(false));
@@ -6896,7 +7264,7 @@
   Simulation.reset();
   View.resize();
   BattleSetup.open(true);
-  window.__ARCANA_DEBUG__ = { State, Units, Geometry, Terrain, AI, Movement, Orders, Engagements, Collision, Simulation, Selection, CFG, Pathfinder, Combat, Morale, Resources, Battle, BattleSetup, Deployment };
+  window.__ARCANA_DEBUG__ = { State, Units, Geometry, Terrain, AI, Movement, Orders, Engagements, Collision, Simulation, Selection, CFG, Pathfinder, Combat, Morale, Resources, Battle, BattleSetup, Deployment, DoctrineEngine };
   requestAnimationFrame(Simulation.frame);
 })();
 
