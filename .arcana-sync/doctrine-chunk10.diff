@@ -1,0 +1,45 @@
++        note:'MIRRORED: costruisci il BLU; composizione, posizione e orientamento del ROSSO vengono specchiati.'
++      };
++      if (mode === 'custom') return {
++        summary:'CUSTOM',
++        note:'CUSTOM: costruisci e schiera liberamente entrambi gli eserciti entro lo stesso budget.'
++      };
++      return {
++        summary:'AUTO · Doctrine Engine',
++        note:'AUTO usa Doctrine Engine: genera prima le unità, poi sceglie la dottrina in base a composizione, campo e ruolo ATT/DEF.'
++      };
++    },
++
++    setMode(mode) {
++      if (!['auto','mirrored','custom'].includes(mode)) mode = 'auto';
++      State.battleSetup.mode = mode;
++      State.battleSetup.mirrorArmy = mode === 'mirrored';
++      State.battleSetup.mirrorDeployment = mode === 'mirrored';
++      this.sync();
++    },
++
+     sync() {
+       const points = this.sanitizePoints(State.battleSetup.points);
+       State.battleSetup.points = points;
+       DOM.setupPointsSummary.textContent = `${points} PT`;
+-      DOM.mirrorArmyInput.checked = !!State.battleSetup.mirrorArmy;
+-      DOM.mirrorDeploymentInput.checked = !!State.battleSetup.mirrorDeployment;
++      const copy = this.modeCopy(State.battleSetup.mode);
++      DOM.setupModeSummary.textContent = copy.summary;
++      DOM.setupModeNote.textContent = copy.note;
++      DOM.setupModes.querySelectorAll('[data-mode]').forEach(btn => {
++        btn.classList.toggle('active', btn.dataset.mode === State.battleSetup.mode);
++      });
+       DOM.pointPresets.querySelectorAll('[data-points]').forEach(btn => {
+         btn.classList.toggle('active', Number(btn.dataset.points) === points && !DOM.customPointsInput.value);
+       });
++      DOM.createBattleBtn.textContent = State.battleSetup.mode === 'auto' ? 'GENERA SCHIERAMENTO' : 'VAI ALLO SCHIERAMENTO';
+     },
+ 
+     selectPreset(points) {
+@@ -5791,19 +6166,25 @@
+       State.battleSetup.points = this.sanitizePoints(
+         DOM.customPointsInput.value ? DOM.customPointsInput.value : State.battleSetup.points
+       );
+-      State.battleSetup.mirrorArmy = DOM.mirrorArmyInput.checked;
+-      State.battleSetup.mirrorDeployment = DOM.mirrorDeploymentInput.checked;
