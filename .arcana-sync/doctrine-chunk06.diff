@@ -1,0 +1,46 @@
++      const result = { open:this.openLaneRatio(side), hill:0, forest:0, rough:0, obstacle:0, wall:0, road:0 };
++      const counts = { hill:0, forest:0, rough:0, obstacle:0, wall:0, road:0 };
++
++      for (const t of State.terrain) {
++        const key = t.type === 'pond' ? 'obstacle' : t.type;
++        if (!(key in counts)) continue;
++        let c;
++        if (t.type === 'road') {
++          const pts = t.samples || [];
++          c = pts.length ? pts[Math.floor(pts.length / 2)] : {x:b.x+b.w/2,y:midY};
++        } else c = Terrain.terrainCenter(t);
++
++        const longitudinal = 1 - this.clamp01(Math.abs(c.y - midY) / Math.max(1, halfH));
++        const lateral = this.clamp01(Math.abs(c.x - (b.x + b.w/2)) / Math.max(1, b.w/2));
++        const influence = this.clamp01(0.45 + longitudinal * 0.40 + lateral * 0.15);
++        result[key] += influence;
++        counts[key] += 1;
++      }
++
++      for (const key of Object.keys(counts)) {
++        if (counts[key]) result[key] /= counts[key];
++      }
++      return result;
++    },
++
++    scoreDoctrines(types, side, battleRole) {
++      const { vector } = this.compositionRoleVector(types);
++      const terrain = this.terrainVector(side);
++      State.doctrine.terrain[side] = terrain;
++
++      return Object.entries(this.doctrines).map(([id, d]) => {
++        const armyRaw = this.roles.reduce((sum, role) => sum + vector[role] * (d.army[role] || 0), 0);
++        const terrainRaw = Object.entries(terrain).reduce((sum, [key, value]) => sum + value * (d.terrain[key] || 0), 0);
++        const roleRaw = d.battleRole[battleRole] || 0;
++        const total = armyRaw * 2 + terrainRaw + roleRaw * 2;
++        return { id, label:d.label, total, army:armyRaw, terrain:terrainRaw, role:roleRaw };
++      }).sort((a,b) => b.total - a.total);
++    },
++
++    chooseDoctrine(types, side, battleRole) {
++      const ranked = this.scoreDoctrines(types, side, battleRole);
++      State.doctrine.scores[side] = ranked;
++      const pool = ranked.slice(0, 3);
++      const best = pool[0]?.total || 0;
++      const chosen = this.weightedPick(pool, x => Math.exp((x.total - best) * 0.85)) || ranked[0];
++      State.doctrine.selected[side] = chosen;
