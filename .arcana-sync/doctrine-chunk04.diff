@@ -1,0 +1,55 @@
++        battleRole:Object.freeze({ attack:-2, defend:2 })
++      })
++    }),
++
++    rand(min, max) { return min + Math.random() * (max - min); },
++    clamp01(v) { return Math.max(0, Math.min(1, v)); },
++
++    weightedPick(items, weightFn) {
++      if (!items.length) return null;
++      const weights = items.map(x => Math.max(0, Number(weightFn(x)) || 0));
++      const total = weights.reduce((a,b) => a+b, 0);
++      if (total <= 0) return items[Math.floor(Math.random() * items.length)];
++      let r = Math.random() * total;
++      for (let i = 0; i < items.length; i++) {
++        r -= weights[i];
++        if (r <= 0) return items[i];
++      }
++      return items.at(-1);
++    },
++
++    roleValue(spec, role) { return Number(spec?.roles?.[role] || 0); },
++
++    compositionRoleVector(types) {
++      const vector = Object.fromEntries(this.roles.map(r => [r, 0]));
++      let total = 0;
++      for (const type of types) {
++        const spec = Deployment.spec(type);
++        total += spec.cost;
++        for (const role of this.roles) vector[role] += spec.cost * this.roleValue(spec, role);
++      }
++      if (total > 0) for (const role of this.roles) vector[role] /= total;
++      return { vector, total };
++    },
++
++    generateComposition(budget) {
++      const entries = Object.entries(Deployment.catalog).map(([type, spec]) => ({ type, spec }));
++      let best = null;
++
++      for (let attempt = 0; attempt < 60; attempt++) {
++        const bias = Object.fromEntries(this.roles.map(r => [r, this.rand(0.55, 1.45)]));
++        const types = [];
++        const roleSpend = Object.fromEntries(this.roles.map(r => [r, 0]));
++        let spent = 0;
++
++        while (types.length < 32) {
++          let candidates = entries.filter(({spec}) => spent + spec.cost <= budget);
++          if (!candidates.length) break;
++
++          // Structural floor: at least ~25% of the budget must be able to hold a line.
++          if (roleSpend.line < budget * 0.25) {
++            const line = candidates.filter(({spec}) => this.roleValue(spec, 'line') >= 0.5);
++            if (line.length) candidates = line;
++          }
++
++          const limited = candidates.filter(({spec}) => {
