@@ -1,0 +1,55 @@
++        const desiredFront = strongFlank === 'left' ? 0.22 + (1-x)*0.68 : 0.22 + x*0.68;
++        const echelon = 1 - Math.abs(f - desiredFront);
++        score += echelon * (0.9 + (r.line||0)*0.8 + (r.shock||0)*0.8) + strong*(r.mobile||0)*0.65;
++      }
++
++      // Defender starts slightly deeper; attacker slightly closer to the engagement line.
++      return score;
++    },
++
++    deployComposition(side, types, chosen, battleRole) {
++      const strongFlank = Math.random() < 0.5 ? 'left' : 'right';
++      const slots = this.gridSlots(side);
++      const used = new Set();
++      const sorted = [...types].sort((a,b) => {
++        const ra = Deployment.spec(a).roles || {}, rb = Deployment.spec(b).roles || {};
++        const pa = (ra.line||0)*3 + (ra.mobile||0)*2 + (ra.shock||0)*1.5 + (ra.ranged||0);
++        const pb = (rb.line||0)*3 + (rb.mobile||0)*2 + (rb.shock||0)*1.5 + (rb.ranged||0);
++        return pb - pa;
++      });
++
++      for (const type of sorted) {
++        const spec = Deployment.spec(type);
++        const u = Deployment.makeDeployUnit(side, type, 0, 0);
++        const baseAngle = side === 'blue' ? -Math.PI/2 : Math.PI/2;
++        const ranked = slots
++          .filter(slot => !used.has(slot.key))
++          .map(slot => {
++            const roleDepthBias = battleRole === 'attack' ? slot.frontness * 0.20 : (1-slot.frontness) * 0.20;
++            return { slot, score:this.slotScore(chosen.id, spec, slot, strongFlank) + roleDepthBias + Math.random()*0.03 };
++          })
++          .sort((a,b) => b.score - a.score);
++
++        let placed = false;
++        for (const {slot} of ranked) {
++          u.pose = { x:slot.x, y:slot.y, angle:baseAngle };
++          if (!Deployment.validPlacement(u)) continue;
++          used.add(slot.key);
++          placed = true;
++          break;
++        }
++
++        if (!placed) {
++          const fallback = Deployment.stagingPose(side, type);
++          if (fallback) {
++            u.pose = { ...fallback };
++            placed = Deployment.validPlacement(u);
++          }
++        }
++
++        if (placed) State.units.push(u);
++        else State.deployment.counters[side] -= 1;
++      }
++    },
++
++    autoSetup() {
