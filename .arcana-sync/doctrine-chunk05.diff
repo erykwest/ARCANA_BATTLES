@@ -1,0 +1,53 @@
++            const ranged = roleSpend.ranged + spec.cost * this.roleValue(spec, 'ranged');
++            const mobile = roleSpend.mobile + spec.cost * this.roleValue(spec, 'mobile');
++            return ranged <= budget * 0.48 && mobile <= budget * 0.48;
++          });
++          if (limited.length) candidates = limited;
++
++          const pick = this.weightedPick(candidates, ({spec}) => {
++            let w = 0.18;
++            for (const role of this.roles) w += this.roleValue(spec, role) * bias[role];
++            return w;
++          });
++          if (!pick) break;
++
++          types.push(pick.type);
++          spent += pick.spec.cost;
++          for (const role of this.roles) roleSpend[role] += pick.spec.cost * this.roleValue(pick.spec, role);
++        }
++
++        const lineShare = spent ? roleSpend.line / spent : 0;
++        const spendRatio = budget ? spent / budget : 0;
++        const quality = spendRatio * 10 + Math.min(1, lineShare / 0.25) * 2 + Math.random() * 0.08;
++        if (!best || quality > best.quality) best = { types, spent, quality };
++      }
++
++      return best || { types:['infantry'], spent:Deployment.spec('infantry').cost, quality:0 };
++    },
++
++    openLaneRatio(side) {
++      const b = battlefieldPx();
++      const midY = b.y + b.h / 2;
++      const ownFrontY = side === 'blue'
++        ? b.y + b.h - CFG.DEPLOYMENT_DEPTH_U * CFG.U
++        : b.y + CFG.DEPLOYMENT_DEPTH_U * CFG.U;
++      let clear = 0, total = 0;
++      for (let xi = 1; xi <= 9; xi++) {
++        const x = b.x + b.w * xi / 10;
++        for (let yi = 0; yi <= 8; yi++) {
++          const q = yi / 8;
++          const y = ownFrontY + (midY - ownFrontY) * q;
++          const blocked = State.terrain.some(t =>
++            ['forest','rough','pond','wall'].includes(t.type) && Terrain.containsPoint(t, {x,y}, 0)
++          );
++          clear += blocked ? 0 : 1;
++          total += 1;
++        }
++      }
++      return total ? clear / total : 1;
++    },
++
++    terrainVector(side) {
++      const b = battlefieldPx();
++      const midY = b.y + b.h / 2;
++      const halfH = b.h / 2;
