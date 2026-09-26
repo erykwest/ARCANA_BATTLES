@@ -1,0 +1,157 @@
+diff --git a/base.html b/modified.html
+index 2dfc6ac..1b94576 100644
+--- a/ARCANA_BATTLES.html
++++ b/ARCANA_BATTLES.html
+@@ -3,7 +3,7 @@
+ <head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-<title>ARCANA — Campal Battle Lab v0.83.5</title>
++<title>ARCANA — Campal Battle Lab v0.84.0</title>
+ <style>
+   :root{
+     --bg:#11151b;
+@@ -200,6 +200,11 @@
+   .point-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+   .point-presets button{height:46px;padding:0;font-size:14px}
+   .point-presets button.active{outline:2px solid #f0d36f;background:#344152;color:#fff}
++  .setup-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
++  .setup-modes button{height:58px;padding:6px 8px;font-size:12px;letter-spacing:.06em}
++  .setup-modes button small{display:block;margin-top:4px;font-size:9px;font-weight:500;letter-spacing:0;color:var(--muted);line-height:1.15}
++  .setup-modes button.active{outline:2px solid #f0d36f;background:#344152;color:#fff}
++  .setup-mode-note{margin-top:9px;font-size:10px;line-height:1.4;color:var(--muted)}
+   .custom-points{display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:center;margin-top:10px}
+   .custom-points label{font-size:12px;color:var(--muted)}
+   .custom-points input{
+@@ -351,7 +356,7 @@
+ </head>
+ <body>
+ <header>
+-  <strong>ARCANA — CAMPAL BATTLE LAB v0.83.5</strong>
++  <strong>ARCANA — CAMPAL BATTLE LAB v0.84.0</strong>
+   <span>REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
+ </header>
+ 
+@@ -376,35 +381,21 @@
+     </div>
+ 
+     <div class="setup-section">
+-      <span class="setup-label">SIMMETRIA</span>
+-      <div class="setup-toggle">
+-        <div class="toggle-copy">
+-          <b>Mirror Army · ROSSO</b>
+-          <span>Il ROSSO usa automaticamente la stessa composizione del BLU.</span>
+-        </div>
+-        <label class="switch" title="Mirror Army">
+-          <input id="mirrorArmyInput" type="checkbox" checked />
+-          <span class="switch-track"></span>
+-        </label>
+-      </div>
+-      <div class="setup-toggle">
+-        <div class="toggle-copy">
+-          <b>Mirror Deployment</b>
+-          <span>Specchia anche posizione, orientamento e formazione iniziale.</span>
+-        </div>
+-        <label class="switch" title="Mirror Deployment">
+-          <input id="mirrorDeploymentInput" type="checkbox" checked />
+-          <span class="switch-track"></span>
+-        </label>
++      <span class="setup-label">MODALITÀ ESERCITI</span>
++      <div class="setup-modes" id="setupModes">
++        <button type="button" data-mode="auto" class="active">AUTO<small>composizione + dottrina + schieramento</small></button>
++        <button type="button" data-mode="mirrored">MIRRORED<small>costruisci BLU, ROSSO specchiato</small></button>
++        <button type="button" data-mode="custom">CUSTOM<small>costruisci entrambi gli eserciti</small></button>
+       </div>
++      <div class="setup-mode-note" id="setupModeNote">AUTO usa Doctrine Engine: genera prima le unità, poi sceglie la dottrina in base a composizione, campo e ruolo ATT/DEF.</div>
+     </div>
+ 
+     <div class="setup-summary">
+-      <span>Setup scenario</span>
++      <span id="setupModeSummary">AUTO · Doctrine Engine</span>
+       <strong id="setupPointsSummary">1000 PT</strong>
+     </div>
+     <button id="createBattleBtn" type="button">VAI ALLO SCHIERAMENTO</button>
+-    <div class="setup-footnote">v0.79 · Step 1/3 — dopo il budget entri direttamente nel Deployment Builder.</div>
++    <div class="setup-footnote">v0.84 · Step 1/3 — AUTO usa Doctrine Engine; MIRRORED e CUSTOM aprono il Deployment Builder.</div>
+   </div>
+ </div>
+ 
+@@ -634,8 +625,9 @@
+     battleSetupOverlay: document.getElementById('battleSetupOverlay'),
+     pointPresets: document.getElementById('pointPresets'),
+     customPointsInput: document.getElementById('customPointsInput'),
+-    mirrorArmyInput: document.getElementById('mirrorArmyInput'),
+-    mirrorDeploymentInput: document.getElementById('mirrorDeploymentInput'),
++    setupModes: document.getElementById('setupModes'),
++    setupModeNote: document.getElementById('setupModeNote'),
++    setupModeSummary: document.getElementById('setupModeSummary'),
+     setupPointsSummary: document.getElementById('setupPointsSummary'),
+     createBattleBtn: document.getElementById('createBattleBtn'),
+     deploymentUI: document.getElementById('deploymentUI'),
+@@ -750,10 +742,18 @@
+     projectiles: [],
+     battleSetup: {
+       points: 1000,
+-      mirrorArmy: true,
+-      mirrorDeployment: true,
++      mode: 'auto',
++      mirrorArmy: false,
++      mirrorDeployment: false,
+       configured: false
+     },
++    doctrine: {
++      roles: { blue: null, red: null },
++      selected: { blue: null, red: null },
++      scores: { blue: [], red: [] },
++      terrain: { blue: null, red: null },
++      compositions: { blue: [], red: [] }
++    },
+     battle: {
+       active: false,
+       ended: false,
+@@ -5381,9 +5381,18 @@
+ 
+   const Deployment = {
+     catalog: Object.freeze({
+-      infantry: Object.freeze({ label: 'Fanteria', cost: 100 }),
+-      archer: Object.freeze({ label: 'Arcieri', cost: 110 }),
+-      cavalry: Object.freeze({ label: 'Cavalleria', cost: 180 })
++      infantry: Object.freeze({
++        label: 'Fanteria', cost: 100,
++        roles: Object.freeze({ line: 1.0, reserve: 0.6 })
++      }),
++      archer: Object.freeze({
++        label: 'Arcieri', cost: 110,
++        roles: Object.freeze({ ranged: 1.0, screen: 0.5 })
++      }),
++      cavalry: Object.freeze({
++        label: 'Cavalleria', cost: 180,
++        roles: Object.freeze({ mobile: 1.0, shock: 0.9, reserve: 0.4 })
++      })
+     }),
+ 
+     zone(side) {
+@@ -5755,6 +5764,344 @@
+     }
+   };
+ 
++  // ============================================================
++  // DOCTRINE ENGINE v0.1
++  // Composition -> ATT/DEF -> terrain reading -> weighted doctrine -> deployment.
++  // Orders intentionally excluded: units remain in HOLD after deployment.
++  // ============================================================
++  const DoctrineEngine = {
++    roles: Object.freeze(['line', 'ranged', 'shock', 'mobile', 'screen', 'reserve']),
++
++    doctrines: Object.freeze({
++      center_wings: Object.freeze({
++        label: 'Centro forte / ali mobili',
++        army:  Object.freeze({ line:2, ranged:1, shock:1, mobile:2, screen:0, reserve:1 }),
++        terrain:Object.freeze({ open:2, hill:1, forest:-1, rough:-1, obstacle:-1, wall:0, road:1 }),
++        battleRole:Object.freeze({ attack:1, defend:1 })
++      }),
++      line_reserve: Object.freeze({
++        label: 'Linea difensiva + riserva',
++        army:  Object.freeze({ line:2, ranged:1, shock:0, mobile:0, screen:1, reserve:2 }),
++        terrain:Object.freeze({ open:0, hill:2, forest:1, rough:1, obstacle:1, wall:2, road:0 }),
++        battleRole:Object.freeze({ a
