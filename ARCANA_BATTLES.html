@@ -233,6 +233,18 @@
   }
   #createBattleBtn:hover{background:#405b80}
   .setup-footnote{margin-top:10px;font-size:10px;color:#718092;text-align:center;line-height:1.4}
+  /* MONETIZATION — desktop ad rails, visible only in setup/end overlays */
+  .ad-rail{
+    position:absolute;top:50%;transform:translateY(-50%);width:160px;height:600px;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+    border:1px dashed #35404d;border-radius:12px;background:rgba(13,17,23,.58);
+    color:#596675;font:800 9px/1.3 Inter,Segoe UI,Arial,sans-serif;letter-spacing:.16em;
+    text-align:center;pointer-events:auto;
+  }
+  .ad-rail::before{content:"ADVERTISEMENT";transform:rotate(-90deg);white-space:nowrap}
+  .ad-rail-left{left:max(18px,calc(50% - 490px))}
+  .ad-rail-right{right:max(18px,calc(50% - 490px))}
+  @media (max-width:1100px),(max-height:660px){.ad-rail{display:none}}
   #newBattleBtn{margin-bottom:8px}
 
 
