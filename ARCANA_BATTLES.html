@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ARCANA — Campal Battle Lab v0.84.0</title>
+<title>ARCANA — Campal Battle Lab v0.85.0</title>
 <style>
   :root{
     --bg:#11151b;
@@ -437,7 +437,7 @@
 </head>
 <body>
 <header>
-  <strong>ARCANA — CAMPAL BATTLE LAB v0.84.0</strong>
+  <strong>ARCANA — CAMPAL BATTLE LAB v0.85.0</strong>
   <span>REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
 </header>
 
@@ -476,7 +476,7 @@
       <strong id="setupPointsSummary">1000 PT</strong>
     </div>
     <button id="createBattleBtn" type="button">VAI ALLO SCHIERAMENTO</button>
-    <div class="setup-footnote">v0.84 · Step 1/3 — AUTO usa Doctrine Engine; MIRRORED e CUSTOM aprono il Deployment Builder.</div>
+    <div class="setup-footnote">v0.85 · Step 1/3 — AUTO usa Doctrine Engine; MIRRORED e CUSTOM aprono il Deployment Builder.</div>
   </div>
 </div>
 
@@ -507,15 +507,15 @@
   <div id="deploymentCards">
     <button class="unit-card" type="button" data-unit-type="infantry" data-cost="100">
       <span class="unit-card-preview"><span class="reg"></span></span>
-      <span class="unit-card-copy"><strong>Fanteria</strong><span>Base · 3×2U</span><span class="cost">100 PT</span></span>
+      <span class="unit-card-copy"><strong>Fanteria</strong><span>C2 · AR1 · V100</span><span class="cost">100 PT</span></span>
     </button>
     <button class="unit-card" type="button" data-unit-type="archer" data-cost="110">
       <span class="unit-card-preview"><span class="reg"></span></span>
-      <span class="unit-card-copy"><strong>Arcieri</strong><span>Gittata 15U</span><span class="cost">110 PT</span></span>
+      <span class="unit-card-copy"><strong>Arcieri</strong><span>C1 · Mira2 · AR0 · V100</span><span class="cost">110 PT</span></span>
     </button>
     <button class="unit-card" type="button" data-unit-type="cavalry" data-cost="180">
       <span class="unit-card-preview"><span class="reg"></span></span>
-      <span class="unit-card-copy"><strong>Cavalleria</strong><span>Base · 2×1U</span><span class="cost">180 PT</span></span>
+      <span class="unit-card-copy"><strong>Cavalleria</strong><span>C3 · AR2 · V30</span><span class="cost">180 PT</span></span>
     </button>
   </div>
   <div id="deploymentActions">
@@ -611,7 +611,7 @@
     </div>
 
     <div class="card">
-      <h3>Regola combattimento v0.1</h3>
+      <h3>Regola combattimento v0.2</h3>
       <div class="legend">
         <b>Stance:</b> Hold = attende ordini · Aggressivo = attacca entro 10U e carica entro 5U · Elusivo = fugge a M3 entro 9U.<br>
         Aggressivo sceglie lo <b>slot naturale</b> dalla regione geometrica dell’attaccante rispetto al rettangolo del difensore: davanti=FRONTE, dietro=RETRO, lateralmente=FIANCO. Lo slot viene <b>bloccato</b> e cambia solo se diventa realmente indisponibile. L'approccio e' <b>continuo</b>: la formazione curva durante l'avanzata verso il lato prenotato, senza waypoint NAV, soste o riallineamenti artificiali; al contatto reale scatta il magnet.<br>
@@ -620,26 +620,24 @@
         Geometria: origine/pivot = <b>centro del fronte</b>.<br>
         Formazioni: <b>▯ Base 3×2</b> · <b>▭ Colonna 2×3</b> · <b>⫿ Linea 6×1</b>.<br>Cambio formazione: <b>2s</b> con deformazione progressiva del rettangolo; è consentito anche <b>in combattimento</b> e il magnet resta attivo.<br>
         Il primo valore è F; la profondità è il secondo valore × <b>V/Vmax</b>.<br>In ingaggio, entrambe le unità usano lo stesso <b>Fc</b>: durante lo SLIDE è la <b>sovrapposizione reale</b> dei fronti e cresce fino al massimo a centratura completata.<br>Formazione: curva a <b>45°/s</b>; se il target richiede una svolta ampia (&gt;60°), ruota <b>sul posto</b> fino a rientrare nella normale curva. Il FLIP automatico di navigazione è disabilitato.<br>In combattimento, se è ingaggiata <b>solo sul retro</b>, esegue automaticamente lo stesso FLIP in 2s; finché espone il retro perde <b>−1B/s</b>.<br>
-        <b>A</b> = attacchi generati: <b>1/s × Fc</b>.<br>
-        <b>C</b> = valore di combattimento: base <b>3</b>.<br>
-        <b>D</b> = difesa: base <b>2</b>.<br><br>
-        Ogni attacco tira <b>C Dadi Arcani</b> contro <b>D Dadi Arcani</b>.<br>
-        Per ora ogni Dado Arcano = <b>d6</b>.<br>
-        Se totale C &gt; totale D: <b>1 perdita</b>.<br>
-        Parità = difensore regge.<br><br>
+        <b>Fc</b> determina il numero di confronti simultanei: si usa il fronte realmente in contatto, quindi il fronte minore limita naturalmente lo scontro.<br>
+        <b>C</b> = Combat, unico valore melee usato sia in attacco sia in difesa: Arcieri <b>C1</b> · Fanteria <b>C2</b> · Cavalleria <b>C3</b>.<br>
+        <b>AR</b> = Armor: Arcieri <b>0</b> · Fanteria <b>1</b> · Cavalleria <b>2</b>.<br>
+        Ogni confronto tira <b>DA + C</b> contro <b>DA + C</b>. Il Dado Arcano è il D12 canonico con facce <b>1,2,2,3,3,3,4,4,4,5,5,6</b>.<br>
+        Il lato col totale maggiore calcola il <b>Δ</b>; infligge <b>−1V</b> solo se <b>Δ &gt; AR</b> del perdente. Parità o Δ insufficiente = nessuna perdita.<br>
         <b>Attacco sul fianco:</b> il difensore subisce <b>C−1</b>.<br>
-        <b>Carica:</b> se entra in contatto a M3, per 1s ottiene <b>+2A×F</b>; il difensore non contrattacca e ha <b>D−1</b> per 1s; poi M torna automaticamente a <b>1</b>.<br>
+        <b>Carica:</b> per 1s l'attaccante ottiene <b>+2×Fc</b> confronti extra; il difensore è soppresso, ha <b>C−1</b> e non può infliggere perdite finché dura la soppressione.<br>
         Ogni <b>−1V</b> infligge anche <b>−1B</b>.<br>
         Lo shock tattico va in una riserva <b>S</b>: ogni <b>5S ⇒ −1B</b> e S torna a 0.<br>
         Perdite del secondo: &lt;2% V = +0S · 2–5% V = +1S · &gt;5% V = +3S.<br>
         Fianco = +2S · Retro = +3S.<br>
-        <b>Stati morale:</b> STEADY &gt;50%B · SHAKEN 25–50%B (−1C) · WAVERING ≤25%B (−1C, −1D) · ROUT a B=0.<br>
+        <b>Stati morale:</b> STEADY &gt;50%B · SHAKEN 25–50%B (−1C) · WAVERING ≤25%B (−1C) · ROUT a B=0.<br>
         <b>ROUT alleata:</b> quando un reparto va in rotta, gli alleati entro 8U ricevono +5S una sola volta per quella rotta.<br>
         <b>Impatto di alleato in fuga:</b> se un reparto in RETREAT/ROUT urta fisicamente un alleato sul <b>fianco</b> infligge <b>+50S</b>; sul <b>retro +100S</b>. Il fronte non subisce questa penalità. Ogni fuggitivo può applicarla una sola volta a ciascun reparto durante la stessa fuga.<br>
         Impatto di carica = <b>25% di Bmax</b> immediato: frontale ×1 · fianco ×2 · retro ×3.
         La <b>cavalleria raddoppia lo shock d'impatto</b> (×2 aggiuntivo).<br>
         Lo Shock è <b>psicologico</b>: converte in perdita di Brain, non di Energia.<br>
-        In <b>ROUT</b>: <b>C=0</b> e <b>D=0</b>.<br><br>
+        In <b>ROUT</b>: <b>C=0</b>.<br><br>
         <b>Energia [E]</b><br>
         Combattimento: <b>−A E/s</b>.<br>
         Movimento: <b>−(V/180 × M) E/s</b>.<br>
@@ -650,8 +648,8 @@
         Se <b>B=0</b>: <b>ROUT</b>, fuga automatica a M3 senza consumo E.<br>
         <b>Rally:</b> in ROUT recupera +1B/s; se non è inseguita e il nemico più vicino è oltre 10U recupera +5B/s. Torna operativa solo raggiungendo il 25% di Bmax.<br>
         <b>M movimento</b>: Fanteria M1 in marcia / M3 in carica. Cavalleria M1 in marcia / <b>M6 in carica</b>.<br>
-        <b>Cavalleria:</b> size base <b>2×1U</b>, <b>C4</b>, <b>D3</b>, consumo Energia da movimento <b>×0,5</b> e durante la <b>carica ×0,25</b>; consumo da combattimento invariato.<br>
-        <b>Arcieri:</b> size, movimento, C e D uguali alla fanteria. Gittata <b>15U</b>. Un <b>target esplicito è sempre un ordine ranged</b>: l'arciere si porta a gittata e spara, anche con 🎯 OFF e anche in Hold. 🎯 <b>FUOCO A VOLONTÀ</b> abilita il bersagliamento automatico del nemico più vicino entro 15U <b>indipendentemente dalla stance</b>. Hold impedisce movimento/melee automatico ma non il tiro. <b>Aggressivo serve esclusivamente ad autorizzare il melee</b>. Cadenza: <b>F attacchi ogni 3s</b>. Tiro: <b>0 Energia</b>.<br>
+        <b>Cavalleria:</b> size base <b>2×1U</b>, <b>C3</b>, <b>AR2</b>, <b>V30</b>; marcia M1, carica/ROUT M6; consumo Energia da movimento <b>×0,5</b> e durante la <b>carica ×0,25</b>.<br>
+        <b>Arcieri:</b> size e movimento uguali alla fanteria; <b>C1</b>, <b>AR0</b>, <b>V100</b>, <b>Mira2</b>. Gittata <b>15U</b>. Un <b>target esplicito è sempre un ordine ranged</b>: l'arciere si porta a gittata e spara, anche con 🎯 OFF e anche in Hold. 🎯 <b>FUOCO A VOLONTÀ</b> abilita il bersagliamento automatico del nemico più vicino entro 15U <b>indipendentemente dalla stance</b>. Hold impedisce movimento/melee automatico ma non il tiro. <b>Aggressivo serve esclusivamente ad autorizzare il melee</b>. Cadenza: <b>F attacchi ogni 3s</b>. Tiro: <b>0 Energia</b>.<br>
         <b>Inseguimento su ROUT:</b> niente magnet/allineamento. Il ROUT ha una <b>boundary di prossimità da 0,75U</b>: quando il corpo dell'inseguitore entra nella fascia può colpire 1 volta/s usando il proprio <b>F pieno</b>; se il bersaglio esce dalla fascia l'inseguitore riparte subito. Un ROUT bloccato contro altre unità non interrompe la pursuit per stallo.<br>
         <b>Ritirata e ROUT:</b> fanteria M3, cavalleria <b>M6</b>. La Ritirata volontaria rompe l’ingaggio e mantiene una <b>direzione di fuga coerente</b>; raggiunto il waypoint ricontrolla gli 11U e, se necessario, prolunga la fuga sulla stessa direttrice. Il ROUT mantiene il proprio vettore di fuga.<br>
         <b>Inseguimento:</b> un nemico già ingaggiato/targettato che entra in RETREAT/ROUT può essere inseguito automaticamente in <b>Carica</b>. Limite: <b>15U di percorso reale</b>; il bersaglio è perso anche se apre un gap oltre <b>15U</b> o l’inseguitore resta bloccato per 2s. Il primo contatto applica l'<b>impatto di carica una sola volta</b>; i contatti successivi sono normali attacchi di inseguimento. Nessun magnet permanente: il fuggitivo continua a muoversi.<br>
@@ -771,13 +769,18 @@
     PURSUIT_PROXIMITY_U: 0.75,
     ARCHER_RANGE_U: 15,
     ARCHER_VOLLEY_INTERVAL: 3,
-    MAX_HP: 150,
+    INFANTRY_HP: 100,
+    ARCHER_HP: 100,
+    CAVALRY_HP: 30,
     MAX_ENERGY: 150,
     MAX_BRAIN: 150,
-    BASE_COMBAT: 3,
-    BASE_DEFENSE: 2,
-    CAVALRY_COMBAT: 4,
-    CAVALRY_DEFENSE: 3,
+    INFANTRY_COMBAT: 2,
+    ARCHER_COMBAT: 1,
+    CAVALRY_COMBAT: 3,
+    INFANTRY_ARMOR: 1,
+    ARCHER_ARMOR: 0,
+    CAVALRY_ARMOR: 2,
+    ARCHER_AIM: 2,
     CAVALRY_CHARGE_MULT: 6,
     CAVALRY_MOVE_ENERGY_FACTOR: 0.5,
     CAVALRY_CHARGE_ENERGY_FACTOR: 0.25,
@@ -893,11 +896,13 @@
       },
       pose: { x, y, angle },
       stats: {
-        hp: CFG.MAX_HP,
+        maxHp: cavalry ? CFG.CAVALRY_HP : (archer ? CFG.ARCHER_HP : CFG.INFANTRY_HP),
+        hp: cavalry ? CFG.CAVALRY_HP : (archer ? CFG.ARCHER_HP : CFG.INFANTRY_HP),
         energy: CFG.MAX_ENERGY,
         brain: CFG.MAX_BRAIN,
-        combat: cavalry ? CFG.CAVALRY_COMBAT : CFG.BASE_COMBAT,
-        defense: cavalry ? CFG.CAVALRY_DEFENSE : CFG.BASE_DEFENSE,
+        combat: cavalry ? CFG.CAVALRY_COMBAT : (archer ? CFG.ARCHER_COMBAT : CFG.INFANTRY_COMBAT),
+        armor: cavalry ? CFG.CAVALRY_ARMOR : (archer ? CFG.ARCHER_ARMOR : CFG.INFANTRY_ARMOR),
+        aim: archer ? CFG.ARCHER_AIM : null,
         shock: 0
       },
       battleRecord: {
@@ -1039,7 +1044,7 @@
       const f = this.formationGeometry(u);
       return {
         front: f.front * CFG.U,
-        depth: f.depth * (u.stats.hp / CFG.MAX_HP) * CFG.U
+        depth: f.depth * (u.stats.hp / u.stats.maxHp) * CFG.U
       };
     },
 
@@ -4622,12 +4627,10 @@
   // 9. COMBAT + RESOURCES
   // ============================================================
   const Combat = {
-    d6() { return 1 + Math.floor(Math.random() * 6); },
+    ARCANE_FACES: Object.freeze([1,2,2,3,3,3,4,4,4,5,5,6]),
 
-    roll(n) {
-      let total = 0;
-      for (let i = 0; i < n; i++) total += this.d6();
-      return total;
+    arcaneDie() {
+      return this.ARCANE_FACES[Math.floor(Math.random() * this.ARCANE_FACES.length)];
     },
 
     effectiveCombat(u, pair = null) {
@@ -4635,15 +4638,23 @@
       let value = u.stats.combat;
       const morale = Morale.stateFor(u);
       if (morale === 'shaken' || morale === 'wavering') value -= 1;
+      if (State.simTime < u.status.suppressedUntil) value -= 1;
       if (pair && pair.defender.id === u.id && pair.slot.startsWith('flank')) value -= 1;
       return Math.max(0, value);
     },
 
-    effectiveDefense(u) {
-      if (u.status.routing || u.stats.brain <= 0) return 0;
-      const suppression = State.simTime < u.status.suppressedUntil ? 1 : 0;
-      const wavering = Morale.stateFor(u) === 'wavering' ? 1 : 0;
-      return Math.max(0, u.stats.defense - suppression - wavering);
+    opposedContest(a, b, pair, canDamageA = true, canDamageB = true, combatA = null, combatB = null, armorA = null, armorB = null) {
+      const ca = combatA === null ? this.effectiveCombat(a, pair) : Math.max(0, combatA);
+      const cb = combatB === null ? this.effectiveCombat(b, pair) : Math.max(0, combatB);
+      const scoreA = this.arcaneDie() + ca;
+      const scoreB = this.arcaneDie() + cb;
+      const delta = Math.abs(scoreA - scoreB);
+      const arA = armorA === null ? a.stats.armor : armorA;
+      const arB = armorB === null ? b.stats.armor : armorB;
+
+      if (scoreA > scoreB && canDamageA && ca > 0 && delta > arB) return { hitA: 1, hitB: 0 };
+      if (scoreB > scoreA && canDamageB && cb > 0 && delta > arA) return { hitA: 0, hitB: 1 };
+      return { hitA: 0, hitB: 0 };
     },
 
     frontage(attacker, defender, pair = null) {
@@ -4669,19 +4680,37 @@
       return whole + (Math.random() < rate - whole ? 1 : 0);
     },
 
-    simulate(attacker, defender, pair) {
-      if (attacker.status.routing || State.simTime < attacker.status.suppressedUntil) {
-        return { hits: 0, attacks: 0 };
+    resolveContests(a, b, pair, count, canDamageA = true, canDamageB = true) {
+      let hitsToA = 0, hitsToB = 0;
+      for (let i = 0; i < count; i++) {
+        const r = this.opposedContest(a, b, pair, canDamageA, canDamageB);
+        hitsToB += r.hitA;
+        hitsToA += r.hitB;
       }
-      const rate = this.attackRate(attacker, defender, pair);
-      const attacks = this.attackCountFromRate(rate);
-      let hits = 0;
-      const c = this.effectiveCombat(attacker, pair);
-      const d = this.effectiveDefense(defender);
-      for (let i = 0; i < attacks; i++) {
-        if (this.roll(c) > this.roll(d)) hits++;
+      return { hitsToA, hitsToB, contests: count };
+    },
+
+    resolveMeleeExchange(a, b, pair) {
+      const fc = this.frontage(a, b, pair);
+      const base = this.attackCountFromRate(fc);
+      const aSuppressed = State.simTime < a.status.suppressedUntil;
+      const bSuppressed = State.simTime < b.status.suppressedUntil;
+      let hitsToA = 0, hitsToB = 0, contests = 0;
+
+      const normal = this.resolveContests(a, b, pair, base, !aSuppressed, !bSuppressed);
+      hitsToA += normal.hitsToA; hitsToB += normal.hitsToB; contests += normal.contests;
+
+      const chargingA = pair && pair.attacker.id === a.id && State.simTime < a.status.chargeUntil;
+      const chargingB = pair && pair.attacker.id === b.id && State.simTime < b.status.chargeUntil;
+      if (chargingA) {
+        const extra = this.resolveContests(a, b, pair, this.attackCountFromRate(fc * 2), true, false);
+        hitsToB += extra.hitsToB; contests += extra.contests;
       }
-      return { hits, attacks };
+      if (chargingB) {
+        const extra = this.resolveContests(a, b, pair, this.attackCountFromRate(fc * 2), false, true);
+        hitsToA += extra.hitsToA; contests += extra.contests;
+      }
+      return { hitsToA, hitsToB, contests, base };
     },
 
     applyChargeImpact(attacker, defender, slot) {
@@ -4739,18 +4768,20 @@
 
       const hpBefore = defender.stats.hp;
       const brainBefore = defender.stats.brain;
-      const result = this.simulate(attacker, defender, pair);
-      const shock = this.moraleShock(defender, result.hits, hpBefore, pair);
+      const contests = this.attackCountFromRate(this.attackRate(attacker, defender, pair));
+      const result = this.resolveContests(attacker, defender, pair, contests, true, false);
+      const hits = result.hitsToB;
+      const shock = this.moraleShock(defender, hits, hpBefore, pair);
 
-      defender.stats.hp = Math.max(0, defender.stats.hp - result.hits);
-      defender.stats.brain = Math.max(0, defender.stats.brain - result.hits);
+      defender.stats.hp = Math.max(0, defender.stats.hp - hits);
+      defender.stats.brain = Math.max(0, defender.stats.brain - hits);
       defender.stats.shock += shock;
       const converted = this.convertShock(defender);
       Battle.recordDamage(attacker, defender, hpBefore - defender.stats.hp, brainBefore - defender.stats.brain);
 
       Log.add(
         `🏇 ${attacker.name} → ${defender.name}: ${firstImpact ? 'IMPATTO' : 'ATTACCO'} IN INSEGUIMENTO | ` +
-        `${result.attacks}A · -${result.hits}V · +${shock}S${converted ? ` → -${converted}B` : ''}`
+        `${result.contests}×DA · -${hits}V · +${shock}S${converted ? ` → -${converted}B` : ''}`
       );
 
       if (defender.stats.hp <= 0) {
@@ -4806,16 +4837,17 @@
       const bhp = b.stats.hp;
       const abrain = a.stats.brain;
       const bbrain = b.stats.brain;
-      const da = this.simulate(a, b, pair);
-      const db = this.simulate(b, a, pair);
-      const shockB = this.moraleShock(b, da.hits, bhp, pair);
-      const shockA = this.moraleShock(a, db.hits, ahp, pair);
+      const exchange = this.resolveMeleeExchange(a, b, pair);
+      const hitsToA = exchange.hitsToA;
+      const hitsToB = exchange.hitsToB;
+      const shockB = this.moraleShock(b, hitsToB, bhp, pair);
+      const shockA = this.moraleShock(a, hitsToA, ahp, pair);
 
-      b.stats.hp = Math.max(0, b.stats.hp - da.hits);
-      b.stats.brain = Math.max(0, b.stats.brain - da.hits);
+      b.stats.hp = Math.max(0, b.stats.hp - hitsToB);
+      b.stats.brain = Math.max(0, b.stats.brain - hitsToB);
       b.stats.shock += shockB;
-      a.stats.hp = Math.max(0, a.stats.hp - db.hits);
-      a.stats.brain = Math.max(0, a.stats.brain - db.hits);
+      a.stats.hp = Math.max(0, a.stats.hp - hitsToA);
+      a.stats.brain = Math.max(0, a.stats.brain - hitsToA);
       a.stats.shock += shockA;
 
       const cb = this.convertShock(b);
@@ -4823,11 +4855,10 @@
       Battle.recordDamage(a, b, bhp - b.stats.hp, bbrain - b.stats.brain);
       Battle.recordDamage(b, a, ahp - a.stats.hp, abrain - a.stats.brain);
 
-      const pctB = bhp > 0 ? da.hits / bhp * 100 : 0;
-      const pctA = ahp > 0 ? db.hits / ahp * 100 : 0;
+      const pctB = bhp > 0 ? hitsToB / bhp * 100 : 0;
+      const pctA = ahp > 0 ? hitsToA / ahp * 100 : 0;
 
-      Log.add(`${a.name} → ${b.name}: ${da.attacks}A | -${da.hits}V (${pctB.toFixed(1)}%) | +${shockB}S${cb ? ` → -${cb}B` : ''}`);
-      Log.add(`${b.name} → ${a.name}: ${db.attacks}A | -${db.hits}V (${pctA.toFixed(1)}%) | +${shockA}S${ca ? ` → -${ca}B` : ''}`);
+      Log.add(`${a.name} ↔ ${b.name}: ${exchange.contests} confronti DA+C | ${a.name} -${hitsToA}V (${pctA.toFixed(1)}%) | ${b.name} -${hitsToB}V (${pctB.toFixed(1)}%) | shock ${shockA}S/${shockB}S${(ca || cb) ? ` → B -${ca}/-${cb}` : ''}`);
 
       if (a.stats.hp <= 0) this.destroy(a, b);
       if (b.stats.hp <= 0) this.destroy(b, a);
@@ -4967,13 +4998,15 @@
       if (!attacker.status.alive || !defender.status.alive) return;
 
       const attacks = this.attacksPerVolley(attacker);
-      const c = Math.max(0, Combat.effectiveCombat(attacker) - Terrain.rangedAttackPenalty(attacker, defender));
-      const d = Math.max(0, Combat.effectiveDefense(defender) + Terrain.rangedDefenseBonus(attacker, defender));
+      const aim = Math.max(0, (attacker.stats.aim || 0) - Terrain.rangedAttackPenalty(attacker, defender));
+      const defenseCombat = Combat.effectiveCombat(defender);
+      const armor = defender.stats.armor + Terrain.rangedDefenseBonus(attacker, defender);
       let hits = 0;
 
       for (let i = 0; i < attacks; i++) {
         this.spawnProjectile(attacker, defender, i, attacks);
-        if (Combat.roll(c) > Combat.roll(d)) hits++;
+        const r = Combat.opposedContest(attacker, defender, null, true, false, aim, defenseCombat, attacker.stats.armor, armor);
+        hits += r.hitA;
       }
 
       const hpBefore = defender.stats.hp;
@@ -5740,7 +5773,7 @@
         ctx.fillStyle = color; ctx.fillRect(x, yy, barW * Math.max(0, Math.min(1, ratio)), barH);
         ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1; ctx.strokeRect(x, yy, barW, barH);
       };
-      bar(y, u.stats.hp / CFG.MAX_HP, '#d84545');
+      bar(y, u.stats.hp / u.stats.maxHp, '#d84545');
       bar(y + barH + gap, u.stats.energy / CFG.MAX_ENERGY, '#e6c84f');
       bar(y + (barH + gap) * 2, u.stats.brain / CFG.MAX_BRAIN, '#8e5ad7');
     },
@@ -6756,18 +6789,18 @@
         <div class="row"><span>Path obstacle</span><b>${pathObstacle}</b></div>
         <div class="row"><span>Approccio</span><b>${approach}</b></div>
         <div class="row"><span>Inseguimento</span><b>${pursuit}</b></div>
-        <div class="row"><span>Vita [V]</span><b>${u.stats.hp.toFixed(0)}/${CFG.MAX_HP}</b></div>
+        <div class="row"><span>Vita [V]</span><b>${u.stats.hp.toFixed(0)}/${u.stats.maxHp}</b></div>
         <div class="row"><span>Energia [E]</span><b>${u.stats.energy.toFixed(1)}/${CFG.MAX_ENERGY}</b></div>
         <div class="row"><span>Brain [B]</span><b>${u.stats.brain.toFixed(1)}/${CFG.MAX_BRAIN}</b></div>
         <div class="row"><span>Morale</span><b>${Morale.label(Morale.stateFor(u))}</b></div>
         <div class="row"><span>Shock [S]</span><b>${u.stats.shock.toFixed(0)}/${CFG.SHOCK_TO_BRAIN}</b></div>
         <div class="row"><span>Combattimento [C]</span><b>${u.stats.combat} → ${Combat.effectiveCombat(u)}</b></div>
-        <div class="row"><span>Difesa [D]</span><b>${u.stats.defense} → ${Combat.effectiveDefense(u)}</b></div>
+        <div class="row"><span>Armor [AR]</span><b>${u.stats.armor}</b></div>
         <div class="row"><span>Stance</span><b>${u.behavior.stance.toUpperCase()}</b></div>
         <div class="row"><span>Formazione</span><b>${form}</b></div>
         <div class="row"><span>Fronte [F]</span><b>${Geometry.frontUnits(u).toFixed(2)}U</b></div>
         <div class="row"><span>Fronte contatto [Fc]</span><b>${this.effectiveFrontageDisplay(u)}U</b></div>
-        <div class="row"><span>Profondità</span><b>${(Geometry.fullDepthUnits(u) * u.stats.hp / CFG.MAX_HP).toFixed(2)}U</b></div>
+        <div class="row"><span>Profondità</span><b>${(Geometry.fullDepthUnits(u) * u.stats.hp / u.stats.maxHp).toFixed(2)}U</b></div>
         <div class="row"><span>Movimento [M]</span><b>${u.motion.moveMult}</b></div>
         <div class="row"><span>Carica</span><b>${u.motion.chargeMode ? 'ON' : 'OFF'} · M${u.profile.chargeMult}</b></div>
         <div class="row"><span>Override carica</span><b>${u.motion.chargeOverride === null ? 'AUTO' : (u.motion.chargeOverride ? 'FORZATA ON' : 'FORZATA OFF')}</b></div>
@@ -6775,6 +6808,7 @@
         <div class="row"><span>Consumo mov.</span><b>×${u.profile.moveEnergyFactor.toFixed(2)}</b></div>
         <div class="row"><span>Consumo carica</span><b>×${u.profile.chargeEnergyFactor.toFixed(2)}</b></div>
         ${u.ranged ? `
+        <div class="row"><span>Mira</span><b>${u.stats.aim}</b></div>
         <div class="row"><span>Gittata</span><b>${u.profile.ranged.rangeU}U</b></div>
         <div class="row"><span>Fuoco a volontà</span><b>${u.ranged.fireAtWill ? 'ON' : 'OFF'}</b></div>
         <div class="row"><span>Target tiro</span><b>${Units.byId(u.ranged.targetId)?.name || '—'}</b></div>
@@ -7160,7 +7194,7 @@
       State.view = { scale: 1, x: 0, y: 0 };
       Battle.reset(restoredDeployment);
       UI.setTimeScale(1);
-      DOM.log.textContent = `${restoredDeployment ? 'Battaglia resettata dallo schieramento.' : 'Battaglia 3 vs 3 resettata.'}\nARCHITETTURA v0.83: ${State.battleSetup.points} PT · Mirror Army ${State.battleSetup.mirrorArmy ? 'ON' : 'OFF'} · Mirror Deployment ${State.battleSetup.mirrorDeployment ? 'ON' : 'OFF'} · campo 90×60U + bordocampo 10U · deployment sui lati lunghi · terreni random al centro (laghetto, muro, altura, bosco, strada, terreno difficile).`;
+      DOM.log.textContent = `${restoredDeployment ? 'Battaglia resettata dallo schieramento.' : 'Battaglia 3 vs 3 resettata.'}\nARCHITETTURA v0.85: ${State.battleSetup.points} PT · Mirror Army ${State.battleSetup.mirrorArmy ? 'ON' : 'OFF'} · Mirror Deployment ${State.battleSetup.mirrorDeployment ? 'ON' : 'OFF'} · campo 90×60U + bordocampo 10U · deployment sui lati lunghi · terreni random al centro (laghetto, muro, altura, bosco, strada, terreno difficile).`;
       UI.updateSelectedInfo();
     },
 
