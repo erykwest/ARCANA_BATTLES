@@ -1,0 +1,67 @@
+name: Sea biome + junction fix v0.90.2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-sea-biome-v0902.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Pull latest main
+        run: git pull --rebase origin main
+
+      - name: Apply fix
+        run: python .github/patch_sea_biome_v0902.py
+
+      - name: Validate JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('COFFEE_BATTLES.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>',s,flags=re.S|re.I)
+          Path('/tmp/coffee-battles.js').write_text('\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/coffee-battles.js
+
+      - name: Validate sea biome contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('COFFEE_BATTLES.html').read_text(encoding='utf-8')
+          checks={
+            'version': 'v0.90.2' in s,
+            'sea option': '<option value="sea">Mare</option>' in s,
+            'sea biome': "sea:       Object.freeze({ label:'Mare'" in s,
+            'no coast chance': 'COAST_CHANCE' not in s,
+            'coast only sea': "if(ctx.biome!=='sea')return;" in s,
+            'junction max 60': 'this.rand(40,60)*Math.PI/180' in s,
+            'no perpendicular village junction': 'branchAngle:baseAngle+Math.PI/2' not in s,
+            'coast-relative ships': 'makeLandingShips(sea,count)' in s and 'coastSeaNormal(sea,frame)' in s,
+            'ship footprint check': 'shipInsideSea(ship,sea)' in s,
+            'old fixed ship y removed': "b.minY-3.5*U" not in s and "b.maxY+3.5*U" not in s,
+            'landing half deployment': 'COAST_MAX_LANDING_DEPTH_U: CFG.DEPLOYMENT_DEPTH_U * .5' in s,
+          }
+          failed=[k for k,v in checks.items() if not v]
+          if failed: raise SystemExit('contract failed: '+', '.join(failed))
+          print('sea biome contract PASS')
+          PY
+
+      - name: Commit and push
+        run: |
+          rm -f .github/patch_sea_biome_v0902.py .github/workflows/patch-sea-biome-v0902.yml
+          git config user.name 'COFFEE BATTLES bot'
+          git config user.email 'actions@github.com'
+          git add -A
+          git commit -m 'Fix sea biome, ships and road junctions v0.90.2'
+          git push origin main
