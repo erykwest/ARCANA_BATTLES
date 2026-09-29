@@ -1,0 +1,27 @@
+name: Cleanup Army AI staging
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/army-ai-cleanup.yml
+permissions:
+  contents: write
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Remove temporary staging files
+        run: |
+          rm -f .arcana-sync/ai_step1.py .arcana-sync/ai_step2.py .arcana-sync/ai_step3.py .arcana-sync/ai_step4.py
+          rm -f .github/workflows/army-ai-sync.yml .github/workflows/army-ai-cleanup.yml
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Clean Army AI staging files"
+          git push origin main
