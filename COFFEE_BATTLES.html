@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>COFFEE BATTLES — Campal Battle Lab v0.89.2</title>
+<title>COFFEE BATTLES — Campal Battle Lab v0.89.3</title>
 <style>
   :root{
     --bg:#11151b;
@@ -479,7 +479,7 @@
 </head>
 <body>
 <header>
-  <strong>COFFEE BATTLES — CAMPAL BATTLE LAB v0.89.2</strong>
+  <strong>COFFEE BATTLES — CAMPAL BATTLE LAB v0.89.3</strong>
   <span>REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
 </header>
 
@@ -556,7 +556,7 @@
       <strong id="setupPointsSummary">1000 PT</strong>
     </div>
     <button id="createBattleBtn" type="button">VAI ALLO SCHIERAMENTO</button>
-    <div class="setup-footnote">v0.89.2 · Step 1/3 — 8 profili unità + ranged resolver unilaterale + Map/Doctrine/Army AI.</div>
+    <div class="setup-footnote">v0.89.3 · Step 1/3 — 8 profili unità + ranged resolver unilaterale + Map/Doctrine/Army AI.</div>
   </div>
 </div>
 
@@ -3945,13 +3945,15 @@
       village:   Object.freeze({ label:'Villaggio', field:'#29261d' })
     }),
 
-    GENERATION_PHASES: Object.freeze(['Orography','Hydrology','Settlement','Buildings','Roads','Crossings','Tactical','Fields']),
+    GENERATION_PHASES: Object.freeze(['Coast','Orography','Hydrology','Settlement','Buildings','Roads','Crossings','Tactical','Fields']),
 
     labels: null,
     rand(min, max) { return min + Math.random() * (max - min); },
     randi(min, max) { return Math.floor(this.rand(min, max + 1)); },
     pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; },
     clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); },
+    COAST_CHANCE: .30,
+    COAST_MAX_LANDING_DEPTH_U: CFG.DEPLOYMENT_DEPTH_U * .5,
 
     resolveBiome(choice = 'random') {
       if (choice && choice !== 'random' && this.BIOMES[choice]) return choice;
@@ -3966,13 +3968,25 @@
     },
     fieldColor() { return this.BIOMES[this.current()]?.field || '#18211a'; },
 
+    worldZone() {
+      const b = Geometry.worldBounds();
+      return { minX:b.minX, maxX:b.maxX, minY:b.minY, maxY:b.maxY, cx:(b.minX+b.maxX)/2, cy:(b.minY+b.maxY)/2 };
+    },
+
+    gameplayContainsPoint(point, pad = 0) {
+      const b = Geometry.battlefieldBounds();
+      return point.x >= b.minX - pad && point.x <= b.maxX + pad && point.y >= b.minY - pad && point.y <= b.maxY + pad;
+    },
+
     mapZone() {
+      // I centri restano legati al campo operativo, ma possono stare vicino al limite:
+      // le forme possono quindi proseguire naturalmente nei 10U di bordocampo.
       const b = Geometry.battlefieldBounds();
       return {
-        minX: b.minX + 8 * CFG.U,
-        maxX: b.maxX - 8 * CFG.U,
-        minY: b.minY + 10 * CFG.U,
-        maxY: b.maxY - 10 * CFG.U,
+        minX: b.minX + 2 * CFG.U,
+        maxX: b.maxX - 2 * CFG.U,
+        minY: b.minY + 2 * CFG.U,
+        maxY: b.maxY - 2 * CFG.U,
         cx: (b.minX + b.maxX) / 2,
         cy: (b.minY + b.maxY) / 2
       };
@@ -4022,7 +4036,7 @@
     },
 
     makeWatercourse(type = 'stream', id = null) {
-      const b = Geometry.battlefieldBounds();
+      const b = Geometry.worldBounds();
       const bw = b.maxX - b.minX, bh = b.maxY - b.minY;
       const horizontal = type === 'river' ? true : Math.random() < .5;
       const controls = [];
@@ -4114,6 +4128,104 @@ makeFieldWalls(field){
   return chosen.map((side,i)=>{const d=defs[side],p=Terrain.localToWorld(field,d.p);const w=this.makeWall(`${field.id}-wall-${i+1}`,p.x,p.y,d.len/CFG.U,.38,d.a);w.parentFieldId=field.id;w.fieldSide=side;return w;});
 },
 
+worldPolygonBoundaryDistance(points,point){
+  if(!points?.length)return Infinity;
+  let best=Infinity;
+  for(let i=0;i<points.length;i++)best=Math.min(best,Geometry.pointSegmentDistance(point,points[i],points[(i+1)%points.length]));
+  return best;
+},
+
+worldPolygonContains(points,point,pad=0){
+  if(!points?.length)return false;
+  let inside=false;
+  for(let i=0,j=points.length-1;i<points.length;j=i++){
+    const a=points[i],b=points[j];
+    const hit=((a.y>point.y)!==(b.y>point.y)) && (point.x < (b.x-a.x)*(point.y-a.y)/((b.y-a.y)||1e-9)+a.x);
+    if(hit)inside=!inside;
+  }
+  return inside || (pad>0 && this.worldPolygonBoundaryDistance(points,point)<=pad);
+},
+
+coastDepthProfile(i,n,minU,maxU,phase){
+  const q=n?i/n:0;
+  const wave=Math.sin(q*Math.PI*2+phase)*1.6 + Math.sin(q*Math.PI*5+phase*.7)*.65;
+  return this.clamp(this.rand(minU,maxU)+wave,minU,maxU);
+},
+
+makeCoastScenario(){
+  const forced=State.battleSetup.coastMode;
+  if(forced==='none')return null;
+  let mode;
+  if(forced==='gulf'||forced==='landing')mode=forced;
+  else{
+    if(Math.random()>=this.COAST_CHANCE)return null;
+    mode=Math.random()<.5?'gulf':'landing';
+  }
+
+  const b=Geometry.battlefieldBounds(),wb=Geometry.worldBounds(),U=CFG.U,phase=this.rand(0,Math.PI*2);
+  const coast=[];
+  let points=[],side=null,attackerSide=null;
+
+  if(mode==='gulf'){
+    side=Math.random()<.5?'left':'right';
+    const n=16;
+    for(let i=0;i<=n;i++){
+      const y=wb.minY+(wb.maxY-wb.minY)*(i/n);
+      const depthU=this.coastDepthProfile(i,n,6,18,phase);
+      const x=side==='left'?b.minX+depthU*U:b.maxX-depthU*U;
+      coast.push({x,y});
+    }
+    points=side==='left'
+      ? [{x:wb.minX,y:wb.minY},...coast,{x:wb.minX,y:wb.maxY}]
+      : [{x:wb.maxX,y:wb.minY},...coast,{x:wb.maxX,y:wb.maxY}];
+  }else{
+    attackerSide=State.doctrine.roles.blue==='attack'?'blue':'red';
+    side=attackerSide==='blue'?'bottom':'top';
+    const maxU=this.COAST_MAX_LANDING_DEPTH_U;
+    const n=20;
+    for(let i=0;i<=n;i++){
+      const x=wb.minX+(wb.maxX-wb.minX)*(i/n);
+      const depthU=this.coastDepthProfile(i,n,3.2,maxU,phase);
+      const y=side==='top'?b.minY+depthU*U:b.maxY-depthU*U;
+      coast.push({x,y});
+    }
+    points=side==='top'
+      ? [{x:wb.minX,y:wb.minY},{x:wb.maxX,y:wb.minY},...coast.slice().reverse()]
+      : [...coast,{x:wb.maxX,y:wb.maxY},{x:wb.minX,y:wb.maxY}];
+  }
+
+  const sea={
+    id:'sea-1',type:'sea',mode,side,attackerSide,points,coastline:coast,
+    fill:'#245d78',edge:'#8bcbdc'
+  };
+  const ships=[];
+  if(mode==='landing'){
+    const count=Math.max(1,Math.ceil(State.battleSetup.points/500));
+    for(let i=0;i<count;i++){
+      const x=b.minX+b.w*(i+1)/(count+1)+this.rand(-1.2,1.2)*U;
+      const y=side==='top'?b.minY-3.5*U:b.maxY+3.5*U;
+      ships.push({id:`ship-${i+1}`,type:'ship',x,y,angle:side==='top'?0:Math.PI,w:4.2*U,h:1.35*U,fill:'#4a382b',edge:'#dfcfaa'});
+    }
+  }
+  return {sea,ships,meta:{mode,side,attackerSide,shipCount:ships.length,maxLandingDepthU:this.COAST_MAX_LANDING_DEPTH_U}};
+},
+
+clampToLand(point){
+  const b=Geometry.battlefieldBounds();
+  const base={x:this.clamp(point.x,b.minX,b.maxX),y:this.clamp(point.y,b.minY,b.maxY)};
+  const sea=State.terrain.find(t=>t.type==='sea');
+  if(!sea||!this.containsPoint(sea,base,0))return base;
+  const step=.5*CFG.U;
+  for(let r=step;r<=24*CFG.U;r+=step){
+    for(let i=0;i<32;i++){
+      const a=Math.PI*2*i/32,p={x:base.x+Math.cos(a)*r,y:base.y+Math.sin(a)*r};
+      if(p.x<b.minX||p.x>b.maxX||p.y<b.minY||p.y>b.maxY)continue;
+      if(!this.containsPoint(sea,p,.15*CFG.U))return p;
+    }
+  }
+  return base;
+},
+
 edgePointsThrough(point,angle){
   const b=Geometry.battlefieldBounds(),dx=Math.cos(angle),dy=Math.sin(angle),hits=[];
   const add=t=>{if(!Number.isFinite(t))return;const x=point.x+dx*t,y=point.y+dy*t;if(x>=b.minX-1&&x<=b.maxX+1&&y>=b.minY-1&&y<=b.maxY+1)hits.push({x:this.clamp(x,b.minX,b.maxX),y:this.clamp(y,b.minY,b.maxY),t});};
@@ -4167,7 +4279,7 @@ roadConflictScore(road,placed,marginU=.55){
   for(let i=0;i<road.samples.length;i+=2){
     const p=road.samples[i];
     for(const o of placed){
-      if(o.type!=='mountain'&&o.type!=='building')continue;
+      if(o.type!=='mountain'&&o.type!=='building'&&o.type!=='sea')continue;
       if(Terrain.containsPoint(o,p,pad)){score++;break;}
     }
   }
@@ -4249,6 +4361,11 @@ makeMountainSectorChain(minLen=3,maxLen=6){
 
     shapeSamples(t,steps=32) {
       if (!t) return null;
+      if (t.type==='sea') return t.points||[];
+      if (t.type==='ship') {
+        const hw=t.w/2,hh=t.h/2;
+        return [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]].map(([x,y])=>Terrain.localToWorld(t,{x,y}));
+      }
       if (['road','river','stream'].includes(t.type)) {
         const src=t.samples||[];
         if(!src.length)return [];
@@ -4266,6 +4383,8 @@ makeMountainSectorChain(minLen=3,maxLen=6){
 
     containsPoint(t,point,pad=0) {
       if (!t || !point) return null;
+      if (t.type==='sea') return this.worldPolygonContains(t.points,point,pad);
+      if (t.type==='ship') return false;
       if (t.type==='river'||t.type==='stream') return Terrain.pointPolylineDistance(point,t.samples)<=t.width/2+pad;
       if (t.type==='building'||t.type==='bridge'||t.type==='ford'||t.type==='field') return Terrain.rectContains(t,point.x,point.y,pad);
       if (t.type==='mountain'||(t.type==='hill'&&t.blob)) return Terrain.polygonContains(t,point.x,point.y,pad);
@@ -4274,6 +4393,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
 
     boundaryDistance(t,point) {
       if (!t || !point) return Infinity;
+      if (t.type==='sea') return this.containsPoint(t,point,0)?0:this.worldPolygonBoundaryDistance(t.points,point);
       if (t.type==='building') {
         const p=Terrain.toLocal(t,point.x,point.y);
         const dx=Math.max(Math.abs(p.x)-t.w/2,0),dy=Math.max(Math.abs(p.y)-t.h/2,0);
@@ -4291,16 +4411,17 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     overlaps(a,b,marginU=.35) {
       if(!a||!b)return false;
       const pad=marginU*CFG.U;
-      const as=Terrain.shapeSamples(a),bs=Terrain.shapeSamples(b);
+      const as=Terrain.shapeSamples(a)||[],bs=Terrain.shapeSamples(b)||[];
+      if(!as.length||!bs.length)return false;
       if(as.some(p=>Terrain.containsPoint(b,p,pad)))return true;
       if(bs.some(p=>Terrain.containsPoint(a,p,pad)))return true;
       return false;
     },
 
     fitsZone(t) {
-      if (['road','river','stream'].includes(t.type)) return true;
-      const z=this.mapZone();
-      return Terrain.shapeSamples(t).every(p=>p.x>=z.minX&&p.x<=z.maxX&&p.y>=z.minY&&p.y<=z.maxY);
+      if (['road','river','stream','sea','ship'].includes(t.type)) return true;
+      const z=this.worldZone(),pad=.35*CFG.U;
+      return (Terrain.shapeSamples(t)||[]).every(p=>p.x>=z.minX+pad&&p.x<=z.maxX-pad&&p.y>=z.minY+pad&&p.y<=z.maxY-pad);
     },
 
     place(factory,placed,attempts=420,marginU=.35) {
@@ -4346,9 +4467,23 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       return{x:cx,y:cy,buildingCount:made,topology:plan?.topology||null};
     },
 
+    generateCoast(ctx) {
+      const scenario=this.makeCoastScenario();
+      State.battleSetup.coast=scenario?.meta||null;
+      if(!scenario)return;
+      ctx.sea=scenario.sea;
+      ctx.ships=scenario.ships;
+      ctx.placed.push(scenario.sea);
+    },
+
     generateOrography(ctx) {
-      if(ctx.biome==='valley')ctx.placed.push(...this.makeMountainSectorChain(3,5));
-      else if(ctx.biome==='mountains')ctx.placed.push(...this.makeMountainSectorChain(4,7));
+      let chain=[];
+      if(ctx.biome==='valley')chain=this.makeMountainSectorChain(3,5);
+      else if(ctx.biome==='mountains')chain=this.makeMountainSectorChain(4,7);
+      if(chain.length){
+        chain=chain.filter(m=>!ctx.placed.some(o=>o.type==='sea'&&this.overlaps(m,o,.20)));
+        ctx.placed.push(...chain);
+      }
     },
 
     generateHydrology(ctx) {
@@ -4379,8 +4514,13 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         const roads=this.makeVillageRoadNetwork(ctx.villagePlan);
         for(const r of roads){
           const score=this.roadConflictScore(r,ctx.placed,.25);
-          if(score>0)r.generationFallback=true;
-          ctx.placed.push(r);
+          if(score>0){
+            const safe=this.makeRoadAvoiding(ctx.placed,r.id,ctx.villagePlan.spawn,120);
+            safe.junction=ctx.villagePlan.topology;
+            safe.spawn={...ctx.villagePlan.spawn};
+            safe.generationFallback=true;
+            ctx.placed.push(safe);
+          }else ctx.placed.push(r);
         }
       }else if(ctx.biome==='river'){
         const crossing=this.sampleAlong(ctx.river,ctx.bridgeQ);
@@ -4446,12 +4586,12 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     },
 
     makeBiomeTerrain(biome) {
-      const ctx={biome,z:this.mapZone(),placed:[],river:null,bridgeQ:null,fordQ:null,villagePlan:null,village:null};
+      const ctx={biome,z:this.mapZone(),placed:[],sea:null,ships:[],river:null,bridgeQ:null,fordQ:null,villagePlan:null,village:null};
       for(const phase of this.GENERATION_PHASES){
         const fn=this[`generate${phase}`];
         if(typeof fn==='function')fn.call(this,ctx);
       }
-      return ctx.placed;
+      return [...ctx.placed,...ctx.ships];
     },
 
     generate(choice=State.battleSetup.biome) {
@@ -4468,6 +4608,43 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       for(let i=1;i<t.samples.length;i++)ctx.lineTo(t.samples[i].x,t.samples[i].y);
       ctx.strokeStyle=t.edge;ctx.lineWidth=t.width+(t.type==='river'?5:3);ctx.stroke();
       ctx.strokeStyle=t.fill;ctx.lineWidth=t.width;ctx.stroke();ctx.restore();
+    },
+
+    drawSea(items) {
+      for(const t of items){
+        if(!t.points?.length)continue;
+        ctx.save();
+        ctx.beginPath();
+        t.points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+        ctx.closePath();ctx.fillStyle=t.fill;ctx.fill();
+        if(t.coastline?.length){
+          ctx.beginPath();t.coastline.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+          ctx.strokeStyle=t.edge;ctx.lineWidth=3;ctx.stroke();
+          ctx.globalAlpha=.28;ctx.strokeStyle='#d8f2f4';ctx.lineWidth=1;
+          for(let k=1;k<=2;k++){
+            ctx.beginPath();
+            t.coastline.forEach((p,i)=>{
+              const q={x:p.x,y:p.y+(t.side==='top'?k*5:(t.side==='bottom'?-k*5:0)),};
+              if(t.side==='left')q.x+=k*5;
+              if(t.side==='right')q.x-=k*5;
+              i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y);
+            });
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+      }
+    },
+
+    drawShips(items) {
+      for(const t of items){
+        ctx.save();ctx.translate(t.x,t.y);ctx.rotate(t.angle||0);
+        ctx.fillStyle=t.fill;ctx.strokeStyle=t.edge;ctx.lineWidth=1.5;
+        ctx.beginPath();ctx.moveTo(-t.w/2,-t.h*.28);ctx.lineTo(t.w*.42,-t.h*.28);ctx.lineTo(t.w/2,0);ctx.lineTo(t.w*.42,t.h*.28);ctx.lineTo(-t.w/2,t.h*.28);ctx.closePath();ctx.fill();ctx.stroke();
+        ctx.beginPath();ctx.moveTo(-t.w*.05,0);ctx.lineTo(-t.w*.05,-t.h*1.25);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(-t.w*.03,-t.h*1.18);ctx.lineTo(t.w*.20,-t.h*.45);ctx.lineTo(-t.w*.03,-t.h*.45);ctx.closePath();ctx.fillStyle='rgba(224,213,181,.78)';ctx.fill();ctx.stroke();
+        ctx.restore();
+      }
     },
 
     drawFields(items) {
@@ -4540,28 +4717,45 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         return legacyTerrainCenter(t);
       };
       Terrain.blocksUnit=(u,t)=>{
-        if(t?.type==='river')return Terrain.unitSamplePoints(u).some(p=>Terrain.containsPoint(t,p,0)&&!this.crossingAt(p,0));
-        if(t?.type==='building'||t?.type==='mountain')return Terrain.unitSamplePoints(u).some(p=>Terrain.containsPoint(t,p,0));
+        const samples=Terrain.unitSamplePoints(u);
+        if(t?.type==='sea')return samples.some(p=>Terrain.containsPoint(t,p,0));
+        if(u?.status?.routing){
+          const active=samples.filter(p=>this.gameplayContainsPoint(p));
+          if(!active.length)return false;
+          if(t?.type==='river')return active.some(p=>Terrain.containsPoint(t,p,0)&&!this.crossingAt(p,0));
+          if(t?.type==='building'||t?.type==='mountain')return active.some(p=>Terrain.containsPoint(t,p,0));
+          if(t?.type==='pond')return active.some(p=>Terrain.insideHardCore(t,p));
+          if(t?.type==='forest'&&u.type==='cavalry')return active.some(p=>Terrain.insideHardCore(t,p));
+          return false;
+        }
+        if(t?.type==='river')return samples.some(p=>Terrain.containsPoint(t,p,0)&&!this.crossingAt(p,0));
+        if(t?.type==='building'||t?.type==='mountain')return samples.some(p=>Terrain.containsPoint(t,p,0));
         return legacyBlocksUnit(u,t);
       };
       Terrain.distanceToBlockingTerrain=(t,point)=>{
-        if(t?.type==='building'||t?.type==='mountain')return this.boundaryDistance(t,point);
+        if(t?.type==='sea'||t?.type==='building'||t?.type==='mountain')return this.boundaryDistance(t,point);
         return legacyDistance(t,point);
       };
       Terrain.blocksPoint=(u,point,clearancePx=0)=>{
+        const routingBorder=!!u?.status?.routing&&!this.gameplayContainsPoint(point,clearancePx);
         for(const t of State.terrain){
-          if(t.type==='river'){
+          if(t.type==='sea'){
+            if(Terrain.distanceToBlockingTerrain(t,point)<=clearancePx)return true;
+          } else if(routingBorder) continue;
+          else if(t.type==='river'){
             if(Terrain.pointPolylineDistance(point,t.samples)<=t.width/2+clearancePx&&!this.crossingAt(point,clearancePx))return true;
           } else if(t.type==='building'||t.type==='mountain'){
             if(Terrain.distanceToBlockingTerrain(t,point)<=clearancePx)return true;
           }
         }
+        if(routingBorder)return false;
         return legacyBlocksPoint(u,point,clearancePx);
       };
       Terrain.movementMultiplier=(u)=>{
-        let mult=legacyMovement(u);
-        if(!u?.status?.alive)return mult;
+        if(!u?.status?.alive)return legacyMovement(u);
         const c=Geometry.center(u);
+        if(u.status.routing&&!this.gameplayContainsPoint(c))return 1;
+        let mult=legacyMovement(u);
         for(const t of State.terrain){
           if(!Terrain.containsPoint(t,c,0))continue;
           if(t.type==='stream'||t.type==='ford')mult=Math.min(mult,.65);
@@ -4591,15 +4785,19 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       };
       Terrain.draw=()=>{
         const all=State.terrain;
+        this.drawSea(all.filter(t=>t.type==='sea'));
         this.drawFields(all.filter(t=>t.type==='field'));
         State.terrain=all.filter(t=>['road','hill','forest','rough','pond','wall'].includes(t.type)&&!(t.type==='hill'&&t.blob));
         try{legacyDraw();}finally{State.terrain=all;}
         this.drawExtras(all.filter(t=>['river','stream','bridge','ford','mountain','building'].includes(t.type)||(t.type==='hill'&&t.blob)));
+        this.drawShips(all.filter(t=>t.type==='ship'));
       };
     }
   };
 
   MapEngine.installTerrainAdapters();
+  const __baseClampPointToBattlefield=Geometry.clampPointToBattlefield.bind(Geometry);
+  Geometry.clampPointToBattlefield=(point)=>MapEngine.clampToLand(__baseClampPointToBattlefield(point));
 
   const Pathfinder = {
     // Dynamic A* on a 1U grid. The original order/target is never rewritten:
@@ -5046,7 +5244,18 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       u.pose.angle = u.status.routAngle;
       u.motion.moving = true;
 
-      // ROUT: il bordocampo è percorribile, ma il bordo esterno è uscita definitiva.
+      // Il mare ha priorità sul bordo esterno: non è mai una direzione valida di fuga.
+      const seaHit=State.terrain.some(t=>t.type==='sea'&&Terrain.blocksUnit(u,t));
+      if(seaHit){
+        u.pose.x=old.x;u.pose.y=old.y;
+        const previous=u.status.routAngle;
+        const next=Terrain.findRoutDeflection(u,previous);
+        u.status.routAngle=next;u.pose.angle=next;u.motion.moving=false;
+        if(Math.abs(Geometry.shortestDelta(previous,next))>.01)Log.add(`${u.name}: ROUT devia dalla costa`);
+        return;
+      }
+
+      // ROUT: il bordocampo è percorribile, ma il bordo esterno di TERRA resta uscita definitiva.
       // RETREAT volontaria non arriva mai qui ed è già confinata nel battlefield centrale.
       if (Geometry.crossesOuterWorld(u)) {
         Battle.removeRoutedUnit(u);
@@ -6458,11 +6667,12 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const b = battlefieldPx();
       ctx.save();
 
-      // Fascia esterna: bordocampo, accessibile soltanto alle unità in ROUT.
-      ctx.fillStyle = '#0c120e';
+      // Continuità visiva: il bioma riempie l'intero world 110×80U.
+      // Il tratteggio 90×60U resta l'unico confine di gameplay ordinario.
+      ctx.fillStyle = MapEngine.fieldColor();
       ctx.fillRect(0, 0, w, h);
 
-      // Campo di battaglia operativo 90×60U.
+      // Campo di battaglia operativo 90×60U: stesso fondo, distinto dal tratteggio.
       ctx.fillStyle = MapEngine.fieldColor();
       ctx.fillRect(b.x, b.y, b.w, b.h);
 
