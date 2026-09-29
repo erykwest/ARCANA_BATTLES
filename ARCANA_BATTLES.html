@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ARCANA — Campal Battle Lab v0.87.5</title>
+<title>ARCANA — Campal Battle Lab v0.88.0</title>
 <style>
   :root{
     --bg:#11151b;
@@ -285,6 +285,11 @@
   .setup-modes button small{display:block;margin-top:4px;font-size:9px;font-weight:500;letter-spacing:0;color:var(--muted);line-height:1.15}
   .setup-modes button.active{outline:2px solid #f0d36f;background:#344152;color:#fff}
   .setup-mode-note{margin-top:9px;font-size:10px;line-height:1.4;color:var(--muted)}
+  .setup-select{display:grid;grid-template-columns:1fr 190px;gap:10px;align-items:center}
+  .setup-select label{font-size:12px;color:var(--muted)}
+  .setup-select select{width:100%;height:42px;border-radius:8px;border:1px solid #394555;background:#0d1117;color:var(--text);font:700 12px Inter,Segoe UI,Arial,sans-serif;padding:0 10px;outline:none}
+  .setup-select select:focus{border-color:#6f8198;box-shadow:0 0 0 2px rgba(111,129,152,.18)}
+  .setup-map-note{margin-top:9px;font-size:10px;line-height:1.4;color:var(--muted)}
   .custom-points{display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:center;margin-top:10px}
   .custom-points label{font-size:12px;color:var(--muted)}
   .custom-points input{
@@ -432,12 +437,13 @@
     .setup-panel h1{font-size:24px}
     .point-presets{grid-template-columns:repeat(2,1fr)}
     .custom-points{grid-template-columns:1fr 120px}
+    .setup-select{grid-template-columns:1fr}
   }
 </style>
 </head>
 <body>
 <header>
-  <strong>ARCANA — CAMPAL BATTLE LAB v0.87.5</strong>
+  <strong>ARCANA — CAMPAL BATTLE LAB v0.88.0</strong>
   <span>REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
 </header>
 
@@ -459,6 +465,24 @@
         <label for="customPointsInput">oppure budget personalizzato</label>
         <input id="customPointsInput" type="number" inputmode="numeric" min="100" max="10000" step="50" placeholder="Custom" />
       </div>
+    </div>
+
+    <div class="setup-section">
+      <span class="setup-label">MAP ENGINE · BIOMA</span>
+      <div class="setup-select">
+        <label for="mapBiomeSelect">Profilo del campo di battaglia</label>
+        <select id="mapBiomeSelect">
+          <option value="random" selected>Casuale</option>
+          <option value="plains">Pianura</option>
+          <option value="hills">Colline</option>
+          <option value="valley">Vallata</option>
+          <option value="river">Fiume</option>
+          <option value="forest">Foresta</option>
+          <option value="mountains">Montagne</option>
+          <option value="village">Villaggio</option>
+        </select>
+      </div>
+      <div class="setup-map-note">Casuale sceglie un bioma coerente. Fiumi: invalicabili salvo ponti/guadi · torrenti: terreno accidentato · montagne/edifici: ostacoli pieni.</div>
     </div>
 
     <div class="setup-section">
@@ -486,7 +510,7 @@
       <strong id="setupPointsSummary">1000 PT</strong>
     </div>
     <button id="createBattleBtn" type="button">VAI ALLO SCHIERAMENTO</button>
-    <div class="setup-footnote">v0.86 · Step 1/3 — ruolo ATT/DEF + Army AI refresh 5s + limite battaglia 600s.</div>
+    <div class="setup-footnote">v0.88 · Step 1/3 — Map Engine biomi + Doctrine Engine + Army AI + limite battaglia 600s.</div>
   </div>
 </div>
 
@@ -726,6 +750,7 @@
     battleSetupOverlay: document.getElementById('battleSetupOverlay'),
     pointPresets: document.getElementById('pointPresets'),
     customPointsInput: document.getElementById('customPointsInput'),
+    mapBiomeSelect: document.getElementById('mapBiomeSelect'),
     setupModes: document.getElementById('setupModes'),
     setupModeNote: document.getElementById('setupModeNote'),
     setupModeSummary: document.getElementById('setupModeSummary'),
@@ -857,6 +882,8 @@
       points: 1000,
       mode: 'auto',
       role: 'random',
+      biome: 'random',
+      resolvedBiome: null,
       mirrorArmy: false,
       mirrorDeployment: false,
       configured: false
@@ -3806,6 +3833,475 @@
     }
   };
 
+  // ============================================================
+  // 8b. MAP ENGINE — biome composition over Terrain runtime rules
+  // ============================================================
+  const MapEngine = {
+    BIOMES: Object.freeze({
+      plains:    Object.freeze({ label:'Pianura',   field:'#1b281c' }),
+      hills:     Object.freeze({ label:'Colline',   field:'#26301e' }),
+      valley:    Object.freeze({ label:'Vallata',   field:'#20291d' }),
+      river:     Object.freeze({ label:'Fiume',     field:'#1c2a22' }),
+      forest:    Object.freeze({ label:'Foresta',   field:'#16271a' }),
+      mountains: Object.freeze({ label:'Montagne',  field:'#252823' }),
+      village:   Object.freeze({ label:'Villaggio', field:'#29261d' })
+    }),
+
+    labels: null,
+    rand(min, max) { return min + Math.random() * (max - min); },
+    randi(min, max) { return Math.floor(this.rand(min, max + 1)); },
+    pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; },
+    clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); },
+
+    resolveBiome(choice = 'random') {
+      if (choice && choice !== 'random' && this.BIOMES[choice]) return choice;
+      return this.pick(Object.keys(this.BIOMES));
+    },
+
+    current() { return State.battleSetup.resolvedBiome || 'plains'; },
+    currentLabel() {
+      const resolved = State.battleSetup.resolvedBiome;
+      if (resolved) return this.BIOMES[resolved]?.label || 'Pianura';
+      return this.labels?.[State.battleSetup.biome] || 'Casuale';
+    },
+    fieldColor() { return this.BIOMES[this.current()]?.field || '#18211a'; },
+
+    mapZone() {
+      const b = Geometry.battlefieldBounds();
+      return {
+        minX: b.minX + 8 * CFG.U,
+        maxX: b.maxX - 8 * CFG.U,
+        minY: b.minY + 10 * CFG.U,
+        maxY: b.maxY - 10 * CFG.U,
+        cx: (b.minX + b.maxX) / 2,
+        cy: (b.minY + b.maxY) / 2
+      };
+    },
+
+    randomCenter(marginU = 0) {
+      const z = this.mapZone(), m = marginU * CFG.U;
+      return {
+        x: this.rand(z.minX + m, z.maxX - m),
+        y: this.rand(z.minY + m, z.maxY - m)
+      };
+    },
+
+    makeRoad(id = 'road-1', through = null) {
+      const { start, end } = Terrain.chooseRoadAnchors(10);
+      const dx = end.x - start.x, dy = end.y - start.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = -dy / len, ny = dx / len;
+      const { w, h } = worldPx();
+      const controls = [{ x:start.x, y:start.y }];
+      if (through) {
+        controls.push({
+          x:this.clamp(start.x + dx * .28 + nx * this.rand(-5,5) * CFG.U, 2*CFG.U, w-2*CFG.U),
+          y:this.clamp(start.y + dy * .28 + ny * this.rand(-5,5) * CFG.U, 2*CFG.U, h-2*CFG.U)
+        });
+        controls.push({ x:through.x, y:through.y });
+        controls.push({
+          x:this.clamp(start.x + dx * .72 + nx * this.rand(-5,5) * CFG.U, 2*CFG.U, w-2*CFG.U),
+          y:this.clamp(start.y + dy * .72 + ny * this.rand(-5,5) * CFG.U, 2*CFG.U, h-2*CFG.U)
+        });
+      } else {
+        for (let i=1;i<=4;i++) {
+          const q=i/5, amp=this.rand(4,9)*(i%2?1:-1);
+          controls.push({
+            x:this.clamp(start.x+dx*q+nx*amp*CFG.U,2*CFG.U,w-2*CFG.U),
+            y:this.clamp(start.y+dy*q+ny*amp*CFG.U,2*CFG.U,h-2*CFG.U)
+          });
+        }
+      }
+      controls.push({ x:end.x, y:end.y });
+      return {
+        id, type:'road', controlPoints:controls,
+        samples:Terrain.sampleRoad(controls, .42),
+        width:2*CFG.U,
+        fill:'rgba(176,142,98,.90)', edge:'rgba(222,198,154,.95)'
+      };
+    },
+
+    makeWatercourse(type = 'stream', id = null) {
+      const b = Geometry.battlefieldBounds();
+      const bw = b.maxX - b.minX, bh = b.maxY - b.minY;
+      const horizontal = type === 'river' ? true : Math.random() < .5;
+      const controls = [];
+      if (horizontal) {
+        const y0 = this.rand(b.minY + bh * .38, b.minY + bh * .62);
+        controls.push({ x:b.minX, y:y0 });
+        for (let i=1;i<=4;i++) {
+          const q=i/5;
+          controls.push({
+            x:b.minX+bw*q,
+            y:this.clamp(y0+this.rand(type==='river'?-7:-10,type==='river'?7:10)*CFG.U,b.minY+2*CFG.U,b.maxY-2*CFG.U)
+          });
+        }
+        controls.push({ x:b.maxX, y:this.clamp(y0+this.rand(-3,3)*CFG.U,b.minY+2*CFG.U,b.maxY-2*CFG.U) });
+      } else {
+        const x0=this.rand(b.minX+bw*.28,b.minX+bw*.72);
+        controls.push({x:x0,y:b.minY});
+        for(let i=1;i<=4;i++){
+          const q=i/5;
+          controls.push({
+            x:this.clamp(x0+this.rand(-8,8)*CFG.U,b.minX+2*CFG.U,b.maxX-2*CFG.U),
+            y:b.minY+bh*q
+          });
+        }
+        controls.push({x:this.clamp(x0+this.rand(-3,3)*CFG.U,b.minX+2*CFG.U,b.maxX-2*CFG.U),y:b.maxY});
+      }
+      const samples=Terrain.sampleRoad(controls,type==='river'?.32:.38);
+      return {
+        id:id||`${type}-1`, type, controlPoints:controls, samples,
+        width:(type==='river'?3.2:1.25)*CFG.U,
+        fill:type==='river'?'#3b86ad':'#5aa4c4',
+        edge:type==='river'?'#8ac5df':'#9dd4e5'
+      };
+    },
+
+    sampleAlong(t, q) {
+      const pts=t.samples||[];
+      if (!pts.length) return {x:0,y:0,angle:0};
+      const idx=Math.max(1,Math.min(pts.length-2,Math.round(q*(pts.length-1))));
+      const p=pts[idx],a=pts[idx-1],b=pts[idx+1];
+      return {x:p.x,y:p.y,angle:Math.atan2(b.y-a.y,b.x-a.x)};
+    },
+
+    makeCrossing(river, kind='bridge', q=.5, id=null) {
+      const p=this.sampleAlong(river,q);
+      return {
+        id:id||`${kind}-${Math.round(q*100)}`, type:kind,
+        x:p.x,y:p.y,angle:p.angle+Math.PI/2,
+        w:(river.width/CFG.U+2.2)*CFG.U,
+        h:(kind==='bridge'?5.0:7.0)*CFG.U,
+        navWidth:(kind==='bridge'?10.0:12.0)*CFG.U,
+        fill:kind==='bridge'?'#a88d64':'rgba(181,160,106,.72)',
+        edge:kind==='bridge'?'#dfc9a4':'#d2c07e'
+      };
+    },
+
+    makeHill(id,x,y,rx=10,ry=5,angle=null){return{id,type:'hill',x,y,angle:angle??this.rand(-.8,.8),rx:rx*CFG.U,ry:ry*CFG.U,fill:'#7a5b34',edge:'#a77f49'};},
+    makeRough(id,x,y,rx=6,ry=4,angle=null){return{id,type:'rough',x,y,angle:angle??this.rand(-.9,.9),rx:rx*CFG.U,ry:ry*CFG.U,fill:'#7c6940',edge:'#a18a5a'};},
+    makeForest(id,x,y,rx=10,ry=5,angle=null){return{id,type:'forest',x,y,angle:angle??this.rand(-.8,.8),fill:'#204622',edge:'#3e7f42',blob:Terrain.makeBlob(rx*CFG.U,ry*CFG.U,22,.20)};},
+    makePond(id,x,y,rx=5,ry=3,angle=null){return{id,type:'pond',x,y,angle:angle??this.rand(-.7,.7),fill:'#4d9fcb',edge:'#94d0ef',blob:Terrain.makeBlob(rx*CFG.U,ry*CFG.U,20,.22)};},
+    makeMountain(id,x,y,rx=8,ry=5,angle=null){return{id,type:'mountain',x,y,angle:angle??this.rand(-.7,.7),fill:'#50534c',edge:'#8b9185',blob:Terrain.makeBlob(rx*CFG.U,ry*CFG.U,24,.16)};},
+    makeWall(id,x,y,w=8,h=.5,angle=null){return{id,type:'wall',x,y,angle:angle??this.rand(-Math.PI,Math.PI),w:w*CFG.U,h:h*CFG.U,fill:'#9d8b71',edge:'#ddd0b5'};},
+    makeBuilding(id,x,y,w=4,h=3,angle=0){return{id,type:'building',x,y,angle,w:w*CFG.U,h:h*CFG.U,fill:'#725647',edge:'#c39a79'};},
+
+    crossingAt(point, clearancePx=0) {
+      for (const t of State.terrain) {
+        if (t.type!=='bridge' && t.type!=='ford') continue;
+        const p=Terrain.toLocal(t,point.x,point.y);
+        const nav=clearancePx>0;
+        const halfLen=t.w/2+(nav?clearancePx+1.0*CFG.U:.45*CFG.U);
+        const width=nav?(t.navWidth||t.h):t.h;
+        const halfWidth=Math.max(0,width/2-(nav?clearancePx*.45:0));
+        if(Math.abs(p.x)<=halfLen && Math.abs(p.y)<=halfWidth) return t;
+      }
+      return null;
+    },
+
+    shapeSamples(t,steps=32) {
+      if (!t) return null;
+      if (['road','river','stream'].includes(t.type)) {
+        const src=t.samples||[];
+        if(!src.length)return [];
+        const stride=Math.max(1,Math.floor(src.length/steps));
+        return src.filter((_,i)=>i%stride===0);
+      }
+      if (['building','bridge','ford'].includes(t.type)) {
+        const hw=t.w/2,hh=t.h/2,pts=[];
+        for(const [x,y] of [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh],[0,-hh],[hw,0],[0,hh],[-hw,0]])pts.push(Terrain.localToWorld(t,{x,y}));
+        return pts;
+      }
+      if (t.type==='mountain') return Terrain.blobPoints(t).map(p=>Terrain.localToWorld(t,p));
+      return null;
+    },
+
+    containsPoint(t,point,pad=0) {
+      if (!t || !point) return null;
+      if (t.type==='river'||t.type==='stream') return Terrain.pointPolylineDistance(point,t.samples)<=t.width/2+pad;
+      if (t.type==='building'||t.type==='bridge'||t.type==='ford') return Terrain.rectContains(t,point.x,point.y,pad);
+      if (t.type==='mountain') return Terrain.polygonContains(t,point.x,point.y,pad);
+      return null;
+    },
+
+    boundaryDistance(t,point) {
+      if (!t || !point) return Infinity;
+      if (t.type==='building') {
+        const p=Terrain.toLocal(t,point.x,point.y);
+        const dx=Math.max(Math.abs(p.x)-t.w/2,0),dy=Math.max(Math.abs(p.y)-t.h/2,0);
+        return Math.hypot(dx,dy);
+      }
+      if (t.type==='mountain') {
+        const pts=Terrain.blobPoints(t).map(p=>Terrain.localToWorld(t,p));
+        let best=Infinity;
+        for(let i=0;i<pts.length;i++)best=Math.min(best,Geometry.pointSegmentDistance(point,pts[i],pts[(i+1)%pts.length]));
+        return Terrain.polygonContains(t,point.x,point.y,0)?0:best;
+      }
+      return Infinity;
+    },
+
+    overlaps(a,b,marginU=.35) {
+      if(!a||!b)return false;
+      const pad=marginU*CFG.U;
+      const as=Terrain.shapeSamples(a),bs=Terrain.shapeSamples(b);
+      if(as.some(p=>Terrain.containsPoint(b,p,pad)))return true;
+      if(bs.some(p=>Terrain.containsPoint(a,p,pad)))return true;
+      return false;
+    },
+
+    fitsZone(t) {
+      if (['road','river','stream'].includes(t.type)) return true;
+      const z=this.mapZone();
+      return Terrain.shapeSamples(t).every(p=>p.x>=z.minX&&p.x<=z.maxX&&p.y>=z.minY&&p.y<=z.maxY);
+    },
+
+    place(factory,placed,attempts=420,marginU=.35) {
+      for(let i=0;i<attempts;i++){
+        const t=factory();
+        if(!this.fitsZone(t))continue;
+        if(placed.some(o=>['bridge','ford'].includes(o.type)?false:this.overlaps(t,o,marginU)))continue;
+        return t;
+      }
+      return null;
+    },
+
+    addRandom(placed,count,factory,marginU=.35) {
+      for(let i=0;i<count;i++){
+        const t=this.place(()=>factory(i),placed,420,marginU);
+        if(t)placed.push(t);
+      }
+    },
+
+    makeVillageCluster(placed,count=5,center=null) {
+      const z=this.mapZone();
+      const cx=center?.x??this.rand(z.cx-8*CFG.U,z.cx+8*CFG.U);
+      const cy=center?.y??this.rand(z.cy-4*CFG.U,z.cy+4*CFG.U);
+      const road=placed.find(t=>t.type==='road');
+      let base=0;
+      if(road?.samples?.length){
+        let best=1,bestD=Infinity;
+        for(let i=1;i<road.samples.length-1;i++){
+          const p=road.samples[i],d=(p.x-cx)**2+(p.y-cy)**2;
+          if(d<bestD){bestD=d;best=i;}
+        }
+        const a=road.samples[best-1],b=road.samples[best+1];
+        base=Math.atan2(b.y-a.y,b.x-a.x);
+      }
+      const tx=Math.cos(base),ty=Math.sin(base),nx=-ty,ny=tx;
+      const spots=[[-12,-6],[-7,6],[-2,-6],[3,6],[8,-6],[13,6],[-13,6],[12,-6]];
+      let made=0;
+      for(let i=0;i<spots.length&&made<count;i++){
+        const [along,side]=spots[i];
+        const x=cx+tx*along*CFG.U+nx*side*CFG.U;
+        const y=cy+ty*along*CFG.U+ny*side*CFG.U;
+        const b=this.makeBuilding(`building-${made+1}`,x,y,this.rand(3.2,4.8),this.rand(2.5,3.6),base+this.rand(-.12,.12));
+        if(this.fitsZone(b)&&!placed.some(o=>o.type!=='road'&&this.overlaps(b,o,.12))){placed.push(b);made++;}
+      }
+      for(let tries=0;made<Math.min(5,count)&&tries<100;tries++){
+        const along=this.rand(-14,14),side=(Math.random()<.5?-1:1)*this.rand(5.5,8);
+        const x=cx+tx*along*CFG.U+nx*side*CFG.U;
+        const y=cy+ty*along*CFG.U+ny*side*CFG.U;
+        const b=this.makeBuilding(`building-${made+1}`,x,y,this.rand(3,4.5),this.rand(2.4,3.5),base+this.rand(-.15,.15));
+        if(this.fitsZone(b)&&!placed.some(o=>o.type!=='road'&&this.overlaps(b,o,.10))){placed.push(b);made++;}
+      }
+      for(const [n,sx,sy] of [[1,16,8.5],[2,-16,-8.5]]){
+        const w=this.makeWall(`village-wall-${n}`,cx+tx*sx*CFG.U+nx*sy*CFG.U,cy+ty*sx*CFG.U+ny*sy*CFG.U,5,.45,base+Math.PI/2);
+        if(this.fitsZone(w)&&!placed.some(o=>o.type!=='road'&&this.overlaps(w,o,.08)))placed.push(w);
+      }
+      return {x:cx,y:cy};
+    },
+
+    makeBiomeTerrain(biome) {
+      const z=this.mapZone(),placed=[];
+      const pos=(m=0)=>this.randomCenter(m);
+      const hill=(i,small=false)=>{const p=pos(small?4:7);return this.makeHill(`hill-${i+1}`,p.x,p.y,small?this.rand(5,7):this.rand(8,10),small?this.rand(3,4):this.rand(4,5.5));};
+      const forest=(i,small=false)=>{const p=pos(small?4:7);return this.makeForest(`forest-${i+1}`,p.x,p.y,small?this.rand(5,7):this.rand(8,10),small?this.rand(3,4):this.rand(4,5.5));};
+      const rough=(i)=>{const p=pos(4);return this.makeRough(`rough-${i+1}`,p.x,p.y,this.rand(4.5,6.0),this.rand(3,4.0));};
+      const pond=(i)=>{const p=pos(4);return this.makePond(`pond-${i+1}`,p.x,p.y,this.rand(4,5),this.rand(2.5,3.3));};
+      const mountain=(i)=>{const p=pos(6);return this.makeMountain(`mountain-${i+1}`,p.x,p.y,this.rand(6.5,8.5),this.rand(4,5.2));};
+
+      if(biome==='plains'){
+        placed.push(this.makeRoad());
+        this.addRandom(placed,this.randi(1,2),rough,.30);
+        this.addRandom(placed,this.randi(0,1),forest,.30);
+        if(Math.random()<.45)placed.push(this.makeWatercourse('stream','stream-1'));
+      } else if(biome==='hills'){
+        placed.push(this.makeRoad());
+        this.addRandom(placed,this.randi(3,4),hill,.20);
+        this.addRandom(placed,this.randi(1,2),rough,.25);
+        this.addRandom(placed,this.randi(0,1),forest,.25);
+      } else if(biome==='valley'){
+        const b=Geometry.battlefieldBounds(),cy=(b.minY+b.maxY)/2;
+        for(let i=0;i<3;i++){
+          const y=cy+this.rand(-7,7)*CFG.U;
+          placed.push(this.makeMountain(`mountain-L-${i}`,b.minX+(10+i*5)*CFG.U,y,this.rand(5.5,7),this.rand(3.8,5),this.rand(-.4,.4)));
+          placed.push(this.makeMountain(`mountain-R-${i}`,b.maxX-(10+i*5)*CFG.U,y,this.rand(5.5,7),this.rand(3.8,5),this.rand(-.4,.4)));
+        }
+        placed.push(this.makeWatercourse('stream','stream-1'));
+        placed.push(this.makeRoad('road-1',{x:z.cx,y:z.cy}));
+        this.addRandom(placed,1,rough,.18);
+      } else if(biome==='river'){
+        const river=this.makeWatercourse('river','river-1');
+        placed.push(river);
+        const bridge=this.makeCrossing(river,'bridge',this.rand(.30,.42),'bridge-1');
+        const ford=this.makeCrossing(river,'ford',this.rand(.62,.75),'ford-1');
+        placed.push(bridge,ford);
+        placed.push(this.makeRoad('road-1',{x:bridge.x,y:bridge.y}));
+        this.addRandom(placed,this.randi(1,2),forest,.22);
+        this.addRandom(placed,this.randi(0,1),hill,.22);
+      } else if(biome==='forest'){
+        placed.push(this.makeRoad());
+        this.addRandom(placed,this.randi(4,6),(i)=>forest(i,true),.16);
+        placed.push(this.makeWatercourse('stream','stream-1'));
+        this.addRandom(placed,this.randi(0,1),pond,.20);
+      } else if(biome==='mountains'){
+        placed.push(this.makeRoad('road-1',{x:z.cx,y:z.cy}));
+        this.addRandom(placed,this.randi(4,5),mountain,.08);
+        this.addRandom(placed,this.randi(1,2),hill,.10);
+        placed.push(this.makeWatercourse('stream','stream-1'));
+      } else if(biome==='village'){
+        const village={x:this.rand(z.cx-7*CFG.U,z.cx+7*CFG.U),y:this.rand(z.cy-3*CFG.U,z.cy+3*CFG.U)};
+        placed.push(this.makeRoad('road-1',village));
+        this.makeVillageCluster(placed,this.randi(5,7),village);
+        this.addRandom(placed,this.randi(1,2),forest,.16);
+        this.addRandom(placed,this.randi(0,1),hill,.16);
+      }
+      return placed;
+    },
+
+    generate(choice=State.battleSetup.biome) {
+      const resolved=this.resolveBiome(choice);
+      State.battleSetup.resolvedBiome=resolved;
+      State.terrain=this.makeBiomeTerrain(resolved);
+      return resolved;
+    },
+
+    drawSpline(t) {
+      if(!t.samples?.length)return;
+      ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+      ctx.beginPath();ctx.moveTo(t.samples[0].x,t.samples[0].y);
+      for(let i=1;i<t.samples.length;i++)ctx.lineTo(t.samples[i].x,t.samples[i].y);
+      ctx.strokeStyle=t.edge;ctx.lineWidth=t.width+(t.type==='river'?5:3);ctx.stroke();
+      ctx.strokeStyle=t.fill;ctx.lineWidth=t.width;ctx.stroke();ctx.restore();
+    },
+
+    drawExtras(items) {
+      const ordered=[...items].sort((a,b)=>{
+        const rank=x=>x.type==='river'||x.type==='stream'?0:x.type==='building'||x.type==='mountain'?1:2;
+        return rank(a)-rank(b);
+      });
+      for(const t of ordered){
+        if(t.type==='river'||t.type==='stream'){this.drawSpline(t);continue;}
+        ctx.save();
+        if(['building','bridge','ford'].includes(t.type)){
+          ctx.translate(t.x,t.y);ctx.rotate(t.angle||0);ctx.fillStyle=t.fill;ctx.strokeStyle=t.edge;ctx.lineWidth=2;
+          ctx.fillRect(-t.w/2,-t.h/2,t.w,t.h);ctx.strokeRect(-t.w/2,-t.h/2,t.w,t.h);
+          if(t.type==='bridge'){
+            ctx.strokeStyle='rgba(55,39,25,.55)';ctx.lineWidth=1;
+            for(let x=-t.w/2+6;x<t.w/2;x+=8){ctx.beginPath();ctx.moveTo(x,-t.h/2);ctx.lineTo(x,t.h/2);ctx.stroke();}
+          }
+          if(t.type==='building'){
+            ctx.fillStyle='rgba(255,226,174,.16)';
+            ctx.fillRect(-t.w*.30,-t.h*.25,t.w*.20,t.h*.18);
+            ctx.fillRect(t.w*.10,-t.h*.25,t.w*.20,t.h*.18);
+          }
+          ctx.restore();continue;
+        }
+        if(t.type==='mountain'){
+          ctx.beginPath();Terrain.drawShapeBlob(t);ctx.fillStyle=t.fill;ctx.strokeStyle=t.edge;ctx.lineWidth=2;ctx.fill();ctx.stroke();
+          ctx.strokeStyle='rgba(225,230,220,.28)';ctx.lineWidth=2;
+          for(let i=-2;i<=2;i++){ctx.beginPath();ctx.moveTo(t.x+i*18,t.y+15);ctx.lineTo(t.x+i*18+12,t.y-14);ctx.lineTo(t.x+i*18+24,t.y+15);ctx.stroke();}
+        }
+        ctx.restore();
+      }
+    },
+
+    installTerrainAdapters() {
+      if (Terrain.__mapEngineInstalled) return;
+      Terrain.__mapEngineInstalled=true;
+      this.labels=Object.freeze({random:'Casuale',...Object.fromEntries(Object.entries(this.BIOMES).map(([k,v])=>[k,v.label]))});
+
+      const legacyContainsPoint=Terrain.containsPoint.bind(Terrain);
+      const legacyShapeSamples=Terrain.shapeSamples.bind(Terrain);
+      const legacyTerrainCenter=Terrain.terrainCenter.bind(Terrain);
+      const legacyBlocksUnit=Terrain.blocksUnit.bind(Terrain);
+      const legacyDistance=Terrain.distanceToBlockingTerrain.bind(Terrain);
+      const legacyBlocksPoint=Terrain.blocksPoint.bind(Terrain);
+      const legacyMovement=Terrain.movementMultiplier.bind(Terrain);
+      const legacyRangedDefense=Terrain.rangedDefenseBonus.bind(Terrain);
+      const legacyLos=Terrain.lineOfSight.bind(Terrain);
+      const legacyDraw=Terrain.draw.bind(Terrain);
+
+      Terrain.containsPoint=(t,point,pad=0)=>{
+        const extra=this.containsPoint(t,point,pad);
+        return extra===null?legacyContainsPoint(t,point,pad):extra;
+      };
+      Terrain.shapeSamples=(t,steps=36)=>this.shapeSamples(t,steps)??legacyShapeSamples(t,steps);
+      Terrain.terrainCenter=(t)=>{
+        if(t?.samples?.length)return t.samples[Math.floor(t.samples.length/2)];
+        return legacyTerrainCenter(t);
+      };
+      Terrain.blocksUnit=(u,t)=>{
+        if(t?.type==='river')return Terrain.unitSamplePoints(u).some(p=>Terrain.containsPoint(t,p,0)&&!this.crossingAt(p,0));
+        if(t?.type==='building'||t?.type==='mountain')return Terrain.unitSamplePoints(u).some(p=>Terrain.containsPoint(t,p,0));
+        return legacyBlocksUnit(u,t);
+      };
+      Terrain.distanceToBlockingTerrain=(t,point)=>{
+        if(t?.type==='building'||t?.type==='mountain')return this.boundaryDistance(t,point);
+        return legacyDistance(t,point);
+      };
+      Terrain.blocksPoint=(u,point,clearancePx=0)=>{
+        for(const t of State.terrain){
+          if(t.type==='river'){
+            if(Terrain.pointPolylineDistance(point,t.samples)<=t.width/2+clearancePx&&!this.crossingAt(point,clearancePx))return true;
+          } else if(t.type==='building'||t.type==='mountain'){
+            if(Terrain.distanceToBlockingTerrain(t,point)<=clearancePx)return true;
+          }
+        }
+        return legacyBlocksPoint(u,point,clearancePx);
+      };
+      Terrain.movementMultiplier=(u)=>{
+        let mult=legacyMovement(u);
+        if(!u?.status?.alive)return mult;
+        const c=Geometry.center(u);
+        for(const t of State.terrain){
+          if(!Terrain.containsPoint(t,c,0))continue;
+          if(t.type==='stream'||t.type==='ford')mult=Math.min(mult,.65);
+          else if(t.type==='bridge'&&mult<=1.0001)mult+=.5;
+        }
+        return mult;
+      };
+      Terrain.rangedDefenseBonus=(attacker,defender)=>{
+        let bonus=legacyRangedDefense(attacker,defender);
+        const a=Geometry.center(attacker),d=Geometry.center(defender);
+        for(const t of State.terrain){
+          if(t.type==='building'&&Terrain.segmentIntersects(t,a,d)&&Terrain.containsPoint(t,d,1.6*CFG.U))bonus=Math.max(bonus,1);
+        }
+        return bonus;
+      };
+      Terrain.lineOfSight=(attacker,defender)=>{
+        if(!legacyLos(attacker,defender))return false;
+        const a=Geometry.center(attacker),d=Geometry.center(defender);
+        for(const t of State.terrain){
+          if(t.type!=='mountain'&&t.type!=='building')continue;
+          if(!Terrain.segmentIntersects(t,a,d))continue;
+          const aIn=Terrain.containsPoint(t,a,0),dIn=Terrain.containsPoint(t,d,0);
+          if(!aIn&&!dIn)return false;
+        }
+        return true;
+      };
+      Terrain.draw=()=>{
+        const all=State.terrain;
+        State.terrain=all.filter(t=>['road','hill','forest','rough','pond','wall'].includes(t.type));
+        try{legacyDraw();}finally{State.terrain=all;}
+        this.drawExtras(all.filter(t=>['river','stream','bridge','ford','mountain','building'].includes(t.type)));
+      };
+    }
+  };
+
+  MapEngine.installTerrainAdapters();
+
   const Pathfinder = {
     // Dynamic A* on a 1U grid. The original order/target is never rewritten:
     // the path lives only in motion.detour and is discarded as soon as LOS is free.
@@ -5653,7 +6149,7 @@
       ctx.fillRect(0, 0, w, h);
 
       // Campo di battaglia operativo 90×60U.
-      ctx.fillStyle = '#18211a';
+      ctx.fillStyle = MapEngine.fieldColor();
       ctx.fillRect(b.x, b.y, b.w, b.h);
 
       // Confine del campo: il superamento da parte di un ROUT è il punto di non ritorno.
@@ -6260,13 +6756,13 @@
       State.combatClocks.clear();
       State.projectiles = [];
       State.view = { scale: 1, x: 0, y: 0 };
-      Terrain.generate();
+      MapEngine.generate(State.battleSetup.biome);
       Battle.reset(false);
       UI.setTimeScale(0);
       document.body.classList.add('deployment-active');
       this.updateUI();
       UI.updateSelectedInfo();
-      Log.add(`DEPLOYMENT: ${State.battleSetup.points} PT per esercito.`);
+      Log.add(`DEPLOYMENT: ${State.battleSetup.points} PT per esercito · MAPPA ${MapEngine.currentLabel().toUpperCase()}.`);
     },
 
     snapshot() {
@@ -6599,7 +7095,7 @@
           const q = yi / 8;
           const y = ownFrontY + (midY - ownFrontY) * q;
           const blocked = State.terrain.some(t =>
-            ['forest','rough','pond','wall'].includes(t.type) && Terrain.containsPoint(t, {x,y}, 0)
+            ['forest','rough','pond','wall','river','stream','mountain','building'].includes(t.type) && Terrain.containsPoint(t, {x,y}, 0)
           );
           clear += blocked ? 0 : 1;
           total += 1;
@@ -6616,7 +7112,7 @@
       const counts = { hill:0, forest:0, rough:0, obstacle:0, wall:0, road:0 };
 
       for (const t of State.terrain) {
-        const key = t.type === 'pond' ? 'obstacle' : t.type;
+        const key = ['pond','river','mountain','building'].includes(t.type) ? 'obstacle' : (['stream','ford'].includes(t.type) ? 'rough' : (t.type === 'bridge' ? 'road' : t.type));
         if (!(key in counts)) continue;
         let c;
         if (t.type === 'road') {
@@ -6860,9 +7356,10 @@
       const points = this.sanitizePoints(State.battleSetup.points);
       State.battleSetup.points = points;
       DOM.setupPointsSummary.textContent = `${points} PT`;
+      DOM.mapBiomeSelect.value = State.battleSetup.biome || 'random';
       const copy = this.modeCopy(State.battleSetup.mode);
       const roleCopy = this.roleCopy(State.battleSetup.role);
-      DOM.setupModeSummary.textContent = `${copy.summary} · ${roleCopy.summary}`;
+      DOM.setupModeSummary.textContent = `${copy.summary} · ${roleCopy.summary} · ${MapEngine.labels[State.battleSetup.biome] || 'Casuale'}`;
       DOM.setupModeNote.textContent = copy.note;
       DOM.setupRoleNote.textContent = `${roleCopy.note} In DEV puoi ancora cambiare fazione durante la battaglia.`;
       DOM.setupModes.querySelectorAll('[data-mode]').forEach(btn => {
@@ -6894,6 +7391,8 @@
       State.battleSetup.points = this.sanitizePoints(
         DOM.customPointsInput.value ? DOM.customPointsInput.value : State.battleSetup.points
       );
+      State.battleSetup.biome = DOM.mapBiomeSelect.value || 'random';
+      State.battleSetup.resolvedBiome = null;
       const resolvedRoles = this.resolveRoles();
       State.battleSetup.configured = true;
       DOM.battleSetupOverlay.classList.remove('open');
@@ -6904,7 +7403,7 @@
         ? 'MIRRORED · Trascina le unità BLU: il ROSSO replica automaticamente composizione, posizione e orientamento.'
         : 'CUSTOM · Trascina e posiziona liberamente entrambi gli eserciti entro il budget.';
 
-      Log.add(`SETUP: ${State.battleSetup.points} PT | mode ${State.battleSetup.mode.toUpperCase()} | BLU ${resolvedRoles.blue.toUpperCase()} · ROSSO ${resolvedRoles.red.toUpperCase()}`);
+      Log.add(`SETUP: ${State.battleSetup.points} PT | MAPPA ${MapEngine.currentLabel().toUpperCase()} | mode ${State.battleSetup.mode.toUpperCase()} | BLU ${resolvedRoles.blue.toUpperCase()} · ROSSO ${resolvedRoles.red.toUpperCase()}`);
     },
 
     bind() {
@@ -6925,6 +7424,11 @@
         State.battleSetup.points = this.sanitizePoints(DOM.customPointsInput.value);
         DOM.setupPointsSummary.textContent = `${State.battleSetup.points} PT`;
         DOM.pointPresets.querySelectorAll('[data-points]').forEach(btn => btn.classList.remove('active'));
+      });
+      DOM.mapBiomeSelect.addEventListener('change', () => {
+        State.battleSetup.biome = DOM.mapBiomeSelect.value || 'random';
+        State.battleSetup.resolvedBiome = null;
+        this.sync();
       });
       DOM.createBattleBtn.addEventListener('click', () => this.closeAndCreate());
       DOM.newBattleBtn.addEventListener('click', () => this.open(false));
