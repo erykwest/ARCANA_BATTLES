@@ -24,7 +24,6 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import base64
 
           path = Path('ARCANA_BATTLES.html')
           text = path.read_text(encoding='utf-8')
@@ -36,8 +35,83 @@ jobs:
           if 'for (let attempt = 0; attempt < 60; attempt++)' not in old_block:
               raise SystemExit('Unexpected generateComposition implementation; refusing to patch.')
 
-          encoded = 'ICAgIGdlbmVyYXRlQ29tcG9zaXRpb24oYnVkZ2V0KSB7CiAgICAgIGNvbnN0IGVudHJpZXM9T2JqZWN0LmVudHJpZXMoRGVwbG95bWVudC5jYXRhbG9nKS5tYXAoKFt0eXBlLHNwZWNdKT0+KHt0eXBlLHNwZWN9KSk7CiAgICAgIGNvbnN0IG1heFVuaXRzPTMyOwogICAgICBjb25zdCBtaW5MaW5lU2hhcmU9MC4yNTsKICAgICAgY29uc3QgbWluQ29zdHM9Wy4uLmVudHJpZXNdLm1hcCh4PT54LnNwZWMuY29zdCkuc29ydCgoYSxiKT0+YS1iKTsKICAgICAgbGV0IHRhcmdldERpc3RpbmN0PTEsIHJ1bm5pbmc9MDsKICAgICAgZm9yKGxldCBpPTA7aTxNYXRoLm1pbigzLG1pbkNvc3RzLmxlbmd0aCk7aSsrKXsKICAgICAgICBydW5uaW5nKz1taW5Db3N0c1tpXTsKICAgICAgICBpZihidWRnZXQ+PXJ1bm5pbmcpIHRhcmdldERpc3RpbmN0PWkrMTsKICAgICAgfQogICAgCiAgICAgIGNvbnN0IGNhbmRpZGF0ZXM9W107CiAgICAgIGNvbnN0IG1heEluZj1NYXRoLm1pbihtYXhVbml0cywgTWF0aC5mbG9vcihidWRnZXQvRGVwbG95bWVudC5jYXRhbG9nLmluZmFudHJ5LmNvc3QpKTsKICAgICAgZm9yKGxldCBpbmZhbnRyeT0wO2luZmFudHJ5PD1tYXhJbmY7aW5mYW50cnkrKyl7CiAgICAgICAgY29uc3Qgc3BlbnRJbmY9aW5mYW50cnkqRGVwbG95bWVudC5jYXRhbG9nLmluZmFudHJ5LmNvc3Q7CiAgICAgICAgY29uc3QgbWF4QXJjaGVyPU1hdGgubWluKG1heFVuaXRzLWluZmFudHJ5LCBNYXRoLmZsb29yKChidWRnZXQtc3BlbnRJbmYpL0RlcGxveW1lbnQuY2F0YWxvZy5hcmNoZXIuY29zdCkpOwogICAgICAgIGZvcihsZXQgYXJjaGVyPTA7YXJjaGVyPD1tYXhBcmNoZXI7YXJjaGVyKyspewogICAgICAgICAgY29uc3QgYmFzZVNwZW50PXNwZW50SW5mK2FyY2hlcipEZXBsb3ltZW50LmNhdGFsb2cuYXJjaGVyLmNvc3Q7CiAgICAgICAgICBjb25zdCBtYXhDYXZhbHJ5PU1hdGgubWluKG1heFVuaXRzLWluZmFudHJ5LWFyY2hlciwgTWF0aC5mbG9vcigoYnVkZ2V0LWJhc2VTcGVudCkvRGVwbG95bWVudC5jYXRhbG9nLmNhdmFscnkuY29zdCkpOwogICAgICAgICAgZm9yKGxldCBjYXZhbHJ5PTA7Y2F2YWxyeTw9bWF4Q2F2YWxyeTtjYXZhbHJ5KyspewogICAgICAgICAgICBjb25zdCBjb3VudD1pbmZhbnRyeSthcmNoZXIrY2F2YWxyeTsKICAgICAgICAgICAgaWYoIWNvdW50KSBjb250aW51ZTsKICAgICAgICAgICAgY29uc3QgY291bnRzPXtpbmZhbnRyeSxhcmNoZXIsY2F2YWxyeX07CiAgICAgICAgICAgIGNvbnN0IHNwZW50PWJhc2VTcGVudCtjYXZhbHJ5KkRlcGxveW1lbnQuY2F0YWxvZy5jYXZhbHJ5LmNvc3Q7CiAgICAgICAgICAgIGNvbnN0IHJvbGVTcGVuZD1PYmplY3QuZnJvbUVudHJpZXModGhpcy5yb2xlcy5tYXAocj0+W3IsMF0pKTsKICAgICAgICAgICAgZm9yKGNvbnN0IHt0eXBlLHNwZWN9IG9mIGVudHJpZXMpewogICAgICAgICAgICAgIGNvbnN0IG49Y291bnRzW3R5cGVdfHwwOwogICAgICAgICAgICAgIGlmKCFuKSBjb250aW51ZTsKICAgICAgICAgICAgICBmb3IoY29uc3Qgcm9sZSBvZiB0aGlzLnJvbGVzKSByb2xlU3BlbmRbcm9sZV0rPW4qc3BlYy5jb3N0KnRoaXMucm9sZVZhbHVlKHNwZWMscm9sZSk7CiAgICAgICAgICAgIH0KICAgICAgICAgICAgY29uc3QgbGluZVNoYXJlPXNwZW50P3JvbGVTcGVuZC5saW5lL3NwZW50OjA7CiAgICAgICAgICAgIGlmKGxpbmVTaGFyZSsxZS05PG1pbkxpbmVTaGFyZSkgY29udGludWU7CiAgICAKICAgICAgICAgICAgY29uc3QgdHlwZVNoYXJlcz1lbnRyaWVzCiAgICAgICAgICAgICAgLm1hcCgoe3R5cGUsc3BlY30pPT4oe3R5cGUsc2hhcmU6KGNvdW50c1t0eXBlXXx8MCkqc3BlYy5jb3N0L3NwZW50fSkpCiAgICAgICAgICAgICAgLmZpbHRlcih4PT54LnNoYXJlPjApOwogICAgICAgICAgICBjb25zdCBkaXN0aW5jdD10eXBlU2hhcmVzLmxlbmd0aDsKICAgICAgICAgICAgY29uc3QgZW50cm9weVJhdz1kaXN0aW5jdD4xPy10eXBlU2hhcmVzLnJlZHVjZSgocyx4KT0+cyt4LnNoYXJlKk1hdGgubG9nKHguc2hhcmUpLDApOjA7CiAgICAgICAgICAgIGNvbnN0IGVudHJvcHk9ZGlzdGluY3Q+MT9lbnRyb3B5UmF3L01hdGgubG9nKGRpc3RpbmN0KTowOwogICAgICAgICAgICBjb25zdCBtYXhUeXBlU2hhcmU9TWF0aC5tYXgoLi4udHlwZVNoYXJlcy5tYXAoeD0+eC5zaGFyZSkpOwogICAgICAgICAgICBjb25zdCBwcmltYXJ5Q292ZXJhZ2U9WydsaW5lJywncmFuZ2VkJywnbW9iaWxlJ10KICAgICAgICAgICAgICAuZmlsdGVyKHJvbGU9Pihyb2xlU3BlbmRbcm9sZV0vc3BlbnQpPj0wLjEwKS5sZW5ndGggLyBNYXRoLm1heCgxLHRhcmdldERpc3RpbmN0KTsKICAgICAgICAgICAgY29uc3QgY292ZXJhZ2U9TWF0aC5taW4oMSxwcmltYXJ5Q292ZXJhZ2UpOwogICAgICAgICAgICBjb25zdCBkaXZlcnNpdHk9TWF0aC5taW4oMSxkaXN0aW5jdC9NYXRoLm1heCgxLHRhcmdldERpc3RpbmN0KSk7CiAgICAgICAgICAgIGNhbmRpZGF0ZXMucHVzaCh7Y291bnRzLHR5cGVzOmVudHJpZXMuZmxhdE1hcCgoe3R5cGV9KT0+QXJyYXkoY291bnRzW3R5cGVdfHwwKS5maWxsKHR5cGUpKSxzcGVudCxyb2xlU3BlbmQsbGluZVNoYXJlLGNvdmVyYWdlLGRpdmVyc2l0eSxlbnRyb3B5LG1heFR5cGVTaGFyZX0pOwogICAgICAgICAgfQogICAgICAgIH0KICAgICAgfQogICAgCiAgICAgIGlmKCFjYW5kaWRhdGVzLmxlbmd0aCkgcmV0dXJuIHt0eXBlczpbJ2luZmFudHJ5J10sc3BlbnQ6RGVwbG95bWVudC5jYXRhbG9nLmluZmFudHJ5LmNvc3QscXVhbGl0eTowfTsKICAgIAogICAgICBjb25zdCBtYXhDYW5kaWRhdGVTcGVuZD1NYXRoLm1heCguLi5jYW5kaWRhdGVzLm1hcCh4PT54LnNwZW50KSk7CiAgICAgGNvbnN0IHRhY3RpY2FsQmlhcz1PYmplY3QuZnJvbUVudHJpZXModGhpcy5yb2xlcy5tYXAocj0+W3IsdGhpcy5yYW5kKDAuODIsMS4xOCldKSk7CiAgICAgIGZvcihjb25zdCBjIG9mIGNhbmRpZGF0ZXMpewogICAgICAgIGNvbnN0IHNwZW5kUmF0aW89Yy5zcGVudC9NYXRoLm1heCgxLG1heENhbmRpZGF0ZVNwZW5kKTsKICAgICAgICBjb25zdCByb2xlQWZmaW5pdHk9dGhpcy5yb2xlcy5yZWR1Y2UoKHN1bSxyb2xlKT0+c3VtKyhjLnJvbGVTcGVuZFtyb2xlXS9jLnNwZW50KSp0YWN0aWNhbEJpYXNbcm9sZV0sMCkvMzsKICAgICAgICBjb25zdCBkb21pbmFuY2VQZW5hbHR5PU1hdGgubWF4KDAsYy5tYXhUeXBlU2hhcmUtMC42Nyk7CiAgICAgICAgY29uc3QgbG93U3BlbmRQZW5hbHR5PU1hdGgubWF4KDAsMC45MC1zcGVuZFJhdGlvKTsKICAgICAgICBjLnF1YWxpdHkgPQogICAgICAgICAgc3BlbmRSYXRpbyo0LjAgKwogICAgICAgICAgYy5jb3ZlcmFnZSoyLjUgKwogICAgICAgICAgYy5kaXZlcnNpdHkqMS40ICsKICAgICAgICAgIGMuZW50cm9weSoxLjAgKwogICAgICAgICAgTWF0aC5taW4oMSxjLmxpbmVTaGFyZS9taW5MaW5lU2hhcmUpKjAuNiArCiAgICAgICAgICByb2xlQWZmaW5pdHkqMC42IC0KICAgICAgICAgIGRvbWluYW5jZVBlbmFsdHkqNC4wIC0KICAgICAgICAgIGxvd1NwZW5kUGVuYWx0eSoxMC4wOwogICAgICB9CiAgICAgIGNhbmRpZGF0ZXMuc29ydCgoYSxiKT0+Yi5xdWFsaXR5LWEucXVhbGl0eSk7CiAgICAgIGNvbnN0IHBvb2w9Y2FuZGlkYXRlcy5zbGljZSgwLE1hdGgubWluKDE4LGNhbmRpZGF0ZXMubGVuZ3RoKSk7CiAgICAgGNvbnN0IGJlc3Q9cG9vbFswXS5xdWFsaXR5OwogICAgICBjb25zdCBjaG9zZW49dGhpcy53ZWlnaHRlZFBpY2socG9vbCx4PT5NYXRoLmV4cCgoeC5xdWFsaXR5LWJlc3QpKjEuNykpfHxwb29sWzBdOwogICAgICByZXR1cm4gY2hvc2VuOwogICAgfSwK'
-          new_block = base64.b64decode(encoded).decode('utf-8')
+          new_block = (
+            '    generateComposition(budget) {\n'
+            '      const entries=Object.entries(Deployment.catalog).map(([type,spec])=>({type,spec}));\n'
+            '      const maxUnits=32;\n'
+            '      const minLineShare=0.25;\n'
+            '      const minCosts=[...entries].map(x=>x.spec.cost).sort((a,b)=>a-b);\n'
+            '      let targetDistinct=1, running=0;\n'
+            '      for(let i=0;i<Math.min(3,minCosts.length);i++){\n'
+            '        running+=minCosts[i];\n'
+            '        if(budget>=running) targetDistinct=i+1;\n'
+            '      }\n'
+            '    \n'
+            '      const candidates=[];\n'
+            '      const maxInf=Math.min(maxUnits, Math.floor(budget/Deployment.catalog.infantry.cost));\n'
+            '      for(let infantry=0;infantry<=maxInf;infantry++){\n'
+            '        const spentInf=infantry*Deployment.catalog.infantry.cost;\n'
+            '        const maxArcher=Math.min(maxUnits-infantry, Math.floor((budget-spentInf)/Deployment.catalog.archer.cost));\n'
+            '        for(let archer=0;archer<=maxArcher;archer++){\n'
+            '          const baseSpent=spentInf+archer*Deployment.catalog.archer.cost;\n'
+            '          const maxCavalry=Math.min(maxUnits-infantry-archer, Math.floor((budget-baseSpent)/Deployment.catalog.cavalry.cost));\n'
+            '          for(let cavalry=0;cavalry<=maxCavalry;cavalry++){\n'
+            '            const count=infantry+archer+cavalry;\n'
+            '            if(!count) continue;\n'
+            '            const counts={infantry,archer,cavalry};\n'
+            '            const spent=baseSpent+cavalry*Deployment.catalog.cavalry.cost;\n'
+            '            const roleSpend=Object.fromEntries(this.roles.map(r=>[r,0]));\n'
+            '            for(const {type,spec} of entries){\n'
+            '              const n=counts[type]||0;\n'
+            '              if(!n) continue;\n'
+            '              for(const role of this.roles) roleSpend[role]+=n*spec.cost*this.roleValue(spec,role);\n'
+            '            }\n'
+            '            const lineShare=spent?roleSpend.line/spent:0;\n'
+            '            if(lineShare+1e-9<minLineShare) continue;\n'
+            '    \n'
+            '            const typeShares=entries\n'
+            '              .map(({type,spec})=>({type,share:(counts[type]||0)*spec.cost/spent}))\n'
+            '              .filter(x=>x.share>0);\n'
+            '            const distinct=typeShares.length;\n'
+            '            const entropyRaw=distinct>1?-typeShares.reduce((s,x)=>s+x.share*Math.log(x.share),0):0;\n'
+            '            const entropy=distinct>1?entropyRaw/Math.log(distinct):0;\n'
+            '            const maxTypeShare=Math.max(...typeShares.map(x=>x.share));\n'
+            "            const primaryCoverage=['line','ranged','mobile']\n"
+            '              .filter(role=>(roleSpend[role]/spent)>=0.10).length / Math.max(1,targetDistinct);\n'
+            '            const coverage=Math.min(1,primaryCoverage);\n'
+            '            const diversity=Math.min(1,distinct/Math.max(1,targetDistinct));\n'
+            '            candidates.push({counts,types:entries.flatMap(({type})=>Array(counts[type]||0).fill(type)),spent,roleSpend,lineShare,coverage,diversity,entropy,maxTypeShare});\n'
+            '          }\n'
+            '        }\n'
+            '      }\n'
+            '    \n'
+            "      if(!candidates.length) return {types:['infantry'],spent:Deployment.catalog.infantry.cost,quality:0};\n"
+            '    \n'
+            '      const maxCandidateSpend=Math.max(...candidates.map(x=>x.spent));\n'
+            '      const tacticalBias=Object.fromEntries(this.roles.map(r=>[r,this.rand(0.82,1.18)]));\n'
+            '      for(const c of candidates){\n'
+            '        const spendRatio=c.spent/Math.max(1,maxCandidateSpend);\n'
+            '        const roleAffinity=this.roles.reduce((sum,role)=>sum+(c.roleSpend[role]/c.spent)*tacticalBias[role],0)/3;\n'
+            '        const dominancePenalty=Math.max(0,c.maxTypeShare-0.67);\n'
+            '        const lowSpendPenalty=Math.max(0,0.90-spendRatio);\n'
+            '        c.quality =\n'
+            '          spendRatio*4.0 +\n'
+            '          c.coverage*2.5 +\n'
+            '          c.diversity*1.4 +\n'
+            '          c.entropy*1.0 +\n'
+            '          Math.min(1,c.lineShare/minLineShare)*0.6 +\n'
+            '          roleAffinity*0.6 -\n'
+            '          dominancePenalty*4.0 -\n'
+            '          lowSpendPenalty*10.0;\n'
+            '      }\n'
+            '      candidates.sort((a,b)=>b.quality-a.quality);\n'
+            '      const pool=candidates.slice(0,Math.min(18,candidates.length));\n'
+            '      const best=pool[0].quality;\n'
+            '      const chosen=this.weightedPick(pool,x=>Math.exp((x.quality-best)*1.7))||pool[0];\n'
+            '      return chosen;\n'
+            '    },\n'
+          )
+
           text = text[:start] + new_block + text[end:]
           text = text.replace('Campal Battle Lab v0.87.4', 'Campal Battle Lab v0.87.5', 1)
           text = text.replace('CAMPAL BATTLE LAB v0.87.4', 'CAMPAL BATTLE LAB v0.87.5', 1)
