@@ -19,7 +19,8 @@ jobs:
           ref: main
 
       - name: Relax stale migration guard
-        run: sed -i "s/state: 'last-known'/'last-known'/" .github/patch_fog_v0900.py
+        run: |
+          sed -i "s/state: 'last-known'/'last-known'/" .github/patch_fog_v0900.py
 
       - name: Apply Fog of War migration
         run: python .github/patch_fog_v0900.py
