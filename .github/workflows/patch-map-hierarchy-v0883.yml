@@ -20,7 +20,9 @@ jobs:
           fetch-depth: 0
 
       - name: Apply patch
-        run: python3 .github/patch_map_hierarchy_v0883.py
+        run: |
+          sed -i "0,/perimeterMountainSectors(){'''/s//'''/" .github/patch_map_hierarchy_v0883.py
+          python3 .github/patch_map_hierarchy_v0883.py
 
       - name: Validate JavaScript
         run: node --check /tmp/coffee-battles.js
