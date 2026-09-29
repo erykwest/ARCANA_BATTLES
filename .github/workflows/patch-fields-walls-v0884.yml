@@ -1,0 +1,41 @@
+name: Fields and walls v0.88.4
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/patch-fields-walls-v0884.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply patch
+        run: python3 .github/patch_fields_walls_v0884.py
+      - name: Validate JavaScript
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('COFFEE_BATTLES.html').read_text(encoding='utf-8')
+          a=s.index('<script>')+len('<script>')
+          b=s.rindex('</script>')
+          Path('/tmp/coffee-battles.js').write_text(s[a:b],encoding='utf-8')
+          PY
+          node --check /tmp/coffee-battles.js
+          grep -q "Campal Battle Lab v0.88.4" COFFEE_BATTLES.html
+          grep -q "WALL_CROSS_TIME_S: 4" COFFEE_BATTLES.html
+          grep -q "'Tactical','Fields'" COFFEE_BATTLES.html
+      - name: Commit and push
+        shell: bash
+        run: |
+          rm -f .github/patch_fields_walls_v0884.py .github/workflows/patch-fields-walls-v0884.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add COFFEE_BATTLES.html .github
+          git commit -m "Add fields and traversable walls v0.88.4"
+          git push origin main
