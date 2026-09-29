@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ARCANA — Campal Battle Lab v0.85.0</title>
+<title>ARCANA — Campal Battle Lab v0.86.0</title>
 <style>
   :root{
     --bg:#11151b;
@@ -437,7 +437,7 @@
 </head>
 <body>
 <header>
-  <strong>ARCANA — CAMPAL BATTLE LAB v0.85.0</strong>
+  <strong>ARCANA — CAMPAL BATTLE LAB v0.86.0</strong>
   <span>REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
 </header>
 
@@ -471,12 +471,22 @@
       <div class="setup-mode-note" id="setupModeNote">AUTO usa Doctrine Engine: genera prima le unità, poi sceglie la dottrina in base a composizione, campo e ruolo ATT/DEF.</div>
     </div>
 
+    <div class="setup-section">
+      <span class="setup-label">RUOLO GIOCATORE · BLU ALL'AVVIO</span>
+      <div class="setup-modes" id="setupRoles">
+        <button type="button" data-role="random" class="active">CASUALE<small>ATT o DEF assegnato a inizio partita</small></button>
+        <button type="button" data-role="attack">ATTACCANTE<small>il BLU deve ottenere la vittoria entro il tempo</small></button>
+        <button type="button" data-role="defend">DIFENSORE<small>il BLU vince se resiste fino al limite</small></button>
+      </div>
+      <div class="setup-mode-note" id="setupRoleNote">In DEV puoi ancora cambiare fazione durante la battaglia; il ruolo ATT/DEF resta legato al colore assegnato all'avvio.</div>
+    </div>
+
     <div class="setup-summary">
       <span id="setupModeSummary">AUTO · Doctrine Engine</span>
       <strong id="setupPointsSummary">1000 PT</strong>
     </div>
     <button id="createBattleBtn" type="button">VAI ALLO SCHIERAMENTO</button>
-    <div class="setup-footnote">v0.85 · Step 1/3 — AUTO usa Doctrine Engine; MIRRORED e CUSTOM aprono il Deployment Builder.</div>
+    <div class="setup-footnote">v0.86 · Step 1/3 — ruolo ATT/DEF + Army AI refresh 5s + limite battaglia 600s.</div>
   </div>
 </div>
 
@@ -719,6 +729,8 @@
     setupModes: document.getElementById('setupModes'),
     setupModeNote: document.getElementById('setupModeNote'),
     setupModeSummary: document.getElementById('setupModeSummary'),
+    setupRoles: document.getElementById('setupRoles'),
+    setupRoleNote: document.getElementById('setupRoleNote'),
     setupPointsSummary: document.getElementById('setupPointsSummary'),
     createBattleBtn: document.getElementById('createBattleBtn'),
     deploymentUI: document.getElementById('deploymentUI'),
@@ -809,6 +821,8 @@
     NAV_WAYPOINT_MIN_U: 0.50,
     COLLIDER_EPS_PX: 0.25,
     TERRAIN_SOFT_EDGE_U: 0.75, // fascia visibile esterna: accidentata ma non collider duro
+    ARMY_AI_REFRESH_S: 5,
+    BATTLE_TIME_LIMIT_S: 600,
     FORMATIONS: Object.freeze({
       base:   Object.freeze({ label: 'BASE',    front: 3, depth: 2 }),
       column: Object.freeze({ label: 'COLONNA', front: 2, depth: 3 }),
@@ -841,6 +855,7 @@
     battleSetup: {
       points: 1000,
       mode: 'auto',
+      role: 'random',
       mirrorArmy: false,
       mirrorDeployment: false,
       configured: false
@@ -851,6 +866,11 @@
       scores: { blue: [], red: [] },
       terrain: { blue: null, red: null },
       compositions: { blue: [], red: [] }
+    },
+    armyAI: {
+      enabled: true,
+      lastRefreshAt: -Infinity,
+      refreshCount: 0
     },
     battle: {
       active: false,
@@ -1541,7 +1561,7 @@
       return true;
     },
 
-    setLock(u, enemy) {
+    setLock(u, enemy, silent = false) {
       if (!u.status.alive || !enemy?.status.alive || u.side === enemy.side || u.status.routing) return false;
       u.motion.detour = null;
       u.order.kind = 'lock';
@@ -1565,7 +1585,7 @@
         AI.planApproach(u, enemy, true);
       }
 
-      Log.add(`${u.name}: LOCK-ON → ${enemy.name}${u.ranged ? ' [RANGED]' : ''}`);
+      if (!silent) Log.add(`${u.name}: LOCK-ON → ${enemy.name}${u.ranged ? ' [RANGED]' : ''}`);
       return true;
     },
 
@@ -4387,7 +4407,10 @@
       State.battle.active = !!active;
       State.battle.ended = false;
       State.battle.result = null;
+      State.battle.playerSide = 'blue';
       State.battle.armyCollapse = { blue: false, red: false };
+      State.armyAI.lastRefreshAt = -Infinity;
+      State.armyAI.refreshCount = 0;
       this.hideResult();
       this.updateVictoryBar();
     },
@@ -4559,7 +4582,7 @@
       </section>`;
     },
 
-    showResult(result) {
+    showResult(result, leadOverride = null) {
       if (State.battle.ended) return;
       State.battle.ended = true;
       State.battle.active = false;
@@ -4569,11 +4592,11 @@
       const title = result === 'victory' ? 'VITTORIA!' : (result === 'defeat' ? 'SCONFITTA' : 'PAREGGIO');
       DOM.battleEndTitle.textContent = title;
       DOM.battleEndTitle.className = result;
-      const outcomeLead = result === 'victory'
+      const outcomeLead = leadOverride || (result === 'victory'
         ? 'Non ci sono più unità nemiche attive sul campo.'
         : result === 'defeat'
           ? 'Non ci sono più unità alleate attive sul campo.'
-          : 'Entrambi gli eserciti non hanno più unità attive sul campo.';
+          : 'Entrambi gli eserciti non hanno più unità attive sul campo.');
       DOM.battleEndLead.textContent = `${outcomeLead} · DMG = punti Vita reali; B = punti psicologia reali; ↑ inflitti / ↓ subiti.`;
       DOM.battleEndLog.innerHTML = this.sideLog('blue') + this.sideLog('red');
       DOM.battleEndOverlay.classList.add('open');
@@ -4597,6 +4620,26 @@
       Selection.remove(u.id);
       Log.add(`↗ ${u.name}: ROUT oltre il bordo esterno → RIMOSSA DALLA BATTAGLIA`);
       this.updateVictoryBar();
+    },
+
+    defenderSide() {
+      if (State.doctrine.roles.blue === 'defend') return 'blue';
+      if (State.doctrine.roles.red === 'defend') return 'red';
+      return State.doctrine.roles.blue === 'attack' ? 'red' : 'blue';
+    },
+
+    showSideWinner(winnerSide, reason) {
+      const result = winnerSide === State.battle.playerSide ? 'victory' : 'defeat';
+      const label = winnerSide === 'blue' ? 'BLU' : 'ROSSO';
+      this.showResult(result, `${reason} · Vincitore: ${label}.`);
+    },
+
+    checkTimeLimit() {
+      if (!State.battle.active || State.battle.ended || State.deployment.active) return;
+      if (State.simTime < CFG.BATTLE_TIME_LIMIT_S) return;
+      const defender = this.defenderSide();
+      Log.add(`⏱ TEMPO SCADUTO ${Math.floor(CFG.BATTLE_TIME_LIMIT_S/60)}:00 → vittoria DIFENSORE ${defender.toUpperCase()}`);
+      this.showSideWinner(defender, `Tempo massimo di ${Math.floor(CFG.BATTLE_TIME_LIMIT_S/60)} minuti raggiunto: il DIFENSORE mantiene il campo`);
     },
 
     checkOutcome() {
@@ -5325,6 +5368,7 @@
         State.primaryId = first.id;
       } else State.primaryId = null;
       UI.updateSelectedInfo();
+      if (State.battle.active && !State.deployment.active) ArmyAI.setPlayerSide(side);
       Log.add(`SCHIERAMENTO: ${side === 'blue' ? 'BLU' : 'ROSSO'}`);
     },
 
@@ -6562,11 +6606,14 @@
       State.selectedIds.clear();
       State.primaryId = null;
 
-      const attacker = Math.random() < 0.5 ? 'blue' : 'red';
-      State.doctrine.roles = {
-        blue: attacker === 'blue' ? 'attack' : 'defend',
-        red: attacker === 'red' ? 'attack' : 'defend'
-      };
+      // I ruoli vengono risolti dal setup partita. Fallback solo per chiamate DEV dirette.
+      if (!State.doctrine.roles.blue || !State.doctrine.roles.red) {
+        const attacker = Math.random() < 0.5 ? 'blue' : 'red';
+        State.doctrine.roles = {
+          blue: attacker === 'blue' ? 'attack' : 'defend',
+          red: attacker === 'red' ? 'attack' : 'defend'
+        };
+      }
 
       for (const side of ['blue','red']) {
         const composition = this.generateComposition(State.battleSetup.points);
@@ -6619,6 +6666,27 @@
       };
     },
 
+    roleCopy(role) {
+      if (role === 'attack') return { summary:'ATTACCANTE', note:'BLU = ATTACCANTE · ROSSO = DIFENSORE.' };
+      if (role === 'defend') return { summary:'DIFENSORE', note:'BLU = DIFENSORE · ROSSO = ATTACCANTE.' };
+      return { summary:'CASUALE', note:'Il ruolo del BLU viene estratto a inizio partita; il ROSSO riceve automaticamente il ruolo opposto.' };
+    },
+
+    setRole(role) {
+      if (!['random','attack','defend'].includes(role)) role = 'random';
+      State.battleSetup.role = role;
+      this.sync();
+    },
+
+    resolveRoles() {
+      let blueRole = State.battleSetup.role;
+      if (blueRole === 'random') blueRole = Math.random() < 0.5 ? 'attack' : 'defend';
+      const redRole = blueRole === 'attack' ? 'defend' : 'attack';
+      State.doctrine.roles = { blue:blueRole, red:redRole };
+      State.battle.playerSide = 'blue';
+      return { blue:blueRole, red:redRole };
+    },
+
     setMode(mode) {
       if (!['auto','mirrored','custom'].includes(mode)) mode = 'auto';
       State.battleSetup.mode = mode;
@@ -6632,10 +6700,15 @@
       State.battleSetup.points = points;
       DOM.setupPointsSummary.textContent = `${points} PT`;
       const copy = this.modeCopy(State.battleSetup.mode);
-      DOM.setupModeSummary.textContent = copy.summary;
+      const roleCopy = this.roleCopy(State.battleSetup.role);
+      DOM.setupModeSummary.textContent = `${copy.summary} · ${roleCopy.summary}`;
       DOM.setupModeNote.textContent = copy.note;
+      DOM.setupRoleNote.textContent = `${roleCopy.note} In DEV puoi ancora cambiare fazione durante la battaglia.`;
       DOM.setupModes.querySelectorAll('[data-mode]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mode === State.battleSetup.mode);
+      });
+      DOM.setupRoles.querySelectorAll('[data-role]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.role === State.battleSetup.role);
       });
       DOM.pointPresets.querySelectorAll('[data-points]').forEach(btn => {
         btn.classList.toggle('active', Number(btn.dataset.points) === points && !DOM.customPointsInput.value);
@@ -6660,6 +6733,7 @@
       State.battleSetup.points = this.sanitizePoints(
         DOM.customPointsInput.value ? DOM.customPointsInput.value : State.battleSetup.points
       );
+      const resolvedRoles = this.resolveRoles();
       State.battleSetup.configured = true;
       DOM.battleSetupOverlay.classList.remove('open');
 
@@ -6669,7 +6743,7 @@
         ? 'MIRRORED · Trascina le unità BLU: il ROSSO replica automaticamente composizione, posizione e orientamento.'
         : 'CUSTOM · Trascina e posiziona liberamente entrambi gli eserciti entro il budget.';
 
-      Log.add(`SETUP: ${State.battleSetup.points} PT | mode ${State.battleSetup.mode.toUpperCase()}`);
+      Log.add(`SETUP: ${State.battleSetup.points} PT | mode ${State.battleSetup.mode.toUpperCase()} | BLU ${resolvedRoles.blue.toUpperCase()} · ROSSO ${resolvedRoles.red.toUpperCase()}`);
     },
 
     bind() {
@@ -6678,6 +6752,9 @@
       });
       DOM.setupModes.querySelectorAll('[data-mode]').forEach(btn => {
         btn.addEventListener('click', () => this.setMode(btn.dataset.mode));
+      });
+      DOM.setupRoles.querySelectorAll('[data-role]').forEach(btn => {
+        btn.addEventListener('click', () => this.setRole(btn.dataset.role));
       });
       DOM.customPointsInput.addEventListener('input', () => {
         if (!DOM.customPointsInput.value) {
@@ -6690,6 +6767,73 @@
       });
       DOM.createBattleBtn.addEventListener('click', () => this.closeAndCreate());
       DOM.newBattleBtn.addEventListener('click', () => this.open(false));
+    }
+  };
+
+  // ============================================================
+  // ARMY AI v0.1 — one strategic refresh every 5 simulated seconds.
+  // Base order: every free AI unit attacks its nearest enemy.
+  // A single refresh may therefore issue the same strategic order to many units.
+  // ============================================================
+  const ArmyAI = {
+    opposite(side) { return side === 'blue' ? 'red' : 'blue'; },
+
+    aiSide() { return this.opposite(State.battle.playerSide); },
+
+    releaseSide(side) {
+      for (const u of Units.alive(side)) {
+        if (u.status.routing || u.order.kind === 'retreat' || Engagements.hasAny(u)) continue;
+        if (u.order.kind === 'lock' || u.order.kind === 'ai') Orders.clear(u);
+        if (u.ranged) {
+          u.ranged.approachTargetId = null;
+          u.ranged.targetId = null;
+          u.ranged.clock = 0;
+        }
+      }
+    },
+
+    setPlayerSide(side) {
+      if (!['blue','red'].includes(side) || State.battle.playerSide === side) return false;
+      State.battle.playerSide = side;
+      this.releaseSide(side);
+      State.armyAI.lastRefreshAt = -Infinity;
+      Log.add(`DEV CONTROLLO → ${side.toUpperCase()} | Army AI passa a ${this.aiSide().toUpperCase()}`);
+      this.refresh(true);
+      return true;
+    },
+
+    issueAttackNearest(u) {
+      if (!u?.status?.alive || u.status.routing || u.order.kind === 'retreat' || Engagements.hasAny(u)) return 'skip';
+      const found = AI.nearestEnemy(u);
+      const enemy = found?.enemy || null;
+      if (!enemy) {
+        if (u.order.kind === 'lock' || u.order.kind === 'ai') Orders.clear(u);
+        return 'none';
+      }
+      if (u.order.lockTargetId === enemy.id && (u.order.kind === 'lock' || u.order.kind === 'ai')) return 'same';
+      return Orders.setLock(u, enemy, true) ? 'new' : 'skip';
+    },
+
+    refresh(force = false) {
+      if (!State.armyAI.enabled || !State.battle.active || State.battle.ended || State.deployment.active) return false;
+      if (!force && State.simTime - State.armyAI.lastRefreshAt < CFG.ARMY_AI_REFRESH_S) return false;
+      State.armyAI.lastRefreshAt = State.simTime;
+      State.armyAI.refreshCount += 1;
+
+      const side = this.aiSide();
+      let issued = 0, same = 0, skipped = 0;
+      for (const u of Units.alive(side)) {
+        const r = this.issueAttackNearest(u);
+        if (r === 'new') issued++;
+        else if (r === 'same') same++;
+        else skipped++;
+      }
+      Log.add(`🤖 ARMY AI ${side.toUpperCase()} #${State.armyAI.refreshCount}: ATTACCA IL PIÙ VICINO | nuovi ${issued} · confermati ${same} · non assegnabili ${skipped}`);
+      return true;
+    },
+
+    update() {
+      this.refresh(false);
     }
   };
 
@@ -7194,7 +7338,7 @@
       State.view = { scale: 1, x: 0, y: 0 };
       Battle.reset(restoredDeployment);
       UI.setTimeScale(1);
-      DOM.log.textContent = `${restoredDeployment ? 'Battaglia resettata dallo schieramento.' : 'Battaglia 3 vs 3 resettata.'}\nARCHITETTURA v0.85: ${State.battleSetup.points} PT · Mirror Army ${State.battleSetup.mirrorArmy ? 'ON' : 'OFF'} · Mirror Deployment ${State.battleSetup.mirrorDeployment ? 'ON' : 'OFF'} · campo 90×60U + bordocampo 10U · deployment sui lati lunghi · terreni random al centro (laghetto, muro, altura, bosco, strada, terreno difficile).`;
+      DOM.log.textContent = `${restoredDeployment ? 'Battaglia resettata dallo schieramento.' : 'Battaglia 3 vs 3 resettata.'}\nARCHITETTURA v0.86: ${State.battleSetup.points} PT · BLU ${(State.doctrine.roles.blue || '—').toUpperCase()} · ROSSO ${(State.doctrine.roles.red || '—').toUpperCase()} · Army AI ${CFG.ARMY_AI_REFRESH_S}s · limite ${CFG.BATTLE_TIME_LIMIT_S}s · campo 90×60U + bordocampo 10U.`;
       UI.updateSelectedInfo();
     },
 
@@ -7249,6 +7393,7 @@
     },
 
     update(dt) {
+      ArmyAI.update();
       State.units.forEach(Formations.update);
       State.units.forEach(AI.update.bind(AI));
       State.units.forEach(u => Movement.update(u, dt));
@@ -7273,6 +7418,7 @@
       Combat.update(dt);
       Battle.checkArmyCollapse();
       Battle.checkOutcome();
+      Battle.checkTimeLimit();
     },
 
     frame(now) {
@@ -7298,7 +7444,7 @@
   Simulation.reset();
   View.resize();
   BattleSetup.open(true);
-  window.__ARCANA_DEBUG__ = { State, Units, Geometry, Terrain, AI, Movement, Orders, Engagements, Collision, Simulation, Selection, CFG, Pathfinder, Combat, Morale, Resources, Battle, BattleSetup, Deployment, DoctrineEngine };
+  window.__ARCANA_DEBUG__ = { State, Units, Geometry, Terrain, AI, ArmyAI, Movement, Orders, Engagements, Collision, Simulation, Selection, CFG, Pathfinder, Combat, Morale, Resources, Battle, BattleSetup, Deployment, DoctrineEngine };
   requestAnimationFrame(Simulation.frame);
 })();
 
