@@ -1,0 +1,89 @@
+name: Rebrand to COFFEE BATTLES
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/rebrand-coffee-battles.yml
+
+permissions:
+  contents: write
+
+jobs:
+  rebrand:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Rebrand project and verify
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git mv ARCANA_BATTLES.html COFFEE_BATTLES.html
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html = Path('COFFEE_BATTLES.html')
+          text = html.read_text(encoding='utf-8')
+
+          replacements = [
+              ('ARCANA — Campal Battle Lab', 'COFFEE BATTLES — Campal Battle Lab'),
+              ('ARCANA — CAMPAL BATTLE LAB', 'COFFEE BATTLES — CAMPAL BATTLE LAB'),
+              ('ARCANA · SOURCE PAUSE', 'COFFEE BATTLES · SOURCE PAUSE'),
+              ('ARCANA · CAMPAL BATTLE LAB', 'COFFEE BATTLES · CAMPAL BATTLE LAB'),
+              ('ARCANA · ESITO BATTAGLIA', 'COFFEE BATTLES · ESITO BATTAGLIA'),
+              ('__ARCANA_DEBUG__', '__COFFEE_BATTLES_DEBUG__'),
+              ('Dado Arcano', 'Dado Battaglia'),
+              ('ARCANE_FACES', 'BATTLE_DIE_FACES'),
+              ('arcaneDie', 'battleDie'),
+          ]
+          for old, new in replacements:
+              text = text.replace(old, new)
+
+          if 'ARCANA' in text or 'Arcano' in text or 'ARCANE' in text or 'arcane' in text:
+              raise SystemExit('Old ARCANA/Arcano/ARCANE identifiers remain in HTML after targeted rebrand')
+
+          html.write_text(text, encoding='utf-8')
+
+          Path('README.md').write_text(
+              '# COFFEE BATTLES\n\n'
+              'Browser-based tactical battle game developed as a single self-contained HTML file.\n\n'
+              '- `COFFEE_BATTLES.html` — standalone application\n'
+              '- `vercel.json` — Vercel routing configuration\n',
+              encoding='utf-8'
+          )
+
+          vercel = Path('vercel.json')
+          vtext = vercel.read_text(encoding='utf-8').replace('/ARCANA_BATTLES.html', '/COFFEE_BATTLES.html')
+          vercel.write_text(vtext, encoding='utf-8')
+          PY
+
+          # Remove this one-shot workflow before validating/committing so the final tree is clean.
+          rm -f .github/workflows/rebrand-coffee-battles.yml
+          rmdir .github/workflows 2>/dev/null || true
+          rmdir .github 2>/dev/null || true
+
+          echo '--- Final project files ---'
+          find . -maxdepth 2 -type f -not -path './.git/*' -print | sort
+
+          echo '--- Checking for old branding (case-insensitive) ---'
+          if grep -RniE 'arcana|arcane|arcano' --exclude-dir=.git .; then
+            echo 'ERROR: old branding still present.' >&2
+            exit 1
+          fi
+
+          grep -q 'COFFEE BATTLES' COFFEE_BATTLES.html
+          grep -q 'COFFEE_BATTLES.html' vercel.json
+          grep -q '^# COFFEE BATTLES$' README.md
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Rebrand project to COFFEE BATTLES'
+          git push origin HEAD:main
