@@ -18,6 +18,9 @@ jobs:
         with:
           ref: main
 
+      - name: Relax stale migration guard
+        run: sed -i "s/state: 'last-known'/'last-known'/" .github/patch_fog_v0900.py
+
       - name: Apply Fog of War migration
         run: python .github/patch_fog_v0900.py
 
@@ -39,6 +42,7 @@ jobs:
         run: |
           grep -q 'VISION_RANGE_U: 20' COFFEE_BATTLES.html
           grep -q 'const Intel = {' COFFEE_BATTLES.html
+          grep -q "old.state = 'last-known'" COFFEE_BATTLES.html
           grep -q 'Intel.visibleEnemies(u.side)' COFFEE_BATTLES.html
           grep -q 'Intel.ghosts(viewSide)' COFFEE_BATTLES.html
           grep -q 'INTEL TARGETING' COFFEE_BATTLES.html
