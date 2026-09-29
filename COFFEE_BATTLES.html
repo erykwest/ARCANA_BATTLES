@@ -5053,6 +5053,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       }
 
       Geometry.clampToWorld(u);
+      if (Terrain.interceptWallTraversal(u, old)) return;
       Morale.markPermanentRoutIfInBorder(u);
 
       // Anti-tunneling anche quando è l'unità in ROUT a muoversi attraverso
@@ -5173,6 +5174,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         u.pose.y += Math.sin(u.pose.angle) * step;
         u.motion.moving = step > 0;
         Geometry.clampToWorld(u);
+        if (Terrain.interceptWallTraversal(u, old)) return;
 
         // Il magnet scatta esclusivamente sul lato prenotato.
         if (AI.intendedContactReached(u, enemy) &&
@@ -5261,6 +5263,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       u.pose.y += Math.sin(u.pose.angle) * step;
       u.motion.moving = step > 0;
       Geometry.clampToWorld(u);
+      if (Terrain.interceptWallTraversal(u, old)) return;
 
       for (const other of Units.enemiesOf(u)) {
         const swept = Geometry.segmentHitsExpandedBody(other, old.x, old.y, u.pose.x, u.pose.y);
