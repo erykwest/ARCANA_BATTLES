@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ARCANA — Campal Battle Lab v0.87.3</title>
+<title>ARCANA — Campal Battle Lab v0.87.4</title>
 <style>
   :root{
     --bg:#11151b;
@@ -437,7 +437,7 @@
 </head>
 <body>
 <header>
-  <strong>ARCANA — CAMPAL BATTLE LAB v0.87.3</strong>
+  <strong>ARCANA — CAMPAL BATTLE LAB v0.87.4</strong>
   <span>REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
 </header>
 
@@ -4648,8 +4648,6 @@
           <td>${this.escapeHtml(u.name)}<span class="battle-unit-state">${this.escapeHtml(this.unitState(u))}</span></td>
           <td>${Math.round(r.damageV || 0)}</td>
           <td>${Math.round(r.damageVTaken || 0)}</td>
-          <td>${Math.round(r.damageB || 0)}</td>
-          <td>${Math.round(r.damageBTaken || 0)}</td>
           <td>${r.kills || 0}</td>
           <td>${r.routsOut || 0}</td>
         </tr>`;
@@ -4659,26 +4657,22 @@
         const r = u.battleRecord || {};
         a.damageV += r.damageV || 0;
         a.damageVTaken += r.damageVTaken || 0;
-        a.damageB += r.damageB || 0;
-        a.damageBTaken += r.damageBTaken || 0;
         a.kills += r.kills || 0;
         a.routsOut += r.routsOut || 0;
         return a;
-      }, { damageV:0, damageVTaken:0, damageB:0, damageBTaken:0, kills:0, routsOut:0 });
+      }, { damageV:0, damageVTaken:0, kills:0, routsOut:0 });
 
       return `<section class="battle-damage-side">
         <h3>${title}</h3>
         <table class="battle-damage-table">
           <thead><tr>
-            <th>UNITÀ</th><th>DMG ↑</th><th>DMG ↓</th><th>B ↑</th><th>B ↓</th><th>KO</th><th>ROUT OUT</th>
+            <th>UNITÀ</th><th>DMG ↑</th><th>DMG ↓</th><th>KO</th><th>ROUT OUT</th>
           </tr></thead>
-          <tbody>${rows || '<tr><td colspan="7">—</td></tr>'}</tbody>
+          <tbody>${rows || '<tr><td colspan="5">—</td></tr>'}</tbody>
           <tfoot><tr>
             <th>TOTALE</th>
             <th>${Math.round(totals.damageV)}</th>
             <th>${Math.round(totals.damageVTaken)}</th>
-            <th>${Math.round(totals.damageB)}</th>
-            <th>${Math.round(totals.damageBTaken)}</th>
             <th>${totals.kills}</th>
             <th>${totals.routsOut}</th>
           </tr></tfoot>
@@ -4701,7 +4695,7 @@
         : result === 'defeat'
           ? 'Non ci sono più unità alleate attive sul campo.'
           : 'Entrambi gli eserciti non hanno più unità attive sul campo.');
-      DOM.battleEndLead.textContent = `${outcomeLead} · DMG = punti Vita reali; B = punti psicologia reali; ↑ inflitti / ↓ subiti.`;
+      DOM.battleEndLead.textContent = `${outcomeLead} · DMG = punti Vita reali; ↑ inflitti / ↓ subiti.`;
       DOM.battleEndLog.innerHTML = this.sideLog('blue') + this.sideLog('red');
       DOM.battleEndOverlay.classList.add('open');
       Log.add(`🏁 ${title}`);
