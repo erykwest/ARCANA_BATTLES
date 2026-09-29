@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ARCANA — Campal Battle Lab v0.86.0</title>
+<title>ARCANA — Campal Battle Lab v0.87.0</title>
 <style>
   :root{
     --bg:#11151b;
@@ -437,7 +437,7 @@
 </head>
 <body>
 <header>
-  <strong>ARCANA — CAMPAL BATTLE LAB v0.86.0</strong>
+  <strong>ARCANA — CAMPAL BATTLE LAB v0.87.0</strong>
   <span>REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
 </header>
 
@@ -817,6 +817,7 @@
     MAX_SCALE: 6,
     SLOT_TIE_EPS_U: 0.05,
     APPROACH_REACHED_U: 0.18,
+    APPROACH_REFRESH_S: 0.10, // aggiornamento target tattico max 10 Hz, non ogni frame
     NAV_WAYPOINT_FRONT_RATIO: 0.50, // waypoint raggiunto entro 1/2 della larghezza frontale
     NAV_WAYPOINT_MIN_U: 0.50,
     COLLIDER_EPS_PX: 0.25,
@@ -2348,13 +2349,13 @@
       return 0.5;
     },
 
-    slotContactPoint(defender, slot, contactT = 0.5) {
+    slotContactPoint(defender, slot, contactT = 0.5, out = null) {
       const seg = Geometry.slotSegment(defender, slot);
       const t = Math.max(0, Math.min(1, Number.isFinite(contactT) ? contactT : 0.5));
-      return {
-        x: seg.a.x + (seg.b.x - seg.a.x) * t,
-        y: seg.a.y + (seg.b.y - seg.a.y) * t
-      };
+      const p = out || { x:0, y:0 };
+      p.x = seg.a.x + (seg.b.x - seg.a.x) * t;
+      p.y = seg.a.y + (seg.b.y - seg.a.y) * t;
+      return p;
     },
 
     slotGatePoint(attacker, defender, slot, contactT = 0.5) {
@@ -2420,7 +2421,7 @@
         if (!next) {
           u.order.approach = null;
           u.order.target = null;
-          u.order.queue = [];
+          u.order.queue.length = 0;
           return false;
         }
         ap.slot = next;
@@ -2428,11 +2429,17 @@
         ap.phase = this.initialApproachPhase(u, enemy, next, ap.contactT);
       }
 
-      ap.contactPoint = this.slotContactPoint(enemy, ap.slot, ap.contactT);
+      // HOT PATH: riusa gli stessi oggetti invece di allocarne 2-3 per unità/frame.
+      ap.contactPoint = this.slotContactPoint(enemy, ap.slot, ap.contactT, ap.contactPoint);
       ap.gatePoint = null;
       ap.navPoint = ap.contactPoint;
-      u.order.target = { ...ap.contactPoint };
-      u.order.queue = [];
+      if (!u.order.target) u.order.target = { x:ap.contactPoint.x, y:ap.contactPoint.y };
+      else {
+        u.order.target.x = ap.contactPoint.x;
+        u.order.target.y = ap.contactPoint.y;
+      }
+      if (u.order.queue.length) u.order.queue.length = 0;
+      ap.nextRefreshAt = State.simTime + CFG.APPROACH_REFRESH_S;
       return true;
     },
 
@@ -2440,6 +2447,7 @@
       if (!u.status.alive || !enemy?.status.alive || u.engagement.outbound) return false;
 
       const existing = u.order.approach?.enemyId === enemy.id ? u.order.approach : null;
+      if (!force && existing && u.order.target && State.simTime < (existing.nextRefreshAt || 0)) return true;
       let slot = existing?.slot || null;
 
       // preferredSlot viene accettato solo se coincide con il lato naturale oppure
@@ -2477,7 +2485,8 @@
           phase: this.initialApproachPhase(u, enemy, slot, contactT),
           contactPoint: null,
           gatePoint: null,
-          navPoint: null
+          navPoint: null,
+          nextRefreshAt: 0
         };
         u.motion.turn = null;
         Pathfinder.clear(u);
@@ -5573,24 +5582,31 @@
       if (!State.deployment.active) return;
       const bz = Deployment.zone('blue');
       const rz = Deployment.zone('red');
+      const hideRed = Deployment.enemyHiddenDuringSetup();
       ctx.save();
       ctx.fillStyle = 'rgba(63,121,216,.10)';
       ctx.fillRect(bz.x, bz.y, bz.w, bz.h);
-      ctx.fillStyle = 'rgba(207,77,77,.10)';
-      ctx.fillRect(rz.x, rz.y, rz.w, rz.h);
+      if (!hideRed) {
+        ctx.fillStyle = 'rgba(207,77,77,.10)';
+        ctx.fillRect(rz.x, rz.y, rz.w, rz.h);
+      }
       ctx.setLineDash([7,6]);
       ctx.lineWidth = 2;
       ctx.strokeStyle = 'rgba(103,158,244,.70)';
       ctx.strokeRect(bz.x, bz.y, bz.w, bz.h);
-      ctx.strokeStyle = 'rgba(235,104,104,.70)';
-      ctx.strokeRect(rz.x, rz.y, rz.w, rz.h);
+      if (!hideRed) {
+        ctx.strokeStyle = 'rgba(235,104,104,.70)';
+        ctx.strokeRect(rz.x, rz.y, rz.w, rz.h);
+      }
       ctx.setLineDash([]);
       ctx.font = 'bold 13px Segoe UI, Arial';
       ctx.textBaseline = 'top';
       ctx.fillStyle = 'rgba(160,198,255,.85)';
       ctx.fillText('ZONA SCHIERAMENTO BLU', bz.x + 8, bz.y + 8);
-      ctx.fillStyle = 'rgba(255,170,170,.85)';
-      ctx.fillText('ZONA SCHIERAMENTO ROSSO', rz.x + 8, rz.y + 8);
+      if (!hideRed) {
+        ctx.fillStyle = 'rgba(255,170,170,.85)';
+        ctx.fillText('ZONA SCHIERAMENTO ROSSO', rz.x + 8, rz.y + 8);
+      }
 
       const d = State.deployment.drag;
       if (d?.kind === 'catalog' && d.ghost) {
@@ -5884,10 +5900,11 @@
       Terrain.draw();
       this.grid(w, h);
       this.deploymentOverlay();
-      State.units.forEach(u => this.orders(u));
+      const visibleUnits = State.units.filter(u => Deployment.visibleInDeployment(u));
+      visibleUnits.filter(u => u.side === State.battle.playerSide).forEach(u => this.orders(u));
       const p = Selection.primary();
-      if (p) this.lock(p);
-      State.units.forEach(u => this.unit(u));
+      if (p && Deployment.visibleInDeployment(p)) this.lock(p);
+      visibleUnits.forEach(u => this.unit(u));
       this.projectiles();
       ctx.save();
       ctx.fillStyle = 'rgba(255,255,255,.7)';
@@ -5898,7 +5915,8 @@
       ctx.restore();
       ctx.restore();
 
-      State.units.forEach(u => this.hud(u));
+      const hudUnits = State.units.filter(u => Deployment.visibleInDeployment(u));
+      hudUnits.forEach(u => this.hud(u));
       this.selectionBox();
     }
   };
@@ -5956,6 +5974,14 @@
 
     unitCost(u) { return Number(u?.deployCost || this.spec(u?.type).cost || 0); },
 
+    enemyHiddenDuringSetup() {
+      return State.deployment.active && State.battleSetup.mode === 'auto';
+    },
+
+    visibleInDeployment(u) {
+      return !(this.enemyHiddenDuringSetup() && u?.side === 'red');
+    },
+
     recount() {
       State.deployment.spent.blue = State.units.filter(u => u.side === 'blue').reduce((n,u) => n + this.unitCost(u), 0);
       State.deployment.spent.red = State.units.filter(u => u.side === 'red').reduce((n,u) => n + this.unitCost(u), 0);
@@ -5963,29 +5989,39 @@
 
     updateUI() {
       this.recount();
+      const autoPlayerDeploy = State.deployment.active && State.battleSetup.mode === 'auto';
+      if (autoPlayerDeploy) State.selectedSide = 'blue';
       const side = State.selectedSide;
       const spent = State.deployment.spent[side] || 0;
       DOM.deploySpent.textContent = spent;
       DOM.deployBudget.textContent = State.battleSetup.points;
       DOM.deployBlueBtn.classList.toggle('active', side === 'blue');
       DOM.deployRedBtn.classList.toggle('active', side === 'red');
+      DOM.deployRedBtn.style.display = autoPlayerDeploy ? 'none' : '';
+      if (DOM.sideRedBtn) DOM.sideRedBtn.disabled = autoPlayerDeploy;
+      if (DOM.sideBlueBtn) DOM.sideBlueBtn.disabled = false;
       DOM.sideBlueBtn?.classList.toggle('active', side === 'blue');
       DOM.sideRedBtn?.classList.toggle('active', side === 'red');
+      if (DOM.removeDeployUnitBtn) DOM.removeDeployUnitBtn.disabled = autoPlayerDeploy;
       DOM.deploymentCards.querySelectorAll('.unit-card').forEach(card => {
         const type = card.dataset.unitType;
         const cost = this.spec(type).cost;
         const blockedByMirror = State.battleSetup.mirrorArmy && side === 'red';
         const unaffordable = spent + cost > State.battleSetup.points;
-        card.classList.toggle('disabled', blockedByMirror || unaffordable);
-        card.disabled = blockedByMirror || unaffordable;
-        card.title = blockedByMirror
-          ? 'Mirror Army attivo: la composizione ROSSA replica automaticamente il BLU.'
-          : (unaffordable ? 'Budget insufficiente.' : `Trascina ${this.spec(type).label} sul campo.`);
+        const lockedRoster = autoPlayerDeploy;
+        card.classList.toggle('disabled', blockedByMirror || unaffordable || lockedRoster);
+        card.disabled = blockedByMirror || unaffordable || lockedRoster;
+        card.title = lockedRoster
+          ? 'AUTO: composizione BLU già generata. Riposiziona le unità esistenti.'
+          : blockedByMirror
+            ? 'Mirror Army attivo: la composizione ROSSA replica automaticamente il BLU.'
+            : (unaffordable ? 'Budget insufficiente.' : `Trascina ${this.spec(type).label} sul campo.`);
       });
     },
 
     setSide(side) {
       if (!State.deployment.active) return false;
+      if (State.battleSetup.mode === 'auto' && side !== 'blue') return false;
       State.selectedSide = side;
       Selection.clear();
       this.updateUI();
@@ -6044,6 +6080,7 @@
     },
 
     placeFromCatalog(side, type, x, y) {
+      if (State.deployment.active && State.battleSetup.mode === 'auto') return false;
       const spec = this.spec(type);
       this.recount();
       if (State.battleSetup.mirrorArmy && side === 'red') return false;
@@ -6094,7 +6131,7 @@
     },
 
     removeSelected() {
-      if (!State.deployment.active) return;
+      if (!State.deployment.active || State.battleSetup.mode === 'auto') return;
       const selected = Selection.primary();
       if (!selected) return;
       const ids = new Set([selected.id]);
@@ -6198,7 +6235,7 @@
     },
 
     beginCatalogDrag(type, e) {
-      if (!State.deployment.active) return;
+      if (!State.deployment.active || State.battleSetup.mode === 'auto') return;
       const side = State.selectedSide;
       const spec = this.spec(type);
       this.recount();
@@ -6212,6 +6249,7 @@
 
     beginUnitDrag(u, e) {
       if (!State.deployment.active || !u) return;
+      if (State.battleSetup.mode === 'auto' && u.side !== 'blue') return;
       if (State.battleSetup.mirrorDeployment && u.side === 'red' && u.deployPairId) {
         State.selectedSide = 'red';
         Selection.clear();
@@ -6599,6 +6637,17 @@
       }
     },
 
+
+    stagePlayerComposition(types) {
+      for (const type of types) {
+        const pose = Deployment.stagingPose('blue', type);
+        if (!pose) continue;
+        const u = Deployment.makeDeployUnit('blue', type, pose.x, pose.y, pose.angle);
+        if (Deployment.validPlacement(u)) State.units.push(u);
+        else State.deployment.counters.blue -= 1;
+      }
+    },
+
     autoSetup() {
       State.units = [];
       State.deployment.spent = { blue:0, red:0 };
@@ -6615,12 +6664,17 @@
         };
       }
 
-      for (const side of ['blue','red']) {
-        const composition = this.generateComposition(State.battleSetup.points);
-        State.doctrine.compositions[side] = [...composition.types];
-        const chosen = this.chooseDoctrine(composition.types, side, State.doctrine.roles[side]);
-        this.deployComposition(side, composition.types, chosen, State.doctrine.roles[side]);
-      }
+      // ROSSO viene risolto per primo e quindi non può reagire allo schieramento BLU.
+      const redComposition = this.generateComposition(State.battleSetup.points);
+      State.doctrine.compositions.red = [...redComposition.types];
+      const redDoctrine = this.chooseDoctrine(redComposition.types, 'red', State.doctrine.roles.red);
+      this.deployComposition('red', redComposition.types, redDoctrine, State.doctrine.roles.red);
+
+      // BLU: composizione e dottrina esistono, ma lo schieramento resta al giocatore.
+      const blueComposition = this.generateComposition(State.battleSetup.points);
+      State.doctrine.compositions.blue = [...blueComposition.types];
+      this.chooseDoctrine(blueComposition.types, 'blue', State.doctrine.roles.blue);
+      this.stagePlayerComposition(blueComposition.types);
 
       Deployment.recount();
       State.selectedSide = 'blue';
@@ -6639,7 +6693,7 @@
 
       const blueD = State.doctrine.selected.blue?.label || '—';
       const redD = State.doctrine.selected.red?.label || '—';
-      DOM.deployHint.textContent = `AUTO · BLU ${State.doctrine.roles.blue.toUpperCase()}: ${blueD} · ROSSO ${State.doctrine.roles.red.toUpperCase()}: ${redD}. Schieramento generato; nessun ordine iniziale applicato (unità in Hold).`;
+      DOM.deployHint.textContent = `AUTO · BLU ${State.doctrine.roles.blue.toUpperCase()}: composizione generata, SCHIERAMENTO MANUALE. ROSSO ${State.doctrine.roles.red.toUpperCase()}: ${redD}, già schierato ma NASCOSTO fino all'inizio.`;
     }
   };
 
@@ -6804,13 +6858,19 @@
 
     issueAttackNearest(u) {
       if (!u?.status?.alive || u.status.routing || u.order.kind === 'retreat' || Engagements.hasAny(u)) return 'skip';
+
+      // Sticky target: il refresh strategico non resetta un ordine ancora valido.
+      // Si cerca un nuovo "più vicino" solo quando il target precedente non esiste più.
+      const currentId = u.order.lockTargetId || u.order.approach?.enemyId || u.order.pursuit?.enemyId;
+      const current = Units.byId(currentId);
+      if (current?.status?.alive && current.side !== u.side) return 'same';
+
       const found = AI.nearestEnemy(u);
       const enemy = found?.enemy || null;
       if (!enemy) {
         if (u.order.kind === 'lock' || u.order.kind === 'ai') Orders.clear(u);
         return 'none';
       }
-      if (u.order.lockTargetId === enemy.id && (u.order.kind === 'lock' || u.order.kind === 'ai')) return 'same';
       return Orders.setLock(u, enemy, true) ? 'new' : 'skip';
     },
 
@@ -6828,7 +6888,10 @@
         else if (r === 'same') same++;
         else skipped++;
       }
-      Log.add(`🤖 ARMY AI ${side.toUpperCase()} #${State.armyAI.refreshCount}: ATTACCA IL PIÙ VICINO | nuovi ${issued} · confermati ${same} · non assegnabili ${skipped}`);
+      // Evita churn DOM/log quando il refresh conferma soltanto ordini invariati.
+      if (issued > 0 || force) {
+        Log.add(`🤖 ARMY AI ${side.toUpperCase()} #${State.armyAI.refreshCount}: ATTACCA IL PIÙ VICINO | nuovi ${issued} · confermati ${same} · non assegnabili ${skipped}`);
+      }
       return true;
     },
 
@@ -6988,7 +7051,9 @@
     },
 
     hitUnit(worldPoint) {
-      return [...State.units].reverse().find(u => u.status.alive && Geometry.pointInUnit(u, worldPoint.x, worldPoint.y)) || null;
+      return [...State.units].reverse().find(u =>
+        u.status.alive && Deployment.visibleInDeployment(u) && Geometry.pointInUnit(u, worldPoint.x, worldPoint.y)
+      ) || null;
     },
 
     setSidebar(open) {
@@ -7338,7 +7403,7 @@
       State.view = { scale: 1, x: 0, y: 0 };
       Battle.reset(restoredDeployment);
       UI.setTimeScale(1);
-      DOM.log.textContent = `${restoredDeployment ? 'Battaglia resettata dallo schieramento.' : 'Battaglia 3 vs 3 resettata.'}\nARCHITETTURA v0.86: ${State.battleSetup.points} PT · BLU ${(State.doctrine.roles.blue || '—').toUpperCase()} · ROSSO ${(State.doctrine.roles.red || '—').toUpperCase()} · Army AI ${CFG.ARMY_AI_REFRESH_S}s · limite ${CFG.BATTLE_TIME_LIMIT_S}s · campo 90×60U + bordocampo 10U.`;
+      DOM.log.textContent = `${restoredDeployment ? 'Battaglia resettata dallo schieramento.' : 'Battaglia 3 vs 3 resettata.'}\nARCHITETTURA v0.87: ${State.battleSetup.points} PT · BLU ${(State.doctrine.roles.blue || '—').toUpperCase()} · ROSSO ${(State.doctrine.roles.red || '—').toUpperCase()} · Army AI ${CFG.ARMY_AI_REFRESH_S}s · limite ${CFG.BATTLE_TIME_LIMIT_S}s · campo 90×60U + bordocampo 10U.`;
       UI.updateSelectedInfo();
     },
 
