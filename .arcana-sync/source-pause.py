@@ -1,0 +1,207 @@
+from pathlib import Path
+
+path = Path('ARCANA_BATTLES.html')
+s = path.read_text(encoding='utf-8')
+
+
+def once(old, new, label):
+    global s
+    count = s.count(old)
+    if count != 1:
+        raise SystemExit(f'{label}: expected exactly 1 anchor, found {count}')
+    s = s.replace(old, new, 1)
+
+
+version_count = s.count('v0.88.1')
+if version_count != 2:
+    raise SystemExit(f'version: expected 2 occurrences of v0.88.1, found {version_count}')
+s = s.replace('v0.88.1', 'v0.88.2')
+
+css_anchor = """  /* ============================================================
+     NEW BATTLE — SPLASH / STEP 1
+     ============================================================ */"""
+css_block = """  /* ============================================================
+     SOURCE PAUSE — SPACE
+     ============================================================ */
+  #sourcePauseOverlay{
+    position:fixed;inset:0;z-index:6000;display:none;flex-direction:column;
+    gap:10px;padding:12px;background:#080b0f;color:#dfe7ef;
+  }
+  #sourcePauseOverlay.open{display:flex}
+  .source-pause-toolbar{
+    display:flex;align-items:center;gap:9px;flex:0 0 auto;
+    min-height:42px;padding:7px 9px;border:1px solid #334052;border-radius:10px;
+    background:#111820;box-shadow:0 8px 28px rgba(0,0,0,.42);
+  }
+  .source-pause-title{font:800 12px/1.2 Inter,Segoe UI,Arial,sans-serif;letter-spacing:.10em}
+  .source-pause-hint{font-size:10px;color:#8ea1b5;margin-right:auto}
+  #sourcePauseOverlay button{width:auto;min-width:112px;height:34px;padding:0 12px;font-size:10px}
+  #sourcePauseCopyBtn{background:#354b69;border-color:#587294}
+  #sourcePauseCloseBtn{background:#2a313c}
+  #sourcePauseText{
+    flex:1 1 auto;width:100%;min-height:0;resize:none;outline:none;
+    border:1px solid #334052;border-radius:10px;background:#05070a;color:#d7e0ea;
+    padding:14px;overflow:auto;white-space:pre;tab-size:2;
+    font:12px/1.48 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+  }
+  @media (max-width:700px){
+    #sourcePauseOverlay{padding:7px;gap:7px}
+    .source-pause-toolbar{flex-wrap:wrap}
+    .source-pause-hint{width:100%;order:3}
+    #sourcePauseOverlay button{min-width:0;flex:1}
+    #sourcePauseText{font-size:10px;padding:9px}
+  }
+
+""" + css_anchor
+once(css_anchor, css_block, 'CSS source overlay')
+
+html_anchor = '<div id="battleSetupOverlay" role="dialog" aria-modal="true" aria-labelledby="battleSetupTitle">'
+html_block = """<div id="sourcePauseOverlay" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Codice HTML della battaglia">
+  <div class="source-pause-toolbar">
+    <div class="source-pause-title">ARCANA · SOURCE PAUSE</div>
+    <div class="source-pause-hint">SPACE chiude il codice e ripristina la velocità precedente.</div>
+    <button id="sourcePauseCopyBtn" type="button">COPIA TUTTO</button>
+    <button id="sourcePauseCloseBtn" type="button">CHIUDI · SPACE</button>
+  </div>
+  <textarea id="sourcePauseText" readonly spellcheck="false" aria-label="Sorgente HTML"></textarea>
+</div>
+
+""" + html_anchor
+once(html_anchor, html_block, 'HTML source overlay')
+
+legend_anchor = '        <span class="pill">⏸ ▶️ ⏩ ⏭️</span> tempo 0× / 1× / 2× / 3×<br>'
+legend_block = '        <span class="pill">SPACE</span> pausa immediata + codice HTML completo<br>\n' + legend_anchor
+once(legend_anchor, legend_block, 'controls legend')
+
+input_anchor = """  // ============================================================
+  // 13. INPUT
+  // ============================================================
+  const Input = {"""
+source_module = r'''  // ============================================================
+  // SOURCE PAUSE — SPACE
+  // ============================================================
+  const SourcePause = {
+    open: false,
+    restoreScale: 0,
+    requestToken: 0,
+
+    isTypingTarget(target) {
+      if (!target) return false;
+      const tag = target.tagName?.toLowerCase();
+      return tag === 'input' || tag === 'textarea' || tag === 'select' || !!target.isContentEditable;
+    },
+
+    serializedSource() {
+      return '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    },
+
+    async exactSource(fallback) {
+      if (location.protocol !== 'http:' && location.protocol !== 'https:') return fallback;
+      try {
+        const response = await fetch(location.href, { cache: 'no-store' });
+        if (response.ok) return await response.text();
+      } catch (_) {}
+      return fallback;
+    },
+
+    show() {
+      if (this.open) return;
+      const overlay = document.getElementById('sourcePauseOverlay');
+      const text = document.getElementById('sourcePauseText');
+      if (!overlay || !text) return;
+
+      const fallback = this.serializedSource();
+      const token = ++this.requestToken;
+      this.restoreScale = State.timeScale;
+      this.open = true;
+      UI.setTimeScale(0);
+      overlay.classList.add('open');
+      overlay.setAttribute('aria-hidden', 'false');
+      text.value = fallback;
+      text.scrollTop = 0;
+      text.scrollLeft = 0;
+
+      this.exactSource(fallback).then(source => {
+        if (!this.open || token !== this.requestToken) return;
+        text.value = source;
+        text.scrollTop = 0;
+        text.scrollLeft = 0;
+      });
+    },
+
+    hide() {
+      if (!this.open) return;
+      const overlay = document.getElementById('sourcePauseOverlay');
+      const text = document.getElementById('sourcePauseText');
+      ++this.requestToken;
+      this.open = false;
+      overlay?.classList.remove('open');
+      overlay?.setAttribute('aria-hidden', 'true');
+      if (text) {
+        text.blur();
+        text.setSelectionRange(0, 0);
+      }
+      UI.setTimeScale(this.restoreScale);
+    },
+
+    toggle() {
+      if (this.open) this.hide();
+      else this.show();
+    },
+
+    async copy() {
+      const text = document.getElementById('sourcePauseText');
+      const button = document.getElementById('sourcePauseCopyBtn');
+      if (!text || !button) return;
+      const original = button.textContent;
+      let copied = false;
+      try {
+        await navigator.clipboard.writeText(text.value);
+        copied = true;
+      } catch (_) {
+        try {
+          text.focus();
+          text.select();
+          copied = document.execCommand('copy');
+          text.setSelectionRange(0, 0);
+        } catch (_) {}
+      }
+      button.textContent = copied ? 'COPIATO ✓' : 'COPIA FALLITA';
+      setTimeout(() => { button.textContent = original; }, 1200);
+    },
+
+    bind() {
+      document.getElementById('sourcePauseCopyBtn')?.addEventListener('click', () => this.copy());
+      document.getElementById('sourcePauseCloseBtn')?.addEventListener('click', () => this.hide());
+    }
+  };
+
+''' + input_anchor
+once(input_anchor, source_module, 'SourcePause module')
+
+key_anchor = """      window.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); if (State.deployment.active) Deployment.setSide('blue'); else { Selection.switchSide('blue'); this.syncSideButtons(); } }
+        if (e.key === 'ArrowRight') { e.preventDefault(); if (State.deployment.active) Deployment.setSide('red'); else { Selection.switchSide('red'); this.syncSideButtons(); } }
+      });"""
+key_block = """      window.addEventListener('keydown', e => {
+        const space = e.code === 'Space' || e.key === ' ';
+        if (space) {
+          if (SourcePause.open || !SourcePause.isTypingTarget(e.target)) {
+            e.preventDefault();
+            e.stopPropagation();
+            SourcePause.toggle();
+          }
+          return;
+        }
+        if (SourcePause.open || SourcePause.isTypingTarget(e.target)) return;
+        if (e.key === 'ArrowLeft') { e.preventDefault(); if (State.deployment.active) Deployment.setSide('blue'); else { Selection.switchSide('blue'); this.syncSideButtons(); } }
+        if (e.key === 'ArrowRight') { e.preventDefault(); if (State.deployment.active) Deployment.setSide('red'); else { Selection.switchSide('red'); this.syncSideButtons(); } }
+      });"""
+once(key_anchor, key_block, 'keyboard handler')
+
+boot_anchor = '  Input.bind();\n  Deployment.bind();'
+boot_block = '  SourcePause.bind();\n  Input.bind();\n  Deployment.bind();'
+once(boot_anchor, boot_block, 'boot binding')
+
+path.write_text(s, encoding='utf-8')
+print('Patched ARCANA_BATTLES.html to v0.88.2 source-pause mode')
