@@ -1,0 +1,54 @@
+name: Apply Fog v0.90.0
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-fog-v0900.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Apply Fog of War migration
+        run: python .github/patch_fog_v0900.py
+
+      - name: Extract and syntax-check JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          text = Path('COFFEE_BATTLES.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script(?:\s[^>]*)?>(.*?)</script>', text, flags=re.S|re.I)
+          inline = [s for s in scripts if s.strip()]
+          if not inline:
+              raise SystemExit('No inline script found')
+          Path('/tmp/coffee-battles.js').write_text('\n'.join(inline), encoding='utf-8')
+          PY
+          node --check /tmp/coffee-battles.js
+
+      - name: Verify Fog invariants
+        run: |
+          grep -q 'VISION_RANGE_U: 20' COFFEE_BATTLES.html
+          grep -q 'const Intel = {' COFFEE_BATTLES.html
+          grep -q 'Intel.visibleEnemies(u.side)' COFFEE_BATTLES.html
+          grep -q 'Intel.ghosts(viewSide)' COFFEE_BATTLES.html
+          grep -q 'INTEL TARGETING' COFFEE_BATTLES.html
+          ! grep -q 'for (const enemy of Units.enemiesOf(u)) {' COFFEE_BATTLES.html
+
+      - name: Commit v0.90.0 and remove temporary tooling
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm -f .github/patch_fog_v0900.py .github/workflows/apply-fog-v0900.yml
+          git add -A
+          git commit -m 'Implement Fog of War and side-shared intel v0.90.0'
+          git push origin main
