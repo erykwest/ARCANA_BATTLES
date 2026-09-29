@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>COFFEE BATTLES — Campal Battle Lab v0.88.4</title>
+<title>COFFEE BATTLES — Campal Battle Lab v0.89.2</title>
 <style>
   :root{
     --bg:#11151b;
@@ -432,8 +432,12 @@
   .unit-card-preview{position:relative;width:48px;height:48px;border-radius:7px;background:#0e141b;border:1px solid #314052;overflow:hidden}
   .unit-card-preview .reg{position:absolute;left:9px;top:14px;width:30px;height:20px;border:1px solid rgba(255,255,255,.65);background:rgba(63,121,216,.48)}
   .unit-card-preview .reg:before{content:"";position:absolute;left:-1px;right:-1px;top:-2px;border-top:3px solid #eef4fb}
-  .unit-card[data-unit-type="cavalry"] .reg{left:14px;top:17px;width:24px;height:14px}
-  .unit-card[data-unit-type="archer"] .reg:after{content:"→";position:absolute;right:-14px;top:-8px;font-size:12px;color:#f0d36f}
+  .unit-card[data-unit-type="cavalry"] .reg,
+  .unit-card[data-unit-type="horse_archer"] .reg{left:14px;top:17px;width:24px;height:14px}
+  .unit-card[data-unit-type="archer"] .reg:after,
+  .unit-card[data-unit-type="light_infantry"] .reg:after,
+  .unit-card[data-unit-type="crossbow"] .reg:after,
+  .unit-card[data-unit-type="horse_archer"] .reg:after{content:"→";position:absolute;right:-14px;top:-8px;font-size:12px;color:#f0d36f}
   .unit-card-copy strong{display:block;font-size:12px;line-height:1.1;margin-bottom:6px}
   .unit-card-copy span{display:block;font-size:10px;color:#9aa6b2}
   .unit-card-copy .cost{font-weight:900;color:#f0d36f;font-size:11px;margin-top:4px}
@@ -475,7 +479,7 @@
 </head>
 <body>
 <header>
-  <strong>COFFEE BATTLES — CAMPAL BATTLE LAB v0.88.4</strong>
+  <strong>COFFEE BATTLES — CAMPAL BATTLE LAB v0.89.2</strong>
   <span>REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
 </header>
 
@@ -552,7 +556,7 @@
       <strong id="setupPointsSummary">1000 PT</strong>
     </div>
     <button id="createBattleBtn" type="button">VAI ALLO SCHIERAMENTO</button>
-    <div class="setup-footnote">v0.88 · Step 1/3 — Map Engine biomi + Doctrine Engine + Army AI + limite battaglia 600s.</div>
+    <div class="setup-footnote">v0.89.2 · Step 1/3 — 8 profili unità + ranged resolver unilaterale + Map/Doctrine/Army AI.</div>
   </div>
 </div>
 
@@ -585,13 +589,33 @@
       <span class="unit-card-preview"><span class="reg"></span></span>
       <span class="unit-card-copy"><strong>Fanteria</strong><span>C2 · AR1 · V100</span><span class="cost">100 PT</span></span>
     </button>
+    <button class="unit-card" type="button" data-unit-type="light_infantry" data-cost="80">
+      <span class="unit-card-preview"><span class="reg"></span></span>
+      <span class="unit-card-copy"><strong>Fanteria leggera</strong><span>C2 · Mira2 · 5U · 5s</span><span class="cost">80 PT</span></span>
+    </button>
+    <button class="unit-card" type="button" data-unit-type="heavy_infantry" data-cost="140">
+      <span class="unit-card-preview"><span class="reg"></span></span>
+      <span class="unit-card-copy"><strong>Fanteria pesante</strong><span>C2 · AR2 · M0.8</span><span class="cost">140 PT</span></span>
+    </button>
+    <button class="unit-card" type="button" data-unit-type="spearman" data-cost="120">
+      <span class="unit-card-preview"><span class="reg"></span></span>
+      <span class="unit-card-copy"><strong>Lanceri</strong><span>C2 · AR2 · COVER FRONTE</span><span class="cost">120 PT</span></span>
+    </button>
     <button class="unit-card" type="button" data-unit-type="archer" data-cost="110">
       <span class="unit-card-preview"><span class="reg"></span></span>
-      <span class="unit-card-copy"><strong>Arcieri</strong><span>C1 · Mira2 · AR0 · V100</span><span class="cost">110 PT</span></span>
+      <span class="unit-card-copy"><strong>Arcieri</strong><span>C1 · Mira2 · AR0 · 15U · 3s</span><span class="cost">110 PT</span></span>
+    </button>
+    <button class="unit-card" type="button" data-unit-type="crossbow" data-cost="125">
+      <span class="unit-card-preview"><span class="reg"></span></span>
+      <span class="unit-card-copy"><strong>Balestrieri</strong><span>C1 · Mira3 · AP1 · 13U · 7s</span><span class="cost">125 PT</span></span>
     </button>
     <button class="unit-card" type="button" data-unit-type="cavalry" data-cost="180">
       <span class="unit-card-preview"><span class="reg"></span></span>
-      <span class="unit-card-copy"><strong>Cavalleria</strong><span>C3 · AR2 · V30</span><span class="cost">180 PT</span></span>
+      <span class="unit-card-copy"><strong>Cavalleria</strong><span>C3 · AR3 · V30</span><span class="cost">180 PT</span></span>
+    </button>
+    <button class="unit-card" type="button" data-unit-type="horse_archer" data-cost="160">
+      <span class="unit-card-preview"><span class="reg"></span></span>
+      <span class="unit-card-copy"><strong>Cavalleria leggera</strong><span>C1 · Mira2 · M2 · 10U</span><span class="cost">160 PT</span></span>
     </button>
   </div>
   <div id="deploymentActions">
@@ -625,7 +649,7 @@
     </div>
     <button id="chargeBtn" title="Carica: M1 ↔ M3">C<small>CARICA</small></button>
     <button id="retreatBtn" title="Ritirata: allontanati dal nemico fino ad almeno 11U">R<small>RITIRATA</small></button>
-    <button id="fireBtn" title="Fuoco a volontà: automatico entro 15U, indipendente dalla stance">🎯<small>FUOCO<br>A VOLONTÀ</small></button>
+    <button id="fireBtn" title="Fuoco a volontà: automatico entro la gittata del profilo, indipendente dalla stance">🎯<small>FUOCO<br>A VOLONTÀ</small></button>
   </div>
   <div id="victoryBar" title="Morale strategico: ogni lato arriva al 100% quando metà dei punti dell'esercito avversario è stata eliminata o è fuggita dal campo.">
     <div class="victory-half blue"><div id="blueVictoryFill"></div></div>
@@ -671,7 +695,7 @@
         <span class="pill">▯ ▭ ⫿</span> Base / Colonna / Linea · non cancella l’ordine manuale<br>
         <span class="pill">C</span> Carica: M1 ↔ M3<br>
         <span class="pill">R</span> Ritirata: M3 via dal nemico fino ad almeno 11U<br>
-        <span class="pill">🎯</span> Arcieri: autofire; target esplicito = tiro anche con 🎯 OFF / Hold<br>
+        <span class="pill">🎯</span> Tiratori: autofire; target esplicito = tiro anche con 🎯 OFF / Hold<br>
         <span class="pill">Pathfinder</span> A* dinamico su griglia 1U attorno alle unità che bloccano il percorso<br>
         <span class="pill">Pannello comandi</span> zona protetta: nessun input passa al battlefield<br>
         <span class="pill">ROUT</span> B=0 → stance automatica 🏃 Elusivo<br>
@@ -698,8 +722,8 @@
         Formazioni: <b>▯ Base 3×2</b> · <b>▭ Colonna 2×3</b> · <b>⫿ Linea 6×1</b>.<br>Cambio formazione: <b>2s</b> con deformazione progressiva del rettangolo; è consentito anche <b>in combattimento</b> e il magnet resta attivo.<br>
         Il primo valore è F; la profondità è il secondo valore × <b>V/Vmax</b>.<br>In ingaggio, entrambe le unità usano lo stesso <b>Fc</b>: durante lo SLIDE è la <b>sovrapposizione reale</b> dei fronti e cresce fino al massimo a centratura completata.<br>Formazione: curva a <b>45°/s</b>; se il target richiede una svolta ampia (&gt;60°), ruota <b>sul posto</b> fino a rientrare nella normale curva. Il FLIP automatico di navigazione è disabilitato.<br>In combattimento, se è ingaggiata <b>solo sul retro</b>, esegue automaticamente lo stesso FLIP in 2s; finché espone il retro perde <b>−1B/s</b>.<br>
         <b>Fc</b> determina il numero di confronti simultanei: si usa il fronte realmente in contatto, quindi il fronte minore limita naturalmente lo scontro.<br>
-        <b>C</b> = Combat, unico valore melee usato sia in attacco sia in difesa: Arcieri <b>C1</b> · Fanteria <b>C2</b> · Cavalleria <b>C3</b>.<br>
-        <b>AR</b> = Armor: Arcieri <b>0</b> · Fanteria <b>1</b> · Cavalleria <b>2</b>.<br>
+        <b>C</b> = Combat, usato <b>solo nel melee</b>: tiratori leggeri C1 · fanterie C2 · cavalleria pesante C3.<br>
+        <b>AR</b> = Armor: AR0 leggeri · AR1 Fanteria/Balestrieri · AR2 Pesante/Lanceri · AR3 Cavalleria.<br>
         Ogni confronto tira <b>DA + C</b> contro <b>DA + C</b>. Il Dado Battaglia è il D12 canonico con facce <b>1,2,2,3,3,3,4,4,4,5,5,6</b>.<br>
         Il lato col totale maggiore calcola il <b>Δ</b>; infligge <b>−1V</b> solo se <b>Δ &gt; AR</b> del perdente. Parità o Δ insufficiente = nessuna perdita.<br>
         <b>Attacco sul fianco:</b> il difensore subisce <b>C−1</b>.<br>
@@ -726,7 +750,7 @@
         <b>Rally:</b> in ROUT recupera +1B/s; se non è inseguita e il nemico più vicino è oltre 10U recupera +5B/s. Torna operativa solo raggiungendo il 25% di Bmax.<br>
         <b>M movimento</b>: Fanteria M1 in marcia / M3 in carica. Cavalleria M1 in marcia / <b>M6 in carica</b>.<br>
         <b>Cavalleria:</b> size base <b>2×1U</b>, <b>C3</b>, <b>AR2</b>, <b>V30</b>; marcia M1, carica/ROUT M6; consumo Energia da movimento <b>×0,5</b> e durante la <b>carica ×0,25</b>.<br>
-        <b>Arcieri:</b> size e movimento uguali alla fanteria; <b>C1</b>, <b>AR0</b>, <b>V100</b>, <b>Mira2</b>. Gittata <b>15U</b>. Un <b>target esplicito è sempre un ordine ranged</b>: l'arciere si porta a gittata e spara, anche con 🎯 OFF e anche in Hold. 🎯 <b>FUOCO A VOLONTÀ</b> abilita il bersagliamento automatico del nemico più vicino entro 15U <b>indipendentemente dalla stance</b>. Hold impedisce movimento/melee automatico ma non il tiro. <b>Aggressivo serve esclusivamente ad autorizzare il melee</b>. Cadenza: <b>F attacchi ogni 3s</b>. Tiro: <b>0 Energia</b>.<br>
+        <b>Ranged:</b> resolver unilaterale <b>DA + Mira ≥ 6 + AR effettiva</b>; 6 naturale = successo, 1 naturale = fallimento. Il difensore non tira e C non entra nel ranged. Cover = <b>−1 Mira</b>; AP1 riduce AR di 1. Tutti i tiratori partono con 🎯 FUOCO A VOLONTÀ ON. Arcieri 15U/3s · Leggera 5U/5s · Balestrieri 13U/7s · Cavalleria leggera 10U/3,5s. Tiro: <b>0 Energia</b>.<br>
         <b>Inseguimento su ROUT:</b> niente magnet/allineamento. Il ROUT ha una <b>boundary di prossimità da 0,75U</b>: quando il corpo dell'inseguitore entra nella fascia può colpire 1 volta/s usando il proprio <b>F pieno</b>; se il bersaglio esce dalla fascia l'inseguitore riparte subito. Un ROUT bloccato contro altre unità non interrompe la pursuit per stallo.<br>
         <b>Ritirata e ROUT:</b> fanteria M3, cavalleria <b>M6</b>. La Ritirata volontaria rompe l’ingaggio e mantiene una <b>direzione di fuga coerente</b>; raggiunto il waypoint ricontrolla gli 11U e, se necessario, prolunga la fuga sulla stessa direttrice. Il ROUT mantiene il proprio vettore di fuga.<br>
         <b>Inseguimento:</b> un nemico già ingaggiato/targettato che entra in RETREAT/ROUT può essere inseguito automaticamente in <b>Carica</b>. Limite: <b>15U di percorso reale</b>; il bersaglio è perso anche se apre un gap oltre <b>15U</b> o l’inseguitore resta bloccato per 2s. Il primo contatto applica l'<b>impatto di carica una sola volta</b>; i contatti successivi sono normali attacchi di inseguimento. Nessun magnet permanente: il fuggitivo continua a muoversi.<br>
@@ -859,7 +883,7 @@
     CAVALRY_COMBAT: 3,
     INFANTRY_ARMOR: 1,
     ARCHER_ARMOR: 0,
-    CAVALRY_ARMOR: 2,
+    CAVALRY_ARMOR: 3,
     ARCHER_AIM: 2,
     CAVALRY_CHARGE_MULT: 6,
     CAVALRY_MOVE_ENERGY_FACTOR: 0.5,
@@ -900,6 +924,60 @@
       line:   Object.freeze({ label: 'LINEA',   front: 6, depth: 1 })
     }),
     SLOTS: Object.freeze(['rear', 'flank-left', 'flank-right', 'front'])
+  });
+
+  // ============================================================
+  // UNIT TYPE CATALOG — single source of truth for stats + roles
+  // ============================================================
+  const UNIT_TYPES = Object.freeze({
+    infantry: Object.freeze({
+      label:'Fanteria', short:'INF', cost:100,
+      stats:Object.freeze({ hp:100, combat:2, armor:1, aim:null }),
+      profile:Object.freeze({ marchMult:1, chargeMult:3, fleeMult:3, moveEnergyFactor:1, chargeEnergyFactor:1, mounted:false, forestBlocked:false, chargeShockMult:1, frontCover:0, ranged:null }),
+      roles:Object.freeze({ line:1.0, reserve:0.6 })
+    }),
+    light_infantry: Object.freeze({
+      label:'Fanteria leggera', short:'LEG', cost:80,
+      stats:Object.freeze({ hp:100, combat:2, armor:0, aim:2 }),
+      profile:Object.freeze({ marchMult:1.25, chargeMult:3.5, fleeMult:3.5, moveEnergyFactor:0.80, chargeEnergyFactor:0.85, mounted:false, forestBlocked:false, chargeShockMult:1, frontCover:0, ranged:Object.freeze({ rangeU:5, volleyInterval:5, armorPiercing:0 }) }),
+      roles:Object.freeze({ line:0.35, ranged:0.55, mobile:0.65, screen:1.0, reserve:0.25 })
+    }),
+    heavy_infantry: Object.freeze({
+      label:'Fanteria pesante', short:'PES', cost:140,
+      stats:Object.freeze({ hp:100, combat:2, armor:2, aim:null }),
+      profile:Object.freeze({ marchMult:0.80, chargeMult:2.5, fleeMult:2.5, moveEnergyFactor:1.15, chargeEnergyFactor:1.15, mounted:false, forestBlocked:false, chargeShockMult:1, frontCover:0, ranged:null }),
+      roles:Object.freeze({ line:1.0, shock:0.45, reserve:0.85 })
+    }),
+    spearman: Object.freeze({
+      label:'Lanceri', short:'LAN', cost:120,
+      stats:Object.freeze({ hp:100, combat:2, armor:2, aim:null }),
+      profile:Object.freeze({ marchMult:0.90, chargeMult:2.5, fleeMult:3, moveEnergyFactor:1, chargeEnergyFactor:1, mounted:false, forestBlocked:false, chargeShockMult:1, frontCover:1, ranged:null }),
+      roles:Object.freeze({ line:1.0, screen:0.25, reserve:0.75 })
+    }),
+    archer: Object.freeze({
+      label:'Arcieri', short:'ARC', cost:110,
+      stats:Object.freeze({ hp:100, combat:1, armor:0, aim:2 }),
+      profile:Object.freeze({ marchMult:1, chargeMult:3, fleeMult:3, moveEnergyFactor:1, chargeEnergyFactor:1, mounted:false, forestBlocked:false, chargeShockMult:1, frontCover:0, ranged:Object.freeze({ rangeU:15, volleyInterval:3, armorPiercing:0 }) }),
+      roles:Object.freeze({ ranged:1.0, screen:0.5 })
+    }),
+    crossbow: Object.freeze({
+      label:'Balestrieri', short:'BAL', cost:125,
+      stats:Object.freeze({ hp:100, combat:1, armor:1, aim:3 }),
+      profile:Object.freeze({ marchMult:0.90, chargeMult:2.5, fleeMult:3, moveEnergyFactor:1.05, chargeEnergyFactor:1.05, mounted:false, forestBlocked:false, chargeShockMult:1, frontCover:0, ranged:Object.freeze({ rangeU:13, volleyInterval:7, armorPiercing:1 }) }),
+      roles:Object.freeze({ line:0.20, ranged:1.0, reserve:0.45 })
+    }),
+    cavalry: Object.freeze({
+      label:'Cavalleria', short:'CAV', cost:180,
+      stats:Object.freeze({ hp:30, combat:3, armor:3, aim:null }),
+      profile:Object.freeze({ marchMult:1, chargeMult:6, fleeMult:6, moveEnergyFactor:0.5, chargeEnergyFactor:0.25, mounted:true, forestBlocked:true, chargeShockMult:2, frontCover:0, ranged:null }),
+      roles:Object.freeze({ mobile:1.0, shock:0.9, reserve:0.4 })
+    }),
+    horse_archer: Object.freeze({
+      label:'Cavalleria leggera', short:'CAV-L', cost:160,
+      stats:Object.freeze({ hp:30, combat:1, armor:0, aim:2 }),
+      profile:Object.freeze({ marchMult:2, chargeMult:5, fleeMult:6, moveEnergyFactor:0.45, chargeEnergyFactor:0.30, mounted:true, forestBlocked:true, chargeShockMult:1, frontCover:0, ranged:Object.freeze({ rangeU:10, volleyInterval:3.5, armorPiercing:0 }) }),
+      roles:Object.freeze({ ranged:0.75, mobile:1.0, screen:0.9, reserve:0.15 })
+    })
   });
 
   const worldPx = () => ({ w: CFG.WORLD_W_U * CFG.U, h: CFG.WORLD_H_U * CFG.U });
@@ -971,107 +1049,28 @@
   };
 
   function makeUnit(id, name, side, x, y, angle, color, type = 'infantry') {
-    const cavalry = type === 'cavalry';
-    const archer = type === 'archer';
-
+    const spec = UNIT_TYPES[type] || UNIT_TYPES.infantry;
+    const rangedSpec = spec.profile.ranged;
     return {
       id, name, side, color, type,
       profile: {
-        marchMult: 1,
-        chargeMult: cavalry ? CFG.CAVALRY_CHARGE_MULT : 3,
-        fleeMult: cavalry ? 6 : 3,
-        moveEnergyFactor: cavalry ? CFG.CAVALRY_MOVE_ENERGY_FACTOR : 1,
-        chargeEnergyFactor: cavalry ? CFG.CAVALRY_CHARGE_ENERGY_FACTOR : 1,
-        ranged: archer ? {
-          rangeU: CFG.ARCHER_RANGE_U,
-          volleyInterval: CFG.ARCHER_VOLLEY_INTERVAL
-        } : null
+        marchMult: spec.profile.marchMult, chargeMult: spec.profile.chargeMult, fleeMult: spec.profile.fleeMult,
+        moveEnergyFactor: spec.profile.moveEnergyFactor, chargeEnergyFactor: spec.profile.chargeEnergyFactor,
+        mounted: !!spec.profile.mounted, forestBlocked: !!spec.profile.forestBlocked,
+        chargeShockMult: Math.max(0, Number(spec.profile.chargeShockMult) || 1),
+        frontCover: Math.max(0, Number(spec.profile.frontCover) || 0),
+        ranged: rangedSpec ? { rangeU:rangedSpec.rangeU, volleyInterval:rangedSpec.volleyInterval, armorPiercing:Math.max(0, Number(rangedSpec.armorPiercing) || 0) } : null
       },
       pose: { x, y, angle },
-      stats: {
-        maxHp: cavalry ? CFG.CAVALRY_HP : (archer ? CFG.ARCHER_HP : CFG.INFANTRY_HP),
-        hp: cavalry ? CFG.CAVALRY_HP : (archer ? CFG.ARCHER_HP : CFG.INFANTRY_HP),
-        energy: CFG.MAX_ENERGY,
-        brain: CFG.MAX_BRAIN,
-        combat: cavalry ? CFG.CAVALRY_COMBAT : (archer ? CFG.ARCHER_COMBAT : CFG.INFANTRY_COMBAT),
-        armor: cavalry ? CFG.CAVALRY_ARMOR : (archer ? CFG.ARCHER_ARMOR : CFG.INFANTRY_ARMOR),
-        aim: archer ? CFG.ARCHER_AIM : null,
-        shock: 0
-      },
-      battleRecord: {
-        damageV: 0,       // punti Vita effettivamente inflitti
-        damageB: 0,       // punti Brain effettivamente inflitti
-        damageVTaken: 0,  // punti Vita effettivamente subiti
-        damageBTaken: 0,  // punti Brain effettivamente subiti
-        kills: 0,
-        routsOut: 0       // nemici mandati definitivamente fuori campo in ROUT
-      },
-      formation: {
-        type: 'base',
-        transition: null
-      },
-      behavior: {
-        stance: 'hold',
-        active: false,
-        targetId: null
-      },
-      order: {
-        kind: 'idle',       // idle | manual | lock | ai | retreat | rout
-        target: null,
-        queue: [],
-        lockTargetId: null,
-        finalAttackTargetId: null, // ATTACCO terminale dopo i waypoint
-        approach: null,     // { enemyId, slot, phase, rearSign }
-        retreatThreatId: null,
-        retreatAngle: null,
-        pursuit: null,      // { enemyId, source, traveledU, lastStrikeAt, impactResolved, lastProgressAt }
-        pursuitBlockedEnemyId: null // evita il restart infinito dopo cap/lost; un nuovo ordine esplicito lo sblocca
-      },
-      motion: {
-        moveMult: 1,
-        chargeMode: false,
-        chargeOverride: null,
-        moving: false,
-        turn: null,         // { kind:'flip'|'combat-flip', start, end, startAngle }
-        detour: null,       // A* runtime path; NON modifica la command chain
-        terrainClearanceBoostUntil: 0,
-        wallCrossing: null,  // { wallId, start, until } · attraversamento atomico 4s
-        wallPassId: null     // muro già pagato: ignorato finché il reparto lo ha completamente superato
-      },
-      engagement: {
-        outbound: null,     // { defenderId, slot }
-        inbound: {
-          front: null,
-          rear: null,
-          'flank-left': null,
-          'flank-right': null
-        }
-      },
-      ranged: archer ? {
-        fireAtWill: false,
-        clock: 0,
-        active: false,
-        targetId: null,
-        approachTargetId: null
-      } : null,
-      status: {
-        alive: true,
-        exited: false,
-        exitReason: null,
-        routing: false,
-        permanentRout: false,
-        routAngle: null,
-        chargeUntil: 0,
-        suppressedUntil: 0,
-        brainLossClock: 0,
-        brainRecoveryClock: 0,
-        rearExposureClock: 0,
-        moraleState: 'steady',
-        routShockEmitted: false,
-        lastHostileSourceId: null,
-        routedById: null,
-        friendlyFleeImpactVictims: new Set()
-      }
+      stats: { maxHp:spec.stats.hp, hp:spec.stats.hp, energy:CFG.MAX_ENERGY, brain:CFG.MAX_BRAIN, combat:spec.stats.combat, armor:spec.stats.armor, aim:spec.stats.aim, shock:0 },
+      battleRecord: { damageV:0, damageB:0, damageVTaken:0, damageBTaken:0, kills:0, routsOut:0 },
+      formation: { type:'base', transition:null },
+      behavior: { stance:'hold', active:false, targetId:null },
+      order: { kind:'idle', target:null, queue:[], lockTargetId:null, finalAttackTargetId:null, approach:null, retreatThreatId:null, retreatAngle:null, pursuit:null, pursuitBlockedEnemyId:null },
+      motion: { moveMult:spec.profile.marchMult, chargeMode:false, chargeOverride:null, moving:false, turn:null, detour:null, terrainClearanceBoostUntil:0, wallCrossing:null, wallPassId:null },
+      engagement: { outbound:null, inbound:{ front:null, rear:null, 'flank-left':null, 'flank-right':null } },
+      ranged: rangedSpec ? { fireAtWill:true, clock:0, active:false, targetId:null, approachTargetId:null } : null,
+      status: { alive:true, exited:false, exitReason:null, routing:false, permanentRout:false, routAngle:null, chargeUntil:0, suppressedUntil:0, brainLossClock:0, brainRecoveryClock:0, rearExposureClock:0, moraleState:'steady', routShockEmitted:false, lastHostileSourceId:null, routedById:null, friendlyFleeImpactVictims:new Set() }
     };
   }
 
@@ -1106,9 +1105,9 @@
 
     formationSpec(u, type) {
       const base = CFG.FORMATIONS[type];
-      if (u.type !== 'cavalry') return { ...base };
+      if (!u.profile.mounted) return { ...base };
 
-      // Cavalleria: BASE = 2×1U.
+      // Unità montate: BASE = 2×1U.
       // Le altre formazioni mantengono la stessa proporzione relativa.
       const sf = 2 / CFG.FORMATIONS.base.front;
       const sd = 1 / CFG.FORMATIONS.base.depth;
@@ -1654,7 +1653,7 @@
 
       if (u.ranged) u.ranged.approachTargetId = null;
 
-      // Gli arcieri interpretano SEMPRE il lock come ordine RANGED.
+      // Le unità ranged interpretano SEMPRE il lock come ordine RANGED.
       // 🎯 abilita solo il bersagliamento automatico.
       if (!u.ranged) {
         AI.planApproach(u, enemy, true);
@@ -2758,7 +2757,7 @@
         }
       }
 
-      // ARCIERI — RANGED COMPLETAMENTE SEPARATO DALLA STANCE.
+      // RANGED — COMPLETAMENTE SEPARATO DALLA STANCE.
       if (u.ranged) {
         const explicit = Units.byId(u.order.lockTargetId);
         const explicitValid =
@@ -2844,7 +2843,7 @@
           if (u.order.kind === 'ai') Orders.clear(u);
           u.behavior.active = false;
           u.behavior.targetId = null;
-          if (State.simTime >= u.status.chargeUntil) u.motion.moveMult = 1;
+          if (State.simTime >= u.status.chargeUntil) u.motion.moveMult = u.profile.marchMult;
           return;
         }
 
@@ -2873,7 +2872,7 @@
           if (u.order.kind === 'ai') Orders.clear(u);
           u.behavior.active = false;
           u.behavior.targetId = null;
-          if (State.simTime >= u.status.chargeUntil) u.motion.moveMult = 1;
+          if (State.simTime >= u.status.chargeUntil) u.motion.moveMult = u.profile.marchMult;
           return;
         }
 
@@ -3572,7 +3571,7 @@
       if (t.type === 'pond') {
         return this.unitSamplePoints(u).some(p => this.insideHardCore(t, p));
       }
-      if (t.type === 'forest' && u.type === 'cavalry') {
+      if (t.type === 'forest' && u.profile.forestBlocked) {
         return this.unitSamplePoints(u).some(p => this.insideHardCore(t, p));
       }
       return false;
@@ -3612,7 +3611,7 @@
 
     blocksPoint(u, point, clearancePx = 0) {
       return State.terrain.some(t => {
-        const blocks = t.type === 'pond' || (t.type === 'forest' && u.type === 'cavalry');
+        const blocks = t.type === 'pond' || (t.type === 'forest' && u.profile.forestBlocked);
         if (!blocks) return false;
         return this.distanceToBlockingTerrain(t, point) <= clearancePx;
       });
@@ -4526,6 +4525,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const legacyDistance=Terrain.distanceToBlockingTerrain.bind(Terrain);
       const legacyBlocksPoint=Terrain.blocksPoint.bind(Terrain);
       const legacyMovement=Terrain.movementMultiplier.bind(Terrain);
+      const legacyRangedAttack=Terrain.rangedAttackPenalty.bind(Terrain);
       const legacyRangedDefense=Terrain.rangedDefenseBonus.bind(Terrain);
       const legacyLos=Terrain.lineOfSight.bind(Terrain);
       const legacyDraw=Terrain.draw.bind(Terrain);
@@ -4569,14 +4569,15 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         }
         return mult;
       };
-      Terrain.rangedDefenseBonus=(attacker,defender)=>{
-        let bonus=legacyRangedDefense(attacker,defender);
+      Terrain.rangedAttackPenalty=(attacker,defender)=>{
+        let penalty=legacyRangedAttack(attacker,defender);
         const a=Geometry.center(attacker),d=Geometry.center(defender);
         for(const t of State.terrain){
-          if(t.type==='building'&&Terrain.segmentIntersects(t,a,d)&&Terrain.containsPoint(t,d,1.6*CFG.U))bonus=Math.max(bonus,1);
+          if(t.type==='building'&&Terrain.segmentIntersects(t,a,d)&&Terrain.containsPoint(t,d,1.6*CFG.U))penalty=Math.max(penalty,1);
         }
-        return bonus;
+        return penalty;
       };
+      Terrain.rangedDefenseBonus=(attacker,defender)=>0;
       Terrain.lineOfSight=(attacker,defender)=>{
         if(!legacyLos(attacker,defender))return false;
         const a=Geometry.center(attacker),d=Geometry.center(defender);
@@ -5662,8 +5663,8 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       defender.status.suppressedUntil = State.simTime + 1;
 
       const positionMult = slot === 'rear' ? 3 : (slot.startsWith('flank') ? 2 : 1);
-      const cavalryMult = attacker.type === 'cavalry' ? CFG.CAVALRY_CHARGE_SHOCK_MULT : 1;
-      const totalMult = positionMult * cavalryMult;
+      const chargeShockMult = Math.max(0, Number(attacker.profile.chargeShockMult) || 1);
+      const totalMult = positionMult * chargeShockMult;
 
       const hit = Math.round(
         CFG.MAX_BRAIN *
@@ -5677,7 +5678,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
 
       Log.add(
         `⚡ ${attacker.name}: IMPATTO DI CARICA ${slot.toUpperCase()} ` +
-        `×${positionMult}${attacker.type === 'cavalry' ? ' ×2 CAV' : ''} | ` +
+        `×${positionMult}${chargeShockMult !== 1 ? ` ×${chargeShockMult} MOUNT` : ''} | ` +
         `${defender.name} -${hit}B | SOPPRESSA 1s`
       );
 
@@ -5912,7 +5913,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     },
 
     attacksPerVolley(u) {
-      // F attacchi ogni 3 secondi.
+      // F attacchi a ogni volley; la cadenza dipende dal profilo unità.
       return Combat.attackCountFromRate(Geometry.frontUnits(u));
     },
 
@@ -5937,38 +5938,45 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       });
     },
 
+    coverPenalty(attacker, defender) {
+      const terrain = Math.max(0, Number(Terrain.rangedAttackPenalty(attacker, defender)) || 0);
+      const incomingSlot = Geometry.incomingSlot(defender, attacker);
+      const frontal = incomingSlot === 'front' ? Math.max(0, Number(defender.profile.frontCover) || 0) : 0;
+      return Math.max(terrain, frontal);
+    },
+
+    resolveShot(attacker, defender) {
+      const cover = this.coverPenalty(attacker, defender);
+      const aim = Math.max(0, (attacker.stats.aim || 0) - cover);
+      const armorPiercing = Math.max(0, Number(attacker.profile.ranged?.armorPiercing) || 0);
+      const effectiveArmor = Math.max(0, defender.stats.armor - armorPiercing);
+      const die = Combat.battleDie();
+      const hit = die === 6 || (die !== 1 && die + aim >= 6 + effectiveArmor);
+      return { hit, die, aim, cover, armorPiercing, effectiveArmor };
+    },
+
     volley(attacker, defender) {
       if (!attacker.status.alive || !defender.status.alive) return;
-
       const attacks = this.attacksPerVolley(attacker);
-      const aim = Math.max(0, (attacker.stats.aim || 0) - Terrain.rangedAttackPenalty(attacker, defender));
-      const defenseCombat = Combat.effectiveCombat(defender);
-      const armor = defender.stats.armor + Terrain.rangedDefenseBonus(attacker, defender);
       let hits = 0;
-
+      let resolved = null;
       for (let i = 0; i < attacks; i++) {
         this.spawnProjectile(attacker, defender, i, attacks);
-        const r = Combat.opposedContest(attacker, defender, null, true, false, aim, defenseCombat, attacker.stats.armor, armor);
-        hits += r.hitA;
+        const shot = this.resolveShot(attacker, defender);
+        resolved = shot;
+        if (shot.hit) hits++;
       }
-
       const hpBefore = defender.stats.hp;
       const brainBefore = defender.stats.brain;
-
       defender.stats.hp = Math.max(0, defender.stats.hp - hits);
       defender.stats.brain = Math.max(0, defender.stats.brain - hits);
-
       const shock = Combat.moraleShock(defender, hits, hpBefore, null);
       defender.stats.shock += shock;
       const converted = Combat.convertShock(defender);
       Battle.recordDamage(attacker, defender, hpBefore - defender.stats.hp, brainBefore - defender.stats.brain);
-
-      Log.add(
-        `🏹 ${attacker.name} → ${defender.name}: ${attacks}A tiro | -${hits}V` +
-        `${shock ? ` | +${shock}S` : ''}` +
-        `${converted ? ` → -${converted}B` : ''}`
-      );
-
+      const ap = resolved?.armorPiercing || 0;
+      const cover = resolved?.cover || 0;
+      Log.add(`🏹 ${attacker.name} → ${defender.name}: ${attacks}A tiro | Mira ${resolved?.aim ?? 0} vs AR${resolved?.effectiveArmor ?? defender.stats.armor} | -${hits}V` + `${ap ? ` | AP${ap}` : ''}` + `${cover ? ` | COVER -${cover} Mira` : ''}` + `${shock ? ` | +${shock}S` : ''}` + `${converted ? ` → -${converted}B` : ''}`);
       if (defender.stats.hp <= 0) Combat.destroy(defender, attacker);
       else if (defender.stats.brain <= 0) Orders.startRout(defender, attacker);
     },
@@ -6394,7 +6402,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         }
       }
 
-      Log.add(`ARCIERI (${archers.length}): FUOCO A VOLONTÀ ${enable ? 'ON' : 'OFF'}`);
+      Log.add(`RANGED (${archers.length}): FUOCO A VOLONTÀ ${enable ? 'ON' : 'OFF'}`);
       UI.updateSelectedInfo();
     }
   };
@@ -6692,14 +6700,10 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       ctx.fillText('>', 0, 0);
       ctx.restore();
 
-      if (u.type === 'cavalry' || u.type === 'archer') {
-        ctx.save();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 10px Segoe UI, Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText(u.type === 'cavalry' ? 'CAV' : 'ARC', cp.x, cp.y - 14);
-        ctx.restore();
+      const unitShort = (UNIT_TYPES[u.type] || UNIT_TYPES.infantry).short;
+      if (unitShort) {
+        ctx.save(); ctx.fillStyle = '#ffffff'; ctx.font = 'bold 9px Segoe UI, Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+        ctx.fillText(unitShort, cp.x, cp.y - 14); ctx.restore();
       }
 
       const moraleState = Morale.stateFor(u);
@@ -6827,20 +6831,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
 
 
   const Deployment = {
-    catalog: Object.freeze({
-      infantry: Object.freeze({
-        label: 'Fanteria', cost: 100,
-        roles: Object.freeze({ line: 1.0, reserve: 0.6 })
-      }),
-      archer: Object.freeze({
-        label: 'Arcieri', cost: 110,
-        roles: Object.freeze({ ranged: 1.0, screen: 0.5 })
-      }),
-      cavalry: Object.freeze({
-        label: 'Cavalleria', cost: 180,
-        roles: Object.freeze({ mobile: 1.0, shock: 0.9, reserve: 0.4 })
-      })
-    }),
+    catalog: UNIT_TYPES,
 
     zone(side) {
       const b = battlefieldPx();
@@ -6923,7 +6914,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const color = side === 'blue' ? '#3f79d8' : '#cf4d4d';
       const a = angle === null ? (side === 'blue' ? -Math.PI / 2 : Math.PI / 2) : angle;
       const prefix = side === 'blue' ? 'BLU' : 'ROSSA';
-      const suffix = type === 'archer' ? ' ARC' : type === 'cavalry' ? ' CAV' : '';
+      const suffix = spec.short ? ` ${spec.short}` : '';
       const u = makeUnit(`${side}-deploy-${n}`, `${prefix}${suffix} ${n}`, side, x, y, a, color, type);
       u.deployCost = spec.cost;
       u.deployPairId = null;
@@ -7314,78 +7305,69 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     },
 
     generateComposition(budget) {
-      const entries=Object.entries(Deployment.catalog).map(([type,spec])=>({type,spec}));
-      const maxUnits=32;
-      const minLineShare=0.25;
-      const minCosts=[...entries].map(x=>x.spec.cost).sort((a,b)=>a-b);
-      let targetDistinct=1, running=0;
-      for(let i=0;i<Math.min(3,minCosts.length);i++){
-        running+=minCosts[i];
-        if(budget>=running) targetDistinct=i+1;
+      const entries = Object.entries(Deployment.catalog).map(([type,spec]) => ({type,spec}));
+      const maxUnits = 32;
+      const minLineShare = 0.25;
+      const minCosts = entries.map(x => x.spec.cost).sort((a,b)=>a-b);
+      let targetDistinct = 1, running = 0;
+      for (let i=0; i<Math.min(3,minCosts.length); i++) { running += minCosts[i]; if (budget >= running) targetDistinct = i + 1; }
+      const candidates = [];
+      const seen = new Set();
+      const addCandidate = counts => {
+        const count = Object.values(counts).reduce((a,b)=>a+b,0);
+        if (!count || count > maxUnits) return;
+        const spent = entries.reduce((n,{type,spec}) => n + (counts[type]||0)*spec.cost, 0);
+        if (spent <= 0 || spent > budget || spent < budget*0.80) return;
+        const roleSpend = Object.fromEntries(this.roles.map(r=>[r,0]));
+        for (const {type,spec} of entries) { const n = counts[type] || 0; if (!n) continue; for (const role of this.roles) roleSpend[role] += n * spec.cost * this.roleValue(spec,role); }
+        const lineShare = roleSpend.line / spent;
+        if (lineShare + 1e-9 < minLineShare) return;
+        const key = entries.map(({type})=>counts[type]||0).join(',');
+        if (seen.has(key)) return; seen.add(key);
+        const typeShares = entries.map(({type,spec})=>({type,share:(counts[type]||0)*spec.cost/spent})).filter(x=>x.share>0);
+        const distinct = typeShares.length;
+        const entropyRaw = distinct>1 ? -typeShares.reduce((sum,x)=>sum+x.share*Math.log(x.share),0) : 0;
+        const entropy = distinct>1 ? entropyRaw/Math.log(distinct) : 0;
+        const maxTypeShare = Math.max(...typeShares.map(x=>x.share));
+        const primaryCoverage = ['line','ranged','mobile'].filter(role=>(roleSpend[role]/spent)>=0.10).length / Math.max(1,targetDistinct);
+        const coverage = Math.min(1,primaryCoverage);
+        const diversity = Math.min(1,distinct/Math.max(1,targetDistinct));
+        const types = entries.flatMap(({type})=>Array(counts[type]||0).fill(type));
+        candidates.push({counts:{...counts},types,spent,roleSpend,lineShare,coverage,diversity,entropy,maxTypeShare});
+      };
+      const cheapestLine = entries.filter(x => this.roleValue(x.spec,'line') >= 0.5).sort((a,b)=>a.spec.cost-b.spec.cost)[0] || entries[0];
+      for (const specialist of entries) {
+        const counts = Object.fromEntries(entries.map(x=>[x.type,0]));
+        while (counts[specialist.type] < 2 && (counts[specialist.type]+1)*specialist.spec.cost <= budget*0.45) counts[specialist.type]++;
+        let spent = counts[specialist.type]*specialist.spec.cost;
+        while (spent + cheapestLine.spec.cost <= budget && Object.values(counts).reduce((a,b)=>a+b,0) < maxUnits) { counts[cheapestLine.type]++; spent += cheapestLine.spec.cost; }
+        addCandidate(counts);
       }
-
-      const candidates=[];
-      const maxInf=Math.min(maxUnits, Math.floor(budget/Deployment.catalog.infantry.cost));
-      for(let infantry=0;infantry<=maxInf;infantry++){
-        const spentInf=infantry*Deployment.catalog.infantry.cost;
-        const maxArcher=Math.min(maxUnits-infantry, Math.floor((budget-spentInf)/Deployment.catalog.archer.cost));
-        for(let archer=0;archer<=maxArcher;archer++){
-          const baseSpent=spentInf+archer*Deployment.catalog.archer.cost;
-          const maxCavalry=Math.min(maxUnits-infantry-archer, Math.floor((budget-baseSpent)/Deployment.catalog.cavalry.cost));
-          for(let cavalry=0;cavalry<=maxCavalry;cavalry++){
-            const count=infantry+archer+cavalry;
-            if(!count) continue;
-            const counts={infantry,archer,cavalry};
-            const spent=baseSpent+cavalry*Deployment.catalog.cavalry.cost;
-            const roleSpend=Object.fromEntries(this.roles.map(r=>[r,0]));
-            for(const {type,spec} of entries){
-              const n=counts[type]||0;
-              if(!n) continue;
-              for(const role of this.roles) roleSpend[role]+=n*spec.cost*this.roleValue(spec,role);
-            }
-            const lineShare=spent?roleSpend.line/spent:0;
-            if(lineShare+1e-9<minLineShare) continue;
-
-            const typeShares=entries
-              .map(({type,spec})=>({type,share:(counts[type]||0)*spec.cost/spent}))
-              .filter(x=>x.share>0);
-            const distinct=typeShares.length;
-            const entropyRaw=distinct>1?-typeShares.reduce((s,x)=>s+x.share*Math.log(x.share),0):0;
-            const entropy=distinct>1?entropyRaw/Math.log(distinct):0;
-            const maxTypeShare=Math.max(...typeShares.map(x=>x.share));
-            const primaryCoverage=['line','ranged','mobile']
-              .filter(role=>(roleSpend[role]/spent)>=0.10).length / Math.max(1,targetDistinct);
-            const coverage=Math.min(1,primaryCoverage);
-            const diversity=Math.min(1,distinct/Math.max(1,targetDistinct));
-            candidates.push({counts,types:entries.flatMap(({type})=>Array(counts[type]||0).fill(type)),spent,roleSpend,lineShare,coverage,diversity,entropy,maxTypeShare});
-          }
+      for (let trial=0; trial<3200; trial++) {
+        const counts = Object.fromEntries(entries.map(x=>[x.type,0]));
+        let spent = 0, count = 0, lineSpend = 0;
+        while (count < maxUnits) {
+          const affordable = entries.filter(x => spent + x.spec.cost <= budget); if (!affordable.length) break;
+          const currentLineShare = spent > 0 ? lineSpend/spent : 0;
+          const pick = this.weightedPick(affordable, x => { const newType = counts[x.type] ? 1 : 1.45; const lineNeed = currentLineShare < minLineShare && this.roleValue(x.spec,'line') >= 0.5 ? 2.6 : 1; const saturation = 1 / (1 + counts[x.type]*0.22); return newType * lineNeed * saturation * this.rand(0.72,1.28); });
+          if (!pick) break; counts[pick.type]++; spent += pick.spec.cost; lineSpend += pick.spec.cost*this.roleValue(pick.spec,'line'); count++; if (spent >= budget*0.92 && Math.random() < 0.18) break;
         }
+        addCandidate(counts);
       }
-
-      if(!candidates.length) return {types:['infantry'],spent:Deployment.catalog.infantry.cost,quality:0};
-
-      const maxCandidateSpend=Math.max(...candidates.map(x=>x.spent));
-      const tacticalBias=Object.fromEntries(this.roles.map(r=>[r,this.rand(0.82,1.18)]));
-      for(const c of candidates){
-        const spendRatio=c.spent/Math.max(1,maxCandidateSpend);
-        const roleAffinity=this.roles.reduce((sum,role)=>sum+(c.roleSpend[role]/c.spent)*tacticalBias[role],0)/3;
-        const dominancePenalty=Math.max(0,c.maxTypeShare-0.67);
-        const lowSpendPenalty=Math.max(0,0.90-spendRatio);
-        c.quality =
-          spendRatio*4.0 +
-          c.coverage*2.5 +
-          c.diversity*1.4 +
-          c.entropy*1.0 +
-          Math.min(1,c.lineShare/minLineShare)*0.6 +
-          roleAffinity*0.6 -
-          dominancePenalty*4.0 -
-          lowSpendPenalty*10.0;
+      if (!candidates.length) return {types:['infantry'],spent:Deployment.catalog.infantry.cost,quality:0};
+      const maxCandidateSpend = Math.max(...candidates.map(x=>x.spent));
+      const tacticalBias = Object.fromEntries(this.roles.map(r=>[r,this.rand(0.82,1.18)]));
+      for (const c of candidates) {
+        const spendRatio = c.spent/Math.max(1,maxCandidateSpend);
+        const roleAffinity = this.roles.reduce((sum,role)=>sum+(c.roleSpend[role]/c.spent)*tacticalBias[role],0)/3;
+        const dominancePenalty = Math.max(0,c.maxTypeShare-0.67);
+        const lowSpendPenalty = Math.max(0,0.90-spendRatio);
+        c.quality = spendRatio*4.0 + c.coverage*2.5 + c.diversity*1.4 + c.entropy*1.0 + Math.min(1,c.lineShare/minLineShare)*0.6 + roleAffinity*0.6 - dominancePenalty*4.0 - lowSpendPenalty*10.0;
       }
       candidates.sort((a,b)=>b.quality-a.quality);
-      const pool=candidates.slice(0,Math.min(18,candidates.length));
-      const best=pool[0].quality;
-      const chosen=this.weightedPick(pool,x=>Math.exp((x.quality-best)*1.7))||pool[0];
-      return chosen;
+      const pool = candidates.slice(0,Math.min(24,candidates.length));
+      const best = pool[0].quality;
+      return this.weightedPick(pool,x=>Math.exp((x.quality-best)*1.7)) || pool[0];
     },
 
     openLaneRatio(side) {
@@ -7905,7 +7887,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         <div class="row"><span>Unità</span><b>${u.name}</b></div>
         <div class="row"><span>Selezione</span><b>${Selection.current().length}</b></div>
         <div class="row"><span>Schieramento</span><b>${u.side === 'blue' ? 'BLU' : 'ROSSO'}</b></div>
-        <div class="row"><span>Tipo</span><b>${u.type === 'cavalry' ? 'CAVALLERIA' : (u.type === 'archer' ? 'ARCIERI' : 'FANTERIA')}</b></div>
+        <div class="row"><span>Tipo</span><b>${(UNIT_TYPES[u.type] || UNIT_TYPES.infantry).label.toUpperCase()}</b></div>
         <div class="row"><span>Ordine</span><b>${effectiveOrder}</b></div>
         <div class="row"><span>Lock-on</span><b>${lock}</b></div>
         <div class="row"><span>Attacco terminale</span><b>${finalAttack}</b></div>
