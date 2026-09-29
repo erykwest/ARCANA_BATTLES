@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ARCANA — Campal Battle Lab v0.87.4</title>
+<title>ARCANA — Campal Battle Lab v0.87.5</title>
 <style>
   :root{
     --bg:#11151b;
@@ -437,7 +437,7 @@
 </head>
 <body>
 <header>
-  <strong>ARCANA — CAMPAL BATTLE LAB v0.87.4</strong>
+  <strong>ARCANA — CAMPAL BATTLE LAB v0.87.5</strong>
   <span>REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
 </header>
 
@@ -6512,51 +6512,78 @@
     },
 
     generateComposition(budget) {
-      const entries = Object.entries(Deployment.catalog).map(([type, spec]) => ({ type, spec }));
-      let best = null;
-
-      for (let attempt = 0; attempt < 60; attempt++) {
-        const bias = Object.fromEntries(this.roles.map(r => [r, this.rand(0.55, 1.45)]));
-        const types = [];
-        const roleSpend = Object.fromEntries(this.roles.map(r => [r, 0]));
-        let spent = 0;
-
-        while (types.length < 32) {
-          let candidates = entries.filter(({spec}) => spent + spec.cost <= budget);
-          if (!candidates.length) break;
-
-          // Structural floor: at least ~25% of the budget must be able to hold a line.
-          if (roleSpend.line < budget * 0.25) {
-            const line = candidates.filter(({spec}) => this.roleValue(spec, 'line') >= 0.5);
-            if (line.length) candidates = line;
-          }
-
-          const limited = candidates.filter(({spec}) => {
-            const ranged = roleSpend.ranged + spec.cost * this.roleValue(spec, 'ranged');
-            const mobile = roleSpend.mobile + spec.cost * this.roleValue(spec, 'mobile');
-            return ranged <= budget * 0.48 && mobile <= budget * 0.48;
-          });
-          if (limited.length) candidates = limited;
-
-          const pick = this.weightedPick(candidates, ({spec}) => {
-            let w = 0.18;
-            for (const role of this.roles) w += this.roleValue(spec, role) * bias[role];
-            return w;
-          });
-          if (!pick) break;
-
-          types.push(pick.type);
-          spent += pick.spec.cost;
-          for (const role of this.roles) roleSpend[role] += pick.spec.cost * this.roleValue(pick.spec, role);
-        }
-
-        const lineShare = spent ? roleSpend.line / spent : 0;
-        const spendRatio = budget ? spent / budget : 0;
-        const quality = spendRatio * 10 + Math.min(1, lineShare / 0.25) * 2 + Math.random() * 0.08;
-        if (!best || quality > best.quality) best = { types, spent, quality };
+      const entries=Object.entries(Deployment.catalog).map(([type,spec])=>({type,spec}));
+      const maxUnits=32;
+      const minLineShare=0.25;
+      const minCosts=[...entries].map(x=>x.spec.cost).sort((a,b)=>a-b);
+      let targetDistinct=1, running=0;
+      for(let i=0;i<Math.min(3,minCosts.length);i++){
+        running+=minCosts[i];
+        if(budget>=running) targetDistinct=i+1;
       }
 
-      return best || { types:['infantry'], spent:Deployment.spec('infantry').cost, quality:0 };
+      const candidates=[];
+      const maxInf=Math.min(maxUnits, Math.floor(budget/Deployment.catalog.infantry.cost));
+      for(let infantry=0;infantry<=maxInf;infantry++){
+        const spentInf=infantry*Deployment.catalog.infantry.cost;
+        const maxArcher=Math.min(maxUnits-infantry, Math.floor((budget-spentInf)/Deployment.catalog.archer.cost));
+        for(let archer=0;archer<=maxArcher;archer++){
+          const baseSpent=spentInf+archer*Deployment.catalog.archer.cost;
+          const maxCavalry=Math.min(maxUnits-infantry-archer, Math.floor((budget-baseSpent)/Deployment.catalog.cavalry.cost));
+          for(let cavalry=0;cavalry<=maxCavalry;cavalry++){
+            const count=infantry+archer+cavalry;
+            if(!count) continue;
+            const counts={infantry,archer,cavalry};
+            const spent=baseSpent+cavalry*Deployment.catalog.cavalry.cost;
+            const roleSpend=Object.fromEntries(this.roles.map(r=>[r,0]));
+            for(const {type,spec} of entries){
+              const n=counts[type]||0;
+              if(!n) continue;
+              for(const role of this.roles) roleSpend[role]+=n*spec.cost*this.roleValue(spec,role);
+            }
+            const lineShare=spent?roleSpend.line/spent:0;
+            if(lineShare+1e-9<minLineShare) continue;
+
+            const typeShares=entries
+              .map(({type,spec})=>({type,share:(counts[type]||0)*spec.cost/spent}))
+              .filter(x=>x.share>0);
+            const distinct=typeShares.length;
+            const entropyRaw=distinct>1?-typeShares.reduce((s,x)=>s+x.share*Math.log(x.share),0):0;
+            const entropy=distinct>1?entropyRaw/Math.log(distinct):0;
+            const maxTypeShare=Math.max(...typeShares.map(x=>x.share));
+            const primaryCoverage=['line','ranged','mobile']
+              .filter(role=>(roleSpend[role]/spent)>=0.10).length / Math.max(1,targetDistinct);
+            const coverage=Math.min(1,primaryCoverage);
+            const diversity=Math.min(1,distinct/Math.max(1,targetDistinct));
+            candidates.push({counts,types:entries.flatMap(({type})=>Array(counts[type]||0).fill(type)),spent,roleSpend,lineShare,coverage,diversity,entropy,maxTypeShare});
+          }
+        }
+      }
+
+      if(!candidates.length) return {types:['infantry'],spent:Deployment.catalog.infantry.cost,quality:0};
+
+      const maxCandidateSpend=Math.max(...candidates.map(x=>x.spent));
+      const tacticalBias=Object.fromEntries(this.roles.map(r=>[r,this.rand(0.82,1.18)]));
+      for(const c of candidates){
+        const spendRatio=c.spent/Math.max(1,maxCandidateSpend);
+        const roleAffinity=this.roles.reduce((sum,role)=>sum+(c.roleSpend[role]/c.spent)*tacticalBias[role],0)/3;
+        const dominancePenalty=Math.max(0,c.maxTypeShare-0.67);
+        const lowSpendPenalty=Math.max(0,0.90-spendRatio);
+        c.quality =
+          spendRatio*4.0 +
+          c.coverage*2.5 +
+          c.diversity*1.4 +
+          c.entropy*1.0 +
+          Math.min(1,c.lineShare/minLineShare)*0.6 +
+          roleAffinity*0.6 -
+          dominancePenalty*4.0 -
+          lowSpendPenalty*10.0;
+      }
+      candidates.sort((a,b)=>b.quality-a.quality);
+      const pool=candidates.slice(0,Math.min(18,candidates.length));
+      const best=pool[0].quality;
+      const chosen=this.weightedPick(pool,x=>Math.exp((x.quality-best)*1.7))||pool[0];
+      return chosen;
     },
 
     openLaneRatio(side) {
