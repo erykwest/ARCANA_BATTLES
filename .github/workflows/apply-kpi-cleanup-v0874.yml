@@ -1,0 +1,61 @@
+name: Apply battle-end KPI cleanup v0.87.4
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-kpi-cleanup-v0874.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Remove morale KPI columns
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('ARCANA_BATTLES.html')
+          s = p.read_text()
+          replacements = {
+            '<title>ARCANA — Campal Battle Lab v0.87.3</title>': '<title>ARCANA — Campal Battle Lab v0.87.4</title>',
+            'ARCANA — CAMPAL BATTLE LAB v0.87.3': 'ARCANA — CAMPAL BATTLE LAB v0.87.4',
+            '''          <td>${Math.round(r.damageVTaken || 0)}</td>\n          <td>${Math.round(r.damageB || 0)}</td>\n          <td>${Math.round(r.damageBTaken || 0)}</td>\n          <td>${r.kills || 0}</td>''': '''          <td>${Math.round(r.damageVTaken || 0)}</td>\n          <td>${r.kills || 0}</td>''',
+            '''        a.damageVTaken += r.damageVTaken || 0;\n        a.damageB += r.damageB || 0;\n        a.damageBTaken += r.damageBTaken || 0;\n        a.kills += r.kills || 0;''': '''        a.damageVTaken += r.damageVTaken || 0;\n        a.kills += r.kills || 0;''',
+            '''      }, { damageV:0, damageVTaken:0, damageB:0, damageBTaken:0, kills:0, routsOut:0 });''': '''      }, { damageV:0, damageVTaken:0, kills:0, routsOut:0 });''',
+            '''            <th>UNITÀ</th><th>DMG ↑</th><th>DMG ↓</th><th>B ↑</th><th>B ↓</th><th>KO</th><th>ROUT OUT</th>''': '''            <th>UNITÀ</th><th>DMG ↑</th><th>DMG ↓</th><th>KO</th><th>ROUT OUT</th>''',
+            '''          <tbody>${rows || '<tr><td colspan="7">—</td></tr>'}</tbody>''': '''          <tbody>${rows || '<tr><td colspan="5">—</td></tr>'}</tbody>''',
+            '''            <th>${Math.round(totals.damageVTaken)}</th>\n            <th>${Math.round(totals.damageB)}</th>\n            <th>${Math.round(totals.damageBTaken)}</th>\n            <th>${totals.kills}</th>''': '''            <th>${Math.round(totals.damageVTaken)}</th>\n            <th>${totals.kills}</th>''',
+            '''      DOM.battleEndLead.textContent = `${outcomeLead} · DMG = punti Vita reali; B = punti psicologia reali; ↑ inflitti / ↓ subiti.`;''': '''      DOM.battleEndLead.textContent = `${outcomeLead} · DMG = punti Vita reali; ↑ inflitti / ↓ subiti.`;'''
+          }
+          for old,new in replacements.items():
+              if old not in s:
+                  raise SystemExit(f'Missing expected block: {old[:100]!r}')
+              s = s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Static invariants
+        run: |
+          grep -q 'v0.87.4' ARCANA_BATTLES.html
+          ! grep -q '<th>B ↑</th>' ARCANA_BATTLES.html
+          ! grep -q '<th>B ↓</th>' ARCANA_BATTLES.html
+          grep -q 'colspan="5"' ARCANA_BATTLES.html
+      - name: JavaScript syntax check
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('ARCANA_BATTLES.html').read_text()
+          blocks=re.findall(r'<script>(.*?)</script>',s,re.S)
+          Path('/tmp/arcana.js').write_text('\n'.join(blocks))
+          PY
+          node --check /tmp/arcana.js
+      - name: Commit final HTML and cleanup workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ARCANA_BATTLES.html
+          git rm .github/workflows/apply-kpi-cleanup-v0874.yml
+          git commit -m 'Remove morale columns from battle-end KPIs v0.87.4'
+          git push
