@@ -1,0 +1,45 @@
+name: Apply Army AI v0.1
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/army-ai-sync.yml
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Apply staged transformations
+        run: |
+          python .arcana-sync/ai_step1.py
+          python .arcana-sync/ai_step2.py
+          python .arcana-sync/ai_step3.py
+          python .arcana-sync/ai_step4.py
+      - name: Validate standalone HTML
+        shell: bash
+        run: |
+          grep -q 'Campal Battle Lab v0.86.0' ARCANA_BATTLES.html
+          grep -q 'id="setupRoles"' ARCANA_BATTLES.html
+          grep -q 'ARMY_AI_REFRESH_S: 5' ARCANA_BATTLES.html
+          grep -q 'BATTLE_TIME_LIMIT_S: 600' ARCANA_BATTLES.html
+          grep -q 'const ArmyAI = {' ARCANA_BATTLES.html
+          python - <<'PY'
+          from pathlib import Path
+          s=Path('ARCANA_BATTLES.html').read_text(encoding='utf-8')
+          a=s.index('<script>')+len('<script>')
+          b=s.rindex('</script>')
+          Path('/tmp/arcana.js').write_text(s[a:b],encoding='utf-8')
+          PY
+          node --check /tmp/arcana.js
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ARCANA_BATTLES.html
+          git commit -m "Add Army AI v0.1 and 10-minute battle limit"
+          git push origin main
