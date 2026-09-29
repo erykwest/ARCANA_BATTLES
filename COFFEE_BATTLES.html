@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ARCANA — Campal Battle Lab v0.88.2</title>
+<title>COFFEE BATTLES — Campal Battle Lab v0.88.2</title>
 <style>
   :root{
     --bg:#11151b;
@@ -475,13 +475,13 @@
 </head>
 <body>
 <header>
-  <strong>ARCANA — CAMPAL BATTLE LAB v0.88.2</strong>
+  <strong>COFFEE BATTLES — CAMPAL BATTLE LAB v0.88.2</strong>
   <span>REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
 </header>
 
 <div id="sourcePauseOverlay" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Codice HTML della battaglia">
   <div class="source-pause-toolbar">
-    <div class="source-pause-title">ARCANA · SOURCE PAUSE</div>
+    <div class="source-pause-title">COFFEE BATTLES · SOURCE PAUSE</div>
     <div class="source-pause-hint">SPACE chiude il codice e ripristina la velocità precedente.</div>
     <button id="sourcePauseCopyBtn" type="button">COPIA TUTTO</button>
     <button id="sourcePauseCloseBtn" type="button">CHIUDI · SPACE</button>
@@ -491,7 +491,7 @@
 
 <div id="battleSetupOverlay" role="dialog" aria-modal="true" aria-labelledby="battleSetupTitle">
   <div class="setup-panel">
-    <div class="setup-kicker">ARCANA · CAMPAL BATTLE LAB</div>
+    <div class="setup-kicker">COFFEE BATTLES · CAMPAL BATTLE LAB</div>
     <h1 id="battleSetupTitle">NUOVA PARTITA</h1>
     <div class="setup-lead">Definisci il budget dello scenario. La composizione degli eserciti e lo schieramento saranno i passaggi successivi dell'Army Builder.</div>
 
@@ -559,7 +559,7 @@
 
 <div id="battleEndOverlay" role="dialog" aria-modal="true" aria-labelledby="battleEndTitle">
   <div class="battle-end-panel">
-    <div class="battle-end-kicker">ARCANA · ESITO BATTAGLIA</div>
+    <div class="battle-end-kicker">COFFEE BATTLES · ESITO BATTAGLIA</div>
     <h1 id="battleEndTitle">VITTORIA!</h1>
     <div id="battleEndLead">La battaglia è terminata.</div>
     <div id="battleEndLog" class="battle-damage-grid"></div>
@@ -700,7 +700,7 @@
         <b>Fc</b> determina il numero di confronti simultanei: si usa il fronte realmente in contatto, quindi il fronte minore limita naturalmente lo scontro.<br>
         <b>C</b> = Combat, unico valore melee usato sia in attacco sia in difesa: Arcieri <b>C1</b> · Fanteria <b>C2</b> · Cavalleria <b>C3</b>.<br>
         <b>AR</b> = Armor: Arcieri <b>0</b> · Fanteria <b>1</b> · Cavalleria <b>2</b>.<br>
-        Ogni confronto tira <b>DA + C</b> contro <b>DA + C</b>. Il Dado Arcano è il D12 canonico con facce <b>1,2,2,3,3,3,4,4,4,5,5,6</b>.<br>
+        Ogni confronto tira <b>DA + C</b> contro <b>DA + C</b>. Il Dado Battaglia è il D12 canonico con facce <b>1,2,2,3,3,3,4,4,4,5,5,6</b>.<br>
         Il lato col totale maggiore calcola il <b>Δ</b>; infligge <b>−1V</b> solo se <b>Δ &gt; AR</b> del perdente. Parità o Δ insufficiente = nessuna perdita.<br>
         <b>Attacco sul fianco:</b> il difensore subisce <b>C−1</b>.<br>
         <b>Carica:</b> per 1s l'attaccante ottiene <b>+2×Fc</b> confronti extra; il difensore è soppresso, ha <b>C−1</b> e non può infliggere perdite finché dura la soppressione.<br>
@@ -5287,10 +5287,10 @@ makeMountainSectorChain(minLen=3,maxLen=6){
   // 9. COMBAT + RESOURCES
   // ============================================================
   const Combat = {
-    ARCANE_FACES: Object.freeze([1,2,2,3,3,3,4,4,4,5,5,6]),
+    BATTLE_DIE_FACES: Object.freeze([1,2,2,3,3,3,4,4,4,5,5,6]),
 
-    arcaneDie() {
-      return this.ARCANE_FACES[Math.floor(Math.random() * this.ARCANE_FACES.length)];
+    battleDie() {
+      return this.BATTLE_DIE_FACES[Math.floor(Math.random() * this.BATTLE_DIE_FACES.length)];
     },
 
     effectiveCombat(u, pair = null) {
@@ -5306,8 +5306,8 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     opposedContest(a, b, pair, canDamageA = true, canDamageB = true, combatA = null, combatB = null, armorA = null, armorB = null) {
       const ca = combatA === null ? this.effectiveCombat(a, pair) : Math.max(0, combatA);
       const cb = combatB === null ? this.effectiveCombat(b, pair) : Math.max(0, combatB);
-      const scoreA = this.arcaneDie() + ca;
-      const scoreB = this.arcaneDie() + cb;
+      const scoreA = this.battleDie() + ca;
+      const scoreB = this.battleDie() + cb;
       const delta = Math.abs(scoreA - scoreB);
       const arA = armorA === null ? a.stats.armor : armorA;
       const arB = armorB === null ? b.stats.armor : armorB;
@@ -8253,7 +8253,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
   Simulation.reset();
   View.resize();
   BattleSetup.open(true);
-  window.__ARCANA_DEBUG__ = { State, Units, Geometry, Terrain, AI, ArmyAI, Movement, Orders, Engagements, Collision, Simulation, Selection, CFG, Pathfinder, Combat, Morale, Resources, Battle, BattleSetup, Deployment, DoctrineEngine };
+  window.__COFFEE_BATTLES_DEBUG__ = { State, Units, Geometry, Terrain, AI, ArmyAI, Movement, Orders, Engagements, Collision, Simulation, Selection, CFG, Pathfinder, Combat, Morale, Resources, Battle, BattleSetup, Deployment, DoctrineEngine };
   requestAnimationFrame(Simulation.frame);
 })();
 
