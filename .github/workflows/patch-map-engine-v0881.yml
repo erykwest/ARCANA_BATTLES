@@ -1,0 +1,131 @@
+name: One-shot Map Engine v0.88.1
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/patch-map-engine-v0881.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Apply Map Engine refinements
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('ARCANA_BATTLES.html')
+          s=p.read_text(encoding='utf-8')
+          if 'Campal Battle Lab v0.88.0' not in s:
+              raise SystemExit('Unexpected version; refusing patch')
+          def repl(start,end,new):
+              global s
+              a=s.index(start); b=s.index(end,a); s=s[:a]+new+s[b:]
+          s=s.replace('Campal Battle Lab v0.88.0','Campal Battle Lab v0.88.1',1)
+          s=s.replace('CAMPAL BATTLE LAB v0.88.0','CAMPAL BATTLE LAB v0.88.1',1)
+          repl("    makeHill(id,x,y,rx=10,ry=5,angle=null){","\n\n    crossingAt(point, clearancePx=0) {",r'''    makeHill(id,x,y,rx=10,ry=5,angle=null) {
+            const a=angle??this.rand(-.9,.9), summitCount=this.randi(3,5), summit=[];
+            for(let i=0;i<summitCount;i++){
+              const q=(Math.PI*2*i/summitCount)+this.rand(-.32,.32);
+              summit.push({x:Math.cos(q)*rx*CFG.U*this.rand(.18,.42),y:Math.sin(q)*ry*CFG.U*this.rand(.18,.42)});
+            }
+            const blob=[],n=30;
+            for(let i=0;i<n;i++){
+              const q=Math.PI*2*i/n,ux=Math.cos(q),uy=Math.sin(q); let influence=0;
+              for(const sp of summit){const sx=sp.x/(rx*CFG.U||1),sy=sp.y/(ry*CFG.U||1); influence=Math.max(influence,ux*sx+uy*sy);}
+              const radial=this.clamp(.88+Math.max(0,influence)*.34+this.rand(-.07,.07),.78,1.14);
+              blob.push({x:ux*rx*CFG.U*radial,y:uy*ry*CFG.U*radial});
+            }
+            return {id,type:'hill',x,y,angle:a,rx:rx*CFG.U,ry:ry*CFG.U,summit,blob,smoothBlob:Terrain.smoothClosedBlob(blob,8),fill:'#7a5b34',edge:'#a77f49'};
+          },
+          makeRough(id,x,y,rx=6,ry=4,angle=null){return{id,type:'rough',x,y,angle:angle??this.rand(-.9,.9),rx:rx*CFG.U,ry:ry*CFG.U,fill:'#7c6940',edge:'#a18a5a'};},
+          makeForest(id,x,y,rx=10,ry=5,angle=null){const blob=Terrain.makeBlob(rx*CFG.U,ry*CFG.U,30,.09);return{id,type:'forest',x,y,angle:angle??this.rand(-.8,.8),fill:'#204622',edge:'#3e7f42',blob,smoothBlob:Terrain.smoothClosedBlob(blob,9)};},
+          makePond(id,x,y,rx=5,ry=3,angle=null){return{id,type:'pond',x,y,angle:angle??this.rand(-.7,.7),fill:'#4d9fcb',edge:'#94d0ef',blob:Terrain.makeBlob(rx*CFG.U,ry*CFG.U,20,.22)};},
+          makeMountain(id,x,y,rx=8,ry=5,angle=null){const blob=Terrain.makeBlob(rx*CFG.U,ry*CFG.U,26,.11);return{id,type:'mountain',x,y,angle:angle??this.rand(-.35,.35),fill:'#50534c',edge:'#8b9185',blob,smoothBlob:Terrain.smoothClosedBlob(blob,7)};},
+          makeWall(id,x,y,w=8,h=.5,angle=null){return{id,type:'wall',x,y,angle:angle??this.rand(-Math.PI,Math.PI),w:w*CFG.U,h:h*CFG.U,fill:'#9d8b71',edge:'#ddd0b5'};},
+          makeBuilding(id,x,y,w=4,h=3,angle=0){return{id,type:'building',x,y,angle,w:w*CFG.U,h:h*CFG.U,fill:'#725647',edge:'#c39a79'};},
+
+          edgePointsThrough(point,angle){
+            const b=Geometry.battlefieldBounds(),dx=Math.cos(angle),dy=Math.sin(angle),hits=[];
+            const add=t=>{if(!Number.isFinite(t))return;const x=point.x+dx*t,y=point.y+dy*t;if(x>=b.minX-1&&x<=b.maxX+1&&y>=b.minY-1&&y<=b.maxY+1)hits.push({x:this.clamp(x,b.minX,b.maxX),y:this.clamp(y,b.minY,b.maxY),t});};
+            if(Math.abs(dx)>1e-6){add((b.minX-point.x)/dx);add((b.maxX-point.x)/dx);} if(Math.abs(dy)>1e-6){add((b.minY-point.y)/dy);add((b.maxY-point.y)/dy);}
+            hits.sort((a,b)=>a.t-b.t); return hits.length>=2?[hits[0],hits[hits.length-1]]:[{x:b.minX,y:point.y},{x:b.maxX,y:point.y}];
+          },
+          makeVillageRoadNetwork(spawn){
+            const main=this.makeRoad('road-1',spawn),near=this.sampleAlong(main,.5),branchAngle=near.angle+Math.PI/2+this.rand(-.15,.15),[e0,e1]=this.edgePointsThrough(spawn,branchAngle),cross=Math.random()<.5;
+            let controls;
+            if(cross)controls=[e0,{x:(e0.x+spawn.x)*.5+this.rand(-2,2)*CFG.U,y:(e0.y+spawn.y)*.5+this.rand(-2,2)*CFG.U},{...spawn},{x:(e1.x+spawn.x)*.5+this.rand(-2,2)*CFG.U,y:(e1.y+spawn.y)*.5+this.rand(-2,2)*CFG.U},e1];
+            else {const end=Math.random()<.5?e0:e1;controls=[{...spawn},{x:(spawn.x+end.x)*.5+this.rand(-2,2)*CFG.U,y:(spawn.y+end.y)*.5+this.rand(-2,2)*CFG.U},end];}
+            const branch={id:'road-2',type:'road',controlPoints:controls,samples:Terrain.sampleRoad(controls,.36),width:2*CFG.U,fill:'rgba(176,142,98,.90)',edge:'rgba(222,198,154,.95)',junction:cross?'cross':'T'};
+            main.junction=branch.junction;main.spawn={...spawn};branch.spawn={...spawn};return[main,branch];
+          },
+          perimeterMountainSectors(){
+            const b=Geometry.battlefieldBounds(),cols=4,rows=3,cw=(b.maxX-b.minX)/cols,ch=(b.maxY-b.minY)/rows,cells=[];
+            for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)if(r===0||r===rows-1||c===0||c===cols-1)cells.push({r,c,x:b.minX+(c+.5)*cw,y:b.minY+(r+.5)*ch,cw,ch});
+            const f=(r,c)=>cells.find(x=>x.r===r&&x.c===c);
+            return[f(0,0),f(0,1),f(0,2),f(0,3),f(1,3),f(2,3),f(2,2),f(2,1),f(2,0),f(1,0)].filter(Boolean);
+          },
+          makeMountainSectorChain(minLen=3,maxLen=6){
+            const ring=this.perimeterMountainSectors();
+            for(let attempt=0;attempt<80;attempt++){
+              const len=this.randi(minLen,Math.min(maxLen,ring.length-2)),start=this.randi(0,ring.length-1),chosen=[];
+              for(let i=0;i<len;i++)chosen.push(ring[(start+i)%ring.length]);
+              if(chosen.filter(c=>c.r===0).length>=4||chosen.filter(c=>c.r===2).length>=4)continue;
+              return chosen.map((c,i)=>{const m=this.makeMountain(`mountain-sector-${i+1}`,c.x,c.y,(c.cw/CFG.U)*this.rand(.52,.60),(c.ch/CFG.U)*this.rand(.54,.62),this.rand(-.12,.12));m.mapSector={row:c.r,col:c.c};return m;});
+            }
+            return[];
+          },''')
+          s=s.replace("      if (t.type==='mountain') return Terrain.blobPoints(t).map(p=>Terrain.localToWorld(t,p));","      if (t.type==='mountain'||(t.type==='hill'&&t.blob)) return Terrain.blobPoints(t).map(p=>Terrain.localToWorld(t,p));")
+          s=s.replace("      if (t.type==='mountain') return Terrain.polygonContains(t,point.x,point.y,pad);","      if (t.type==='mountain'||(t.type==='hill'&&t.blob)) return Terrain.polygonContains(t,point.x,point.y,pad);")
+          repl("    makeVillageCluster(placed,count=5,center=null) {","\n\n    makeBiomeTerrain(biome) {",r'''    makeVillageCluster(placed,count=14,center=null) {
+            const z=this.mapZone(),cx=center?.x??z.cx,cy=center?.y??z.cy,road=placed.find(t=>t.type==='road'),probe=road?this.sampleAlong(road,.5):{angle:0};
+            const base=probe.angle||0,tx=Math.cos(base),ty=Math.sin(base),nx=-ty,ny=tx,blockCenters=[[-9,-7],[-2,-8],[6,-7],[-10,7],[-2,8],[7,7]]; let made=0;
+            for(let bi=0;bi<blockCenters.length&&made<count;bi++){
+              const [ba,bs]=blockCenters[bi],bcA=ba+this.rand(-2.2,2.2),bcS=bs+this.rand(-1.8,1.8),blockAngle=base+this.rand(-.28,.28),ct=Math.cos(blockAngle),st=Math.sin(blockAngle),nBuildings=this.randi(2,4);
+              for(let j=0;j<nBuildings&&made<count;j++)for(let tries=0;tries<24;tries++){
+                const localA=this.rand(-3.4,3.4),localS=this.rand(-2.7,2.7),along=bcA+localA*ct-localS*st,side=bcS+localA*st+localS*ct,x=cx+tx*along*CFG.U+nx*side*CFG.U,y=cy+ty*along*CFG.U+ny*side*CFG.U,b=this.makeBuilding(`building-${made+1}`,x,y,this.rand(2.5,4.2),this.rand(2.2,3.4),blockAngle+this.rand(-.18,.18));
+                if(!this.fitsZone(b)||placed.some(o=>o.type==='road'&&Terrain.overlapsRoad(b,o,.42))||placed.some(o=>o.type==='building'&&this.overlaps(b,o,.12)))continue;placed.push(b);made++;break;
+              }
+            }
+            for(let tries=0;made<count&&tries<220;tries++){
+              const a=this.rand(0,Math.PI*2),r=this.rand(6,15),x=cx+Math.cos(a)*r*CFG.U,y=cy+Math.sin(a)*r*CFG.U,b=this.makeBuilding(`building-${made+1}`,x,y,this.rand(2.4,4),this.rand(2.1,3.2),base+this.rand(-.35,.35));
+              if(!this.fitsZone(b)||placed.some(o=>o.type==='road'&&Terrain.overlapsRoad(b,o,.40))||placed.some(o=>o.type==='building'&&this.overlaps(b,o,.10)))continue;placed.push(b);made++;
+            }
+            return{x:cx,y:cy,buildingCount:made};
+          },''')
+          repl("    makeBiomeTerrain(biome) {","\n\n    generate(choice=State.battleSetup.biome) {",r'''    makeBiomeTerrain(biome) {
+            const z=this.mapZone(),placed=[],pos=(m=0)=>this.randomCenter(m);
+            const hill=(i,small=false)=>{const p=pos(small?4:7);return this.makeHill(`hill-${i+1}`,p.x,p.y,small?this.rand(5,7):this.rand(8,10),small?this.rand(3,4):this.rand(4,5.5));};
+            const forest=(i,small=false)=>{const p=pos(small?4:7);return this.makeForest(`forest-${i+1}`,p.x,p.y,small?this.rand(5,7):this.rand(8,10),small?this.rand(3,4):this.rand(4,5.5));};
+            const rough=i=>{const p=pos(4);return this.makeRough(`rough-${i+1}`,p.x,p.y,this.rand(4.5,6),this.rand(3,4));}; const pond=i=>{const p=pos(4);return this.makePond(`pond-${i+1}`,p.x,p.y,this.rand(4,5),this.rand(2.5,3.3));};
+            if(biome==='plains'){placed.push(this.makeRoad());this.addRandom(placed,this.randi(1,2),rough,.30);this.addRandom(placed,this.randi(0,1),forest,.30);if(Math.random()<.45)placed.push(this.makeWatercourse('stream','stream-1'));}
+            else if(biome==='hills'){placed.push(this.makeRoad());this.addRandom(placed,this.randi(3,4),hill,.20);this.addRandom(placed,this.randi(1,2),rough,.25);this.addRandom(placed,this.randi(0,1),forest,.25);}
+            else if(biome==='valley'){placed.push(...this.makeMountainSectorChain(3,5));placed.push(this.makeWatercourse('stream','stream-1'));placed.push(this.makeRoad('road-1',{x:z.cx,y:z.cy}));this.addRandom(placed,1,rough,.18);}
+            else if(biome==='river'){const river=this.makeWatercourse('river','river-1');placed.push(river);const bridge=this.makeCrossing(river,'bridge',this.rand(.30,.42),'bridge-1'),ford=this.makeCrossing(river,'ford',this.rand(.62,.75),'ford-1');placed.push(bridge,ford);placed.push(this.makeRoad('road-1',{x:bridge.x,y:bridge.y}));this.addRandom(placed,this.randi(1,2),forest,.22);this.addRandom(placed,this.randi(0,1),hill,.22);}
+            else if(biome==='forest'){placed.push(this.makeRoad());this.addRandom(placed,this.randi(4,6),i=>forest(i,true),.16);placed.push(this.makeWatercourse('stream','stream-1'));this.addRandom(placed,this.randi(0,1),pond,.20);}
+            else if(biome==='mountains'){placed.push(...this.makeMountainSectorChain(4,7));placed.push(this.makeRoad('road-1',{x:z.cx,y:z.cy}));this.addRandom(placed,this.randi(1,2),hill,.10);placed.push(this.makeWatercourse('stream','stream-1'));}
+            else if(biome==='village'){const village={x:this.rand(z.cx-5*CFG.U,z.cx+5*CFG.U),y:this.rand(z.cy-3*CFG.U,z.cy+3*CFG.U)};State.battleSetup.mapSpawn={...village};placed.push(...this.makeVillageRoadNetwork(village));this.makeVillageCluster(placed,this.randi(12,18),village);this.addRandom(placed,this.randi(1,2),forest,.16);this.addRandom(placed,this.randi(0,1),hill,.16);}
+            return placed;
+          },''')
+          s=s.replace("        const rank=x=>x.type==='river'||x.type==='stream'?0:x.type==='building'||x.type==='mountain'?1:2;","        const rank=x=>x.type==='river'||x.type==='stream'?0:x.type==='building'||x.type==='mountain'||(x.type==='hill'&&x.blob)?1:2;")
+          s=s.replace("        if(t.type==='mountain'){\n          ctx.beginPath();Terrain.drawShapeBlob(t);ctx.fillStyle=t.fill;ctx.strokeStyle=t.edge;ctx.lineWidth=2;ctx.fill();ctx.stroke();","        if(t.type==='mountain'||(t.type==='hill'&&t.blob)){\n          ctx.beginPath();Terrain.drawShapeBlob(t);ctx.fillStyle=t.fill;ctx.strokeStyle=t.edge;ctx.lineWidth=2;ctx.fill();ctx.stroke();")
+          s=s.replace("        State.terrain=all.filter(t=>['road','hill','forest','rough','pond','wall'].includes(t.type));","        State.terrain=all.filter(t=>['road','hill','forest','rough','pond','wall'].includes(t.type)&&!(t.type==='hill'&&t.blob));")
+          s=s.replace("        this.drawExtras(all.filter(t=>['river','stream','bridge','ford','mountain','building'].includes(t.type)));","        this.drawExtras(all.filter(t=>['river','stream','bridge','ford','mountain','building'].includes(t.type)||(t.type==='hill'&&t.blob)));")
+          p.write_text(s,encoding='utf-8')
+          Path('/tmp/arcana.js').write_text(s.split('<script>',1)[1].rsplit('</script>',1)[0],encoding='utf-8')
+          print('Map Engine v0.88.1 patched')
+          PY
+          node --check /tmp/arcana.js
+      - name: Commit and cleanup
+        shell: bash
+        run: |
+          rm -f .github/workflows/patch-map-engine-v0881.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Refine Map Engine geometry v0.88.1'
+          git push origin HEAD:main
