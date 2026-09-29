@@ -1,0 +1,206 @@
+name: One-shot composition selector patch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-composition-selector.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch DoctrineEngine composition selector
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('ARCANA_BATTLES.html')
+          text = path.read_text(encoding='utf-8')
+
+          start_marker = '    generateComposition(budget) {'
+          end_marker = '\n    openLaneRatio(side) {'
+          start = text.index(start_marker)
+          end = text.index(end_marker, start)
+          old_block = text[start:end]
+          if 'for (let attempt = 0; attempt < 60; attempt++)' not in old_block:
+              raise SystemExit('Unexpected generateComposition implementation; refusing to patch.')
+
+          new_block = r'''    generateComposition(budget) {
+      const entries = Object.entries(Deployment.catalog).map(([type, spec]) => ({ type, spec }));
+      const maxUnits = 32;
+      const minLineShare = 0.25;
+
+      // Quanti tipi diversi sono economicamente accessibili con questo budget?
+      // Serve come target morbido: varietà quando possibile, senza quote obbligatorie.
+      const minCosts = entries.map(({spec}) => spec.cost).sort((a,b) => a-b);
+      let targetDistinct = 1;
+      let runningCost = 0;
+      for (let i = 0; i < Math.min(3, minCosts.length); i++) {
+        runningCost += minCosts[i];
+        if (budget >= runningCost) targetDistinct = i + 1;
+      }
+
+      // Con il catalogo attuale (3 famiglie) possiamo valutare tutte le composizioni
+      // valide: evita il bias del vecchio picker sequenziale verso il budget perfetto.
+      const candidates = [];
+      const infantry = Deployment.catalog.infantry;
+      const archer = Deployment.catalog.archer;
+      const cavalry = Deployment.catalog.cavalry;
+      const maxInfantry = Math.min(maxUnits, Math.floor(budget / infantry.cost));
+
+      for (let nInfantry = 0; nInfantry <= maxInfantry; nInfantry++) {
+        const spentInfantry = nInfantry * infantry.cost;
+        const maxArchers = Math.min(
+          maxUnits - nInfantry,
+          Math.floor((budget - spentInfantry) / archer.cost)
+        );
+
+        for (let nArchers = 0; nArchers <= maxArchers; nArchers++) {
+          const baseSpent = spentInfantry + nArchers * archer.cost;
+          const maxCavalry = Math.min(
+            maxUnits - nInfantry - nArchers,
+            Math.floor((budget - baseSpent) / cavalry.cost)
+          );
+
+          for (let nCavalry = 0; nCavalry <= maxCavalry; nCavalry++) {
+            const count = nInfantry + nArchers + nCavalry;
+            if (!count) continue;
+
+            const counts = {
+              infantry: nInfantry,
+              archer: nArchers,
+              cavalry: nCavalry
+            };
+            const spent = baseSpent + nCavalry * cavalry.cost;
+            const roleSpend = Object.fromEntries(this.roles.map(r => [r, 0]));
+
+            for (const {type, spec} of entries) {
+              const n = counts[type] || 0;
+              if (!n) continue;
+              for (const role of this.roles) {
+                roleSpend[role] += n * spec.cost * this.roleValue(spec, role);
+              }
+            }
+
+            // Mantiene il requisito strutturale: almeno ~25% del valore deve poter
+            // tenere una linea. Non obbliga invece ranged/mobile a quote fisse.
+            const lineShare = spent ? roleSpend.line / spent : 0;
+            if (lineShare + 1e-9 < minLineShare) continue;
+
+            const typeShares = entries
+              .map(({type, spec}) => ({
+                type,
+                share: ((counts[type] || 0) * spec.cost) / spent
+              }))
+              .filter(x => x.share > 0);
+            const distinct = typeShares.length;
+            const entropyRaw = distinct > 1
+              ? -typeShares.reduce((sum, x) => sum + x.share * Math.log(x.share), 0)
+              : 0;
+            const entropy = distinct > 1 ? entropyRaw / Math.log(distinct) : 0;
+            const maxTypeShare = Math.max(...typeShares.map(x => x.share));
+
+            // I tre ruoli primari corrispondono oggi alle tre famiglie tattiche.
+            // Una presenza <10% del valore non conta come vera copertura del ruolo.
+            const primaryCoverage = ['line', 'ranged', 'mobile']
+              .filter(role => (roleSpend[role] / spent) >= 0.10).length /
+              Math.max(1, targetDistinct);
+
+            candidates.push({
+              counts,
+              types: entries.flatMap(({type}) => Array(counts[type] || 0).fill(type)),
+              spent,
+              roleSpend,
+              lineShare,
+              coverage: Math.min(1, primaryCoverage),
+              diversity: Math.min(1, distinct / Math.max(1, targetDistinct)),
+              entropy,
+              maxTypeShare
+            });
+          }
+        }
+      }
+
+      if (!candidates.length) {
+        return {
+          types: ['infantry'],
+          spent: Deployment.spec('infantry').cost,
+          quality: 0
+        };
+      }
+
+      // Confrontiamo l'efficienza rispetto alla migliore spesa realmente ottenibile,
+      // non al budget nominale: lasciare 10-30 PT non deve cancellare un esercito
+      // tatticamente molto più completo.
+      const maxCandidateSpend = Math.max(...candidates.map(x => x.spent));
+      const tacticalBias = Object.fromEntries(
+        this.roles.map(r => [r, this.rand(0.82, 1.18)])
+      );
+
+      for (const c of candidates) {
+        const spendRatio = c.spent / Math.max(1, maxCandidateSpend);
+        const roleAffinity = this.roles.reduce(
+          (sum, role) => sum + (c.roleSpend[role] / c.spent) * tacticalBias[role],
+          0
+        ) / 3;
+        const dominancePenalty = Math.max(0, c.maxTypeShare - 0.67);
+        const lowSpendPenalty = Math.max(0, 0.90 - spendRatio);
+
+        c.quality =
+          spendRatio * 4.0 +
+          c.coverage * 2.5 +
+          c.diversity * 1.4 +
+          c.entropy * 1.0 +
+          Math.min(1, c.lineShare / minLineShare) * 0.6 +
+          roleAffinity * 0.6 -
+          dominancePenalty * 4.0 -
+          lowSpendPenalty * 10.0;
+      }
+
+      candidates.sort((a,b) => b.quality - a.quality);
+
+      // Non rende il risultato deterministico: sceglie fra le composizioni migliori
+      // con decadimento esponenziale, così eserciti validi restano differenti fra run.
+      const pool = candidates.slice(0, Math.min(18, candidates.length));
+      const bestQuality = pool[0].quality;
+      return this.weightedPick(
+        pool,
+        x => Math.exp((x.quality - bestQuality) * 1.7)
+      ) || pool[0];
+    },
+'''
+
+          text = text[:start] + new_block + text[end:]
+          text = text.replace('Campal Battle Lab v0.87.4', 'Campal Battle Lab v0.87.5', 1)
+          text = text.replace('CAMPAL BATTLE LAB v0.87.4', 'CAMPAL BATTLE LAB v0.87.5', 1)
+          path.write_text(text, encoding='utf-8')
+
+          script = text.split('<script>', 1)[1].rsplit('</script>', 1)[0]
+          Path('/tmp/arcana-battles.js').write_text(script, encoding='utf-8')
+          print('Patched generateComposition and bumped v0.87.5')
+          PY
+
+          node --check /tmp/arcana-battles.js
+
+      - name: Commit selector fix and remove one-shot workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/patch-composition-selector.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ARCANA_BATTLES.html .github/workflows/patch-composition-selector.yml
+          git diff --cached --check
+          git diff --cached --quiet && { echo 'No changes to commit'; exit 1; }
+          git commit -m 'Improve composition selector diversity v0.87.5'
+          git push origin HEAD:main
