@@ -24,10 +24,10 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import base64
 
           path = Path('ARCANA_BATTLES.html')
           text = path.read_text(encoding='utf-8')
-
           start_marker = '    generateComposition(budget) {'
           end_marker = '\n    openLaneRatio(side) {'
           start = text.index(start_marker)
@@ -36,161 +36,16 @@ jobs:
           if 'for (let attempt = 0; attempt < 60; attempt++)' not in old_block:
               raise SystemExit('Unexpected generateComposition implementation; refusing to patch.')
 
-          new_block = r'''    generateComposition(budget) {
-      const entries = Object.entries(Deployment.catalog).map(([type, spec]) => ({ type, spec }));
-      const maxUnits = 32;
-      const minLineShare = 0.25;
-
-      // Quanti tipi diversi sono economicamente accessibili con questo budget?
-      // Serve come target morbido: varietà quando possibile, senza quote obbligatorie.
-      const minCosts = entries.map(({spec}) => spec.cost).sort((a,b) => a-b);
-      let targetDistinct = 1;
-      let runningCost = 0;
-      for (let i = 0; i < Math.min(3, minCosts.length); i++) {
-        runningCost += minCosts[i];
-        if (budget >= runningCost) targetDistinct = i + 1;
-      }
-
-      // Con il catalogo attuale (3 famiglie) possiamo valutare tutte le composizioni
-      // valide: evita il bias del vecchio picker sequenziale verso il budget perfetto.
-      const candidates = [];
-      const infantry = Deployment.catalog.infantry;
-      const archer = Deployment.catalog.archer;
-      const cavalry = Deployment.catalog.cavalry;
-      const maxInfantry = Math.min(maxUnits, Math.floor(budget / infantry.cost));
-
-      for (let nInfantry = 0; nInfantry <= maxInfantry; nInfantry++) {
-        const spentInfantry = nInfantry * infantry.cost;
-        const maxArchers = Math.min(
-          maxUnits - nInfantry,
-          Math.floor((budget - spentInfantry) / archer.cost)
-        );
-
-        for (let nArchers = 0; nArchers <= maxArchers; nArchers++) {
-          const baseSpent = spentInfantry + nArchers * archer.cost;
-          const maxCavalry = Math.min(
-            maxUnits - nInfantry - nArchers,
-            Math.floor((budget - baseSpent) / cavalry.cost)
-          );
-
-          for (let nCavalry = 0; nCavalry <= maxCavalry; nCavalry++) {
-            const count = nInfantry + nArchers + nCavalry;
-            if (!count) continue;
-
-            const counts = {
-              infantry: nInfantry,
-              archer: nArchers,
-              cavalry: nCavalry
-            };
-            const spent = baseSpent + nCavalry * cavalry.cost;
-            const roleSpend = Object.fromEntries(this.roles.map(r => [r, 0]));
-
-            for (const {type, spec} of entries) {
-              const n = counts[type] || 0;
-              if (!n) continue;
-              for (const role of this.roles) {
-                roleSpend[role] += n * spec.cost * this.roleValue(spec, role);
-              }
-            }
-
-            // Mantiene il requisito strutturale: almeno ~25% del valore deve poter
-            // tenere una linea. Non obbliga invece ranged/mobile a quote fisse.
-            const lineShare = spent ? roleSpend.line / spent : 0;
-            if (lineShare + 1e-9 < minLineShare) continue;
-
-            const typeShares = entries
-              .map(({type, spec}) => ({
-                type,
-                share: ((counts[type] || 0) * spec.cost) / spent
-              }))
-              .filter(x => x.share > 0);
-            const distinct = typeShares.length;
-            const entropyRaw = distinct > 1
-              ? -typeShares.reduce((sum, x) => sum + x.share * Math.log(x.share), 0)
-              : 0;
-            const entropy = distinct > 1 ? entropyRaw / Math.log(distinct) : 0;
-            const maxTypeShare = Math.max(...typeShares.map(x => x.share));
-
-            // I tre ruoli primari corrispondono oggi alle tre famiglie tattiche.
-            // Una presenza <10% del valore non conta come vera copertura del ruolo.
-            const primaryCoverage = ['line', 'ranged', 'mobile']
-              .filter(role => (roleSpend[role] / spent) >= 0.10).length /
-              Math.max(1, targetDistinct);
-
-            candidates.push({
-              counts,
-              types: entries.flatMap(({type}) => Array(counts[type] || 0).fill(type)),
-              spent,
-              roleSpend,
-              lineShare,
-              coverage: Math.min(1, primaryCoverage),
-              diversity: Math.min(1, distinct / Math.max(1, targetDistinct)),
-              entropy,
-              maxTypeShare
-            });
-          }
-        }
-      }
-
-      if (!candidates.length) {
-        return {
-          types: ['infantry'],
-          spent: Deployment.spec('infantry').cost,
-          quality: 0
-        };
-      }
-
-      // Confrontiamo l'efficienza rispetto alla migliore spesa realmente ottenibile,
-      // non al budget nominale: lasciare 10-30 PT non deve cancellare un esercito
-      // tatticamente molto più completo.
-      const maxCandidateSpend = Math.max(...candidates.map(x => x.spent));
-      const tacticalBias = Object.fromEntries(
-        this.roles.map(r => [r, this.rand(0.82, 1.18)])
-      );
-
-      for (const c of candidates) {
-        const spendRatio = c.spent / Math.max(1, maxCandidateSpend);
-        const roleAffinity = this.roles.reduce(
-          (sum, role) => sum + (c.roleSpend[role] / c.spent) * tacticalBias[role],
-          0
-        ) / 3;
-        const dominancePenalty = Math.max(0, c.maxTypeShare - 0.67);
-        const lowSpendPenalty = Math.max(0, 0.90 - spendRatio);
-
-        c.quality =
-          spendRatio * 4.0 +
-          c.coverage * 2.5 +
-          c.diversity * 1.4 +
-          c.entropy * 1.0 +
-          Math.min(1, c.lineShare / minLineShare) * 0.6 +
-          roleAffinity * 0.6 -
-          dominancePenalty * 4.0 -
-          lowSpendPenalty * 10.0;
-      }
-
-      candidates.sort((a,b) => b.quality - a.quality);
-
-      // Non rende il risultato deterministico: sceglie fra le composizioni migliori
-      // con decadimento esponenziale, così eserciti validi restano differenti fra run.
-      const pool = candidates.slice(0, Math.min(18, candidates.length));
-      const bestQuality = pool[0].quality;
-      return this.weightedPick(
-        pool,
-        x => Math.exp((x.quality - bestQuality) * 1.7)
-      ) || pool[0];
-    },
-'''
-
+          encoded = 'ICAgIGdlbmVyYXRlQ29tcG9zaXRpb24oYnVkZ2V0KSB7CiAgICAgIGNvbnN0IGVudHJpZXM9T2JqZWN0LmVudHJpZXMoRGVwbG95bWVudC5jYXRhbG9nKS5tYXAoKFt0eXBlLHNwZWNdKT0+KHt0eXBlLHNwZWN9KSk7CiAgICAgIGNvbnN0IG1heFVuaXRzPTMyOwogICAgICBjb25zdCBtaW5MaW5lU2hhcmU9MC4yNTsKICAgICAgY29uc3QgbWluQ29zdHM9Wy4uLmVudHJpZXNdLm1hcCh4PT54LnNwZWMuY29zdCkuc29ydCgoYSxiKT0+YS1iKTsKICAgICAgbGV0IHRhcmdldERpc3RpbmN0PTEsIHJ1bm5pbmc9MDsKICAgICAgZm9yKGxldCBpPTA7aTxNYXRoLm1pbigzLG1pbkNvc3RzLmxlbmd0aCk7aSsrKXsKICAgICAgICBydW5uaW5nKz1taW5Db3N0c1tpXTsKICAgICAgICBpZihidWRnZXQ+PXJ1bm5pbmcpIHRhcmdldERpc3RpbmN0PWkrMTsKICAgICAgfQogICAgCiAgICAgIGNvbnN0IGNhbmRpZGF0ZXM9W107CiAgICAgIGNvbnN0IG1heEluZj1NYXRoLm1pbihtYXhVbml0cywgTWF0aC5mbG9vcihidWRnZXQvRGVwbG95bWVudC5jYXRhbG9nLmluZmFudHJ5LmNvc3QpKTsKICAgICAgZm9yKGxldCBpbmZhbnRyeT0wO2luZmFudHJ5PD1tYXhJbmY7aW5mYW50cnkrKyl7CiAgICAgICAgY29uc3Qgc3BlbnRJbmY9aW5mYW50cnkqRGVwbG95bWVudC5jYXRhbG9nLmluZmFudHJ5LmNvc3Q7CiAgICAgICAgY29uc3QgbWF4QXJjaGVyPU1hdGgubWluKG1heFVuaXRzLWluZmFudHJ5LCBNYXRoLmZsb29yKChidWRnZXQtc3BlbnRJbmYpL0RlcGxveW1lbnQuY2F0YWxvZy5hcmNoZXIuY29zdCkpOwogICAgICAgIGZvcihsZXQgYXJjaGVyPTA7YXJjaGVyPD1tYXhBcmNoZXI7YXJjaGVyKyspewogICAgICAgICAgY29uc3QgYmFzZVNwZW50PXNwZW50SW5mK2FyY2hlcipEZXBsb3ltZW50LmNhdGFsb2cuYXJjaGVyLmNvc3Q7CiAgICAgICAgICBjb25zdCBtYXhDYXZhbHJ5PU1hdGgubWluKG1heFVuaXRzLWluZmFudHJ5LWFyY2hlciwgTWF0aC5mbG9vcigoYnVkZ2V0LWJhc2VTcGVudCkvRGVwbG95bWVudC5jYXRhbG9nLmNhdmFscnkuY29zdCkpOwogICAgICAgICAgZm9yKGxldCBjYXZhbHJ5PTA7Y2F2YWxyeTw9bWF4Q2F2YWxyeTtjYXZhbHJ5KyspewogICAgICAgICAgICBjb25zdCBjb3VudD1pbmZhbnRyeSthcmNoZXIrY2F2YWxyeTsKICAgICAgICAgICAgaWYoIWNvdW50KSBjb250aW51ZTsKICAgICAgICAgICAgY29uc3QgY291bnRzPXtpbmZhbnRyeSxhcmNoZXIsY2F2YWxyeX07CiAgICAgICAgICAgIGNvbnN0IHNwZW50PWJhc2VTcGVudCtjYXZhbHJ5KkRlcGxveW1lbnQuY2F0YWxvZy5jYXZhbHJ5LmNvc3Q7CiAgICAgICAgICAgIGNvbnN0IHJvbGVTcGVuZD1PYmplY3QuZnJvbUVudHJpZXModGhpcy5yb2xlcy5tYXAocj0+W3IsMF0pKTsKICAgICAgICAgICAgZm9yKGNvbnN0IHt0eXBlLHNwZWN9IG9mIGVudHJpZXMpewogICAgICAgICAgICAgIGNvbnN0IG49Y291bnRzW3R5cGVdfHwwOwogICAgICAgICAgICAgIGlmKCFuKSBjb250aW51ZTsKICAgICAgICAgICAgICBmb3IoY29uc3Qgcm9sZSBvZiB0aGlzLnJvbGVzKSByb2xlU3BlbmRbcm9sZV0rPW4qc3BlYy5jb3N0KnRoaXMucm9sZVZhbHVlKHNwZWMscm9sZSk7CiAgICAgICAgICAgIH0KICAgICAgICAgICAgY29uc3QgbGluZVNoYXJlPXNwZW50P3JvbGVTcGVuZC5saW5lL3NwZW50OjA7CiAgICAgICAgICAgIGlmKGxpbmVTaGFyZSsxZS05PG1pbkxpbmVTaGFyZSkgY29udGludWU7CiAgICAKICAgICAgICAgICAgY29uc3QgdHlwZVNoYXJlcz1lbnRyaWVzCiAgICAgICAgICAgICAgLm1hcCgoe3R5cGUsc3BlY30pPT4oe3R5cGUsc2hhcmU6KGNvdW50c1t0eXBlXXx8MCkqc3BlYy5jb3N0L3NwZW50fSkpCiAgICAgICAgICAgICAgLmZpbHRlcih4PT54LnNoYXJlPjApOwogICAgICAgICAgICBjb25zdCBkaXN0aW5jdD10eXBlU2hhcmVzLmxlbmd0aDsKICAgICAgICAgICAgY29uc3QgZW50cm9weVJhdz1kaXN0aW5jdD4xPy10eXBlU2hhcmVzLnJlZHVjZSgocyx4KT0+cyt4LnNoYXJlKk1hdGgubG9nKHguc2hhcmUpLDApOjA7CiAgICAgICAgICAgIGNvbnN0IGVudHJvcHk9ZGlzdGluY3Q+MT9lbnRyb3B5UmF3L01hdGgubG9nKGRpc3RpbmN0KTowOwogICAgICAgICAgICBjb25zdCBtYXhUeXBlU2hhcmU9TWF0aC5tYXgoLi4udHlwZVNoYXJlcy5tYXAoeD0+eC5zaGFyZSkpOwogICAgICAgICAgICBjb25zdCBwcmltYXJ5Q292ZXJhZ2U9WydsaW5lJywncmFuZ2VkJywnbW9iaWxlJ10KICAgICAgICAgICAgICAuZmlsdGVyKHJvbGU9Pihyb2xlU3BlbmRbcm9sZV0vc3BlbnQpPj0wLjEwKS5sZW5ndGggLyBNYXRoLm1heCgxLHRhcmdldERpc3RpbmN0KTsKICAgICAgICAgICAgY29uc3QgY292ZXJhZ2U9TWF0aC5taW4oMSxwcmltYXJ5Q292ZXJhZ2UpOwogICAgICAgICAgICBjb25zdCBkaXZlcnNpdHk9TWF0aC5taW4oMSxkaXN0aW5jdC9NYXRoLm1heCgxLHRhcmdldERpc3RpbmN0KSk7CiAgICAgICAgICAgIGNhbmRpZGF0ZXMucHVzaCh7Y291bnRzLHR5cGVzOmVudHJpZXMuZmxhdE1hcCgoe3R5cGV9KT0+QXJyYXkoY291bnRzW3R5cGVdfHwwKS5maWxsKHR5cGUpKSxzcGVudCxyb2xlU3BlbmQsbGluZVNoYXJlLGNvdmVyYWdlLGRpdmVyc2l0eSxlbnRyb3B5LG1heFR5cGVTaGFyZX0pOwogICAgICAgICAgfQogICAgICAgIH0KICAgICAgfQogICAgCiAgICAgIGlmKCFjYW5kaWRhdGVzLmxlbmd0aCkgcmV0dXJuIHt0eXBlczpbJ2luZmFudHJ5J10sc3BlbnQ6RGVwbG95bWVudC5jYXRhbG9nLmluZmFudHJ5LmNvc3QscXVhbGl0eTowfTsKICAgIAogICAgICBjb25zdCBtYXhDYW5kaWRhdGVTcGVuZD1NYXRoLm1heCguLi5jYW5kaWRhdGVzLm1hcCh4PT54LnNwZW50KSk7CiAgICAgIGNvbnN0IHRhY3RpY2FsQmlhcz1PYmplY3QuZnJvbUVudHJpZXModGhpcy5yb2xlcy5tYXAocj0+W3IsdGhpcy5yYW5kKDAuODIsMS4xOCldKSk7CiAgICAgIGZvcihjb25zdCBjIG9mIGNhbmRpZGF0ZXMpewogICAgICAgIGNvbnN0IHNwZW5kUmF0aW89Yy5zcGVudC9NYXRoLm1heCgxLG1heENhbmRpZGF0ZVNwZW5kKTsKICAgICAgICBjb25zdCByb2xlQWZmaW5pdHk9dGhpcy5yb2xlcy5yZWR1Y2UoKHN1bSxyb2xlKT0+c3VtKyhjLnJvbGVTcGVuZFtyb2xlXS9jLnNwZW50KSp0YWN0aWNhbEJpYXNbcm9sZV0sMCkvMzsKICAgICAgICBjb25zdCBkb21pbmFuY2VQZW5hbHR5PU1hdGgubWF4KDAsYy5tYXhUeXBlU2hhcmUtMC42Nyk7CiAgICAgICAgY29uc3QgbG93U3BlbmRQZW5hbHR5PU1hdGgubWF4KDAsMC45MC1zcGVuZFJhdGlvKTsKICAgICAgICBjLnF1YWxpdHkgPQogICAgICAgICAgc3BlbmRSYXRpbyo0LjAgKwogICAgICAgICAgYy5jb3ZlcmFnZSoyLjUgKwogICAgICAgICAgYy5kaXZlcnNpdHkqMS40ICsKICAgICAgICAgIGMuZW50cm9weSoxLjAgKwogICAgICAgICAgTWF0aC5taW4oMSxjLmxpbmVTaGFyZS9taW5MaW5lU2hhcmUpKjAuNiArCiAgICAgICAgICByb2xlQWZmaW5pdHkqMC42IC0KICAgICAgICAgIGRvbWluYW5jZVBlbmFsdHkqNC4wIC0KICAgICAgICAgIGxvd1NwZW5kUGVuYWx0eSoxMC4wOwogICAgICB9CiAgICAgIGNhbmRpZGF0ZXMuc29ydCgoYSxiKT0+Yi5xdWFsaXR5LWEucXVhbGl0eSk7CiAgICAgIGNvbnN0IHBvb2w9Y2FuZGlkYXRlcy5zbGljZSgwLE1hdGgubWluKDE4LGNhbmRpZGF0ZXMubGVuZ3RoKSk7CiAgICAgIGNvbnN0IGJlc3Q9cG9vbFswXS5xdWFsaXR5OwogICAgICBjb25zdCBjaG9zZW49dGhpcy53ZWlnaHRlZFBpY2socG9vbCx4PT5NYXRoLmV4cCgoeC5xdWFsaXR5LWJlc3QpKjEuNykpfHxwb29sWzBdOwogICAgICByZXR1cm4gY2hvc2VuOwogICAgfQo='
+          new_block = base64.b64decode(encoded).decode('utf-8')
           text = text[:start] + new_block + text[end:]
           text = text.replace('Campal Battle Lab v0.87.4', 'Campal Battle Lab v0.87.5', 1)
           text = text.replace('CAMPAL BATTLE LAB v0.87.4', 'CAMPAL BATTLE LAB v0.87.5', 1)
           path.write_text(text, encoding='utf-8')
-
           script = text.split('<script>', 1)[1].rsplit('</script>', 1)[0]
           Path('/tmp/arcana-battles.js').write_text(script, encoding='utf-8')
           print('Patched generateComposition and bumped v0.87.5')
           PY
-
           node --check /tmp/arcana-battles.js
 
       - name: Commit selector fix and remove one-shot workflow
@@ -199,7 +54,7 @@ jobs:
           rm -f .github/workflows/patch-composition-selector.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ARCANA_BATTLES.html .github/workflows/patch-composition-selector.yml
+          git add -A
           git diff --cached --check
           git diff --cached --quiet && { echo 'No changes to commit'; exit 1; }
           git commit -m 'Improve composition selector diversity v0.87.5'
