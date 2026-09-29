@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>COFFEE BATTLES — Campal Battle Lab v0.88.3</title>
+<title>COFFEE BATTLES — Campal Battle Lab v0.88.4</title>
 <style>
   :root{
     --bg:#11151b;
@@ -475,7 +475,7 @@
 </head>
 <body>
 <header>
-  <strong>COFFEE BATTLES — CAMPAL BATTLE LAB v0.88.3</strong>
+  <strong>COFFEE BATTLES — CAMPAL BATTLE LAB v0.88.4</strong>
   <span>REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
 </header>
 
@@ -890,6 +890,8 @@
     NAV_WAYPOINT_MIN_U: 0.50,
     COLLIDER_EPS_PX: 0.25,
     TERRAIN_SOFT_EDGE_U: 0.75, // fascia visibile esterna: accidentata ma non collider duro
+    WALL_CROSS_TIME_S: 4,
+    WALL_ADJACENCY_U: 1.6,
     ARMY_AI_REFRESH_S: 5,
     BATTLE_TIME_LIMIT_S: 600,
     FORMATIONS: Object.freeze({
@@ -1032,7 +1034,9 @@
         moving: false,
         turn: null,         // { kind:'flip'|'combat-flip', start, end, startAngle }
         detour: null,       // A* runtime path; NON modifica la command chain
-        terrainClearanceBoostUntil: 0
+        terrainClearanceBoostUntil: 0,
+        wallCrossing: null,  // { wallId, start, until } · attraversamento atomico 4s
+        wallPassId: null     // muro già pagato: ignorato finché il reparto lo ha completamente superato
       },
       engagement: {
         outbound: null,     // { defenderId, slot }
@@ -3121,6 +3125,7 @@
     },
 
     resolveMover(u, oldPose) {
+      if (Terrain.interceptWallTraversal(u, oldPose)) return 'wall-crossing';
       if (Terrain.placementBlocked(u)) {
         const recovered = Terrain.recoverUnitFromBlockingTerrain(u, oldPose);
         u.motion.moving = false;
@@ -3563,9 +3568,7 @@
 
     blocksUnit(u, t) {
       if (!u?.status?.alive || !t) return false;
-      if (t.type === 'wall') {
-        return this.unitSamplePoints(u).some(p => this.containsPoint(t, p, 0));
-      }
+      if (t.type === 'wall') return false; // valicabile: il costo è temporale, non un collider duro
       if (t.type === 'pond') {
         return this.unitSamplePoints(u).some(p => this.insideHardCore(t, p));
       }
@@ -3609,7 +3612,7 @@
 
     blocksPoint(u, point, clearancePx = 0) {
       return State.terrain.some(t => {
-        const blocks = t.type === 'pond' || t.type === 'wall' || (t.type === 'forest' && u.type === 'cavalry');
+        const blocks = t.type === 'pond' || (t.type === 'forest' && u.type === 'cavalry');
         if (!blocks) return false;
         return this.distanceToBlockingTerrain(t, point) <= clearancePx;
       });
@@ -3801,16 +3804,27 @@
       return State.terrain.some(t=>t.type==='hill'&&this.containsPoint(t,c,0))?5:0;
     },
 
+    wallProtection(attacker, defender) {
+      if(!attacker?.status?.alive || !defender?.status?.alive) return 0;
+      const a=Geometry.center(attacker),d=Geometry.center(defender);
+      for(const t of State.terrain){
+        if(t.type!=='wall') continue;
+        if(!this.containsPoint(t,d,CFG.WALL_ADJACENCY_U*CFG.U)) continue;
+        if(this.segmentIntersects(t,a,d)) return 1;
+      }
+      return 0;
+    },
+
     rangedAttackPenalty(attacker,defender) {
       const ac=Geometry.center(attacker),dc=Geometry.center(defender); let penalty=0;
       for(const t of State.terrain) if(t.type==='forest'&&(this.containsPoint(t,ac,0)||this.containsPoint(t,dc,0))) penalty=Math.max(penalty,1);
+      penalty=Math.max(penalty,this.wallProtection(attacker,defender));
       return penalty;
     },
 
     rangedDefenseBonus(attacker,defender) {
-      const a=Geometry.center(attacker),d=Geometry.center(defender); let bonus=0;
-      for(const t of State.terrain) if(t.type==='wall'&&this.segmentIntersects(t,a,d)&&this.containsPoint(t,d,1.6*CFG.U)) bonus=Math.max(bonus,1);
-      return bonus;
+      // I muretti non aggiungono armatura: Cover 1 = -1 Mira all'attaccante.
+      return 0;
     },
 
     lineOfSight(attacker,defender) {
@@ -3828,6 +3842,48 @@
     segmentIntersects(t,a,b) {
       const len=Math.hypot(b.x-a.x,b.y-a.y),steps=Math.max(10,Math.ceil(len/(0.45*CFG.U)));
       for(let i=0;i<=steps;i++){const r=i/steps,p={x:a.x+(b.x-a.x)*r,y:a.y+(b.y-a.y)*r};if(this.containsPoint(t,p,0))return true;}
+      return false;
+    },
+
+    wallTouchesUnit(u, wall) {
+      if(!u?.status?.alive || wall?.type!=='wall') return false;
+      const a=this.localToWorld(wall,{x:-wall.w/2,y:0});
+      const b=this.localToWorld(wall,{x: wall.w/2,y:0});
+      if(Geometry.pointInUnit(u,a.x,a.y)||Geometry.pointInUnit(u,b.x,b.y)) return true;
+      const pts=Geometry.corners(u);
+      for(let i=0;i<pts.length;i++) if(Geometry.segmentsIntersect(pts[i],pts[(i+1)%pts.length],a,b)) return true;
+      return this.unitSamplePoints(u).some(p=>this.containsPoint(wall,p,0.08*CFG.U));
+    },
+
+    updateWallTraversal(u) {
+      const cross=u?.motion?.wallCrossing;
+      if(cross){
+        if(State.simTime < cross.until){u.motion.moving=false;return true;}
+        u.motion.wallPassId=cross.wallId;
+        u.motion.wallCrossing=null;
+        Log.add(`${u.name}: MURETTO SUPERATO | ${CFG.WALL_CROSS_TIME_S}s`);
+      }
+      if(u?.motion?.wallPassId){
+        const wall=State.terrain.find(t=>t.id===u.motion.wallPassId&&t.type==='wall');
+        if(!wall||!this.wallTouchesUnit(u,wall)) u.motion.wallPassId=null;
+      }
+      return false;
+    },
+
+    interceptWallTraversal(u, oldPose) {
+      if(!u?.status?.alive || !oldPose || u.motion.wallCrossing) return false;
+      const moved=Math.hypot(u.pose.x-oldPose.x,u.pose.y-oldPose.y);
+      if(moved < 0.01*CFG.U) return false;
+      const oldUnit={...u,pose:{...oldPose}};
+      for(const wall of State.terrain){
+        if(wall.type!=='wall'||wall.id===u.motion.wallPassId) continue;
+        if(!this.wallTouchesUnit(u,wall)||this.wallTouchesUnit(oldUnit,wall)) continue;
+        u.pose.x=oldPose.x;u.pose.y=oldPose.y;u.pose.angle=oldPose.angle;
+        u.motion.moving=false;
+        u.motion.wallCrossing={wallId:wall.id,start:State.simTime,until:State.simTime+CFG.WALL_CROSS_TIME_S};
+        Log.add(`${u.name}: SCAVALCA MURETTO | ${CFG.WALL_CROSS_TIME_S}s`);
+        return true;
+      }
       return false;
     },
 
@@ -3890,7 +3946,7 @@
       village:   Object.freeze({ label:'Villaggio', field:'#29261d' })
     }),
 
-    GENERATION_PHASES: Object.freeze(['Orography','Hydrology','Settlement','Buildings','Roads','Crossings','Tactical']),
+    GENERATION_PHASES: Object.freeze(['Orography','Hydrology','Settlement','Buildings','Roads','Crossings','Tactical','Fields']),
 
     labels: null,
     rand(min, max) { return min + Math.random() * (max - min); },
@@ -4045,6 +4101,19 @@ makePond(id,x,y,rx=5,ry=3,angle=null){return{id,type:'pond',x,y,angle:angle??thi
 makeMountain(id,x,y,rx=8,ry=5,angle=null){const blob=Terrain.makeBlob(rx*CFG.U,ry*CFG.U,26,.11);return{id,type:'mountain',x,y,angle:angle??this.rand(-.35,.35),fill:'#50534c',edge:'#8b9185',blob,smoothBlob:Terrain.smoothClosedBlob(blob,7)};},
 makeWall(id,x,y,w=8,h=.5,angle=null){return{id,type:'wall',x,y,angle:angle??this.rand(-Math.PI,Math.PI),w:w*CFG.U,h:h*CFG.U,fill:'#9d8b71',edge:'#ddd0b5'};},
 makeBuilding(id,x,y,w=4,h=3,angle=0){return{id,type:'building',x,y,angle,w:w*CFG.U,h:h*CFG.U,fill:'#725647',edge:'#c39a79'};},
+makeField(id,x,y,wU,hU,angle=0){return{id,type:'field',x,y,angle,w:wU*CFG.U,h:hU*CFG.U,fill:'rgba(203,181,128,.34)',edge:'rgba(232,211,164,.46)'};},
+makeFieldWalls(field){
+  const hw=field.w/2,hh=field.h/2;
+  const adjacent=[[0,1],[1,2],[2,3],[3,0]],opposite=[[0,2],[1,3]];
+  const chosen=Math.random()<.72?this.pick(adjacent):this.pick(opposite);
+  const defs=[
+    {p:{x:0,y:-hh},len:field.w,a:field.angle},
+    {p:{x:hw,y:0},len:field.h,a:field.angle+Math.PI/2},
+    {p:{x:0,y:hh},len:field.w,a:field.angle},
+    {p:{x:-hw,y:0},len:field.h,a:field.angle+Math.PI/2}
+  ];
+  return chosen.map((side,i)=>{const d=defs[side],p=Terrain.localToWorld(field,d.p);const w=this.makeWall(`${field.id}-wall-${i+1}`,p.x,p.y,d.len/CFG.U,.38,d.a);w.parentFieldId=field.id;w.fieldSide=side;return w;});
+},
 
 edgePointsThrough(point,angle){
   const b=Geometry.battlefieldBounds(),dx=Math.cos(angle),dy=Math.sin(angle),hits=[];
@@ -4187,7 +4256,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         const stride=Math.max(1,Math.floor(src.length/steps));
         return src.filter((_,i)=>i%stride===0);
       }
-      if (['building','bridge','ford'].includes(t.type)) {
+      if (['building','bridge','ford','field'].includes(t.type)) {
         const hw=t.w/2,hh=t.h/2,pts=[];
         for(const [x,y] of [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh],[0,-hh],[hw,0],[0,hh],[-hw,0]])pts.push(Terrain.localToWorld(t,{x,y}));
         return pts;
@@ -4199,7 +4268,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     containsPoint(t,point,pad=0) {
       if (!t || !point) return null;
       if (t.type==='river'||t.type==='stream') return Terrain.pointPolylineDistance(point,t.samples)<=t.width/2+pad;
-      if (t.type==='building'||t.type==='bridge'||t.type==='ford') return Terrain.rectContains(t,point.x,point.y,pad);
+      if (t.type==='building'||t.type==='bridge'||t.type==='ford'||t.type==='field') return Terrain.rectContains(t,point.x,point.y,pad);
       if (t.type==='mountain'||(t.type==='hill'&&t.blob)) return Terrain.polygonContains(t,point.x,point.y,pad);
       return null;
     },
@@ -4359,6 +4428,24 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       }
     },
 
+    generateFields(ctx) {
+      const ranges={plains:[2,4],hills:[1,3],valley:[1,3],river:[1,3],forest:[0,2],mountains:[0,1],village:[2,4]};
+      const [lo,hi]=ranges[ctx.biome]||[1,2],count=this.randi(lo,hi);
+      for(let i=0;i<count;i++){
+        let field=null;
+        for(let tries=0;tries<320;tries++){
+          const p=this.randomCenter(0),swap=Math.random()<.5;
+          const a=this.rand(4,10),b=this.rand(6,12),wU=swap?b:a,hU=swap?a:b;
+          const candidate=this.makeField(`field-${i+1}`,p.x,p.y,wU,hU,this.rand(-Math.PI,Math.PI));
+          if(!this.fitsZone(candidate)) continue;
+          if(ctx.placed.some(o=>this.overlaps(candidate,o,.20))) continue;
+          field=candidate;break;
+        }
+        if(!field) continue;
+        ctx.placed.push(field,...this.makeFieldWalls(field));
+      }
+    },
+
     makeBiomeTerrain(biome) {
       const ctx={biome,z:this.mapZone(),placed:[],river:null,bridgeQ:null,fordQ:null,villagePlan:null,village:null};
       for(const phase of this.GENERATION_PHASES){
@@ -4382,6 +4469,18 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       for(let i=1;i<t.samples.length;i++)ctx.lineTo(t.samples[i].x,t.samples[i].y);
       ctx.strokeStyle=t.edge;ctx.lineWidth=t.width+(t.type==='river'?5:3);ctx.stroke();
       ctx.strokeStyle=t.fill;ctx.lineWidth=t.width;ctx.stroke();ctx.restore();
+    },
+
+    drawFields(items) {
+      for(const t of items){
+        ctx.save();ctx.translate(t.x,t.y);ctx.rotate(t.angle||0);
+        ctx.fillStyle=t.fill;ctx.strokeStyle=t.edge;ctx.lineWidth=1.2;
+        ctx.fillRect(-t.w/2,-t.h/2,t.w,t.h);ctx.strokeRect(-t.w/2,-t.h/2,t.w,t.h);
+        ctx.globalAlpha=.20;ctx.strokeStyle='#f0dfb8';ctx.lineWidth=1;
+        const step=Math.max(8,1.2*CFG.U);
+        for(let x=-t.w/2+step;x<t.w/2;x+=step){ctx.beginPath();ctx.moveTo(x,-t.h/2+2);ctx.lineTo(x,t.h/2-2);ctx.stroke();}
+        ctx.restore();
+      }
     },
 
     drawExtras(items) {
@@ -4491,6 +4590,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       };
       Terrain.draw=()=>{
         const all=State.terrain;
+        this.drawFields(all.filter(t=>t.type==='field'));
         State.terrain=all.filter(t=>['road','hill','forest','rough','pond','wall'].includes(t.type)&&!(t.type==='hill'&&t.blob));
         try{legacyDraw();}finally{State.terrain=all;}
         this.drawExtras(all.filter(t=>['river','stream','bridge','ford','mountain','building'].includes(t.type)||(t.type==='hill'&&t.blob)));
@@ -4984,6 +5084,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     update(u, dt) {
       u.motion.moving = false;
       if (!u.status.alive) return;
+      if (Terrain.updateWallTraversal(u)) return;
       if (u.status.routing) {
         this.updateRout(u, dt);
         return;
@@ -5479,8 +5580,12 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     },
 
     opposedContest(a, b, pair, canDamageA = true, canDamageB = true, combatA = null, combatB = null, armorA = null, armorB = null) {
-      const ca = combatA === null ? this.effectiveCombat(a, pair) : Math.max(0, combatA);
-      const cb = combatB === null ? this.effectiveCombat(b, pair) : Math.max(0, combatB);
+      let ca = combatA === null ? this.effectiveCombat(a, pair) : Math.max(0, combatA);
+      let cb = combatB === null ? this.effectiveCombat(b, pair) : Math.max(0, combatB);
+      if(pair){
+        ca=Math.max(0,ca-Terrain.wallProtection(a,b));
+        cb=Math.max(0,cb-Terrain.wallProtection(b,a));
+      }
       const scoreA = this.battleDie() + ca;
       const scoreB = this.battleDie() + cb;
       const delta = Math.abs(scoreA - scoreB);
