@@ -1,0 +1,50 @@
+name: Coast + border continuity v0.89.3
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-coast-v0893.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Pull latest main
+        run: git pull --rebase origin main
+      - name: Apply patch
+        run: python .tmp_patch_coast_v0893.py
+      - name: Validate JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('COFFEE_BATTLES.html').read_text(encoding='utf-8')
+          m=re.search(r'<script>([\s\S]*?)</script>',s)
+          if not m: raise SystemExit('script tag not found')
+          Path('/tmp/coffee-battles.js').write_text(m.group(1),encoding='utf-8')
+          PY
+          node --check /tmp/coffee-battles.js
+      - name: Validate coast contract
+        run: |
+          grep -F "['Coast','Orography','Hydrology','Settlement','Buildings','Roads','Crossings','Tactical','Fields']" COFFEE_BATTLES.html
+          grep -F "COAST_MAX_LANDING_DEPTH_U: CFG.DEPLOYMENT_DEPTH_U * .5" COFFEE_BATTLES.html
+          grep -F "Math.ceil(State.battleSetup.points/500)" COFFEE_BATTLES.html
+          grep -F "ROUT devia dalla costa" COFFEE_BATTLES.html
+          grep -F "Campal Battle Lab v0.89.3" COFFEE_BATTLES.html
+      - name: Commit and push
+        run: |
+          rm -f .tmp_patch_coast_v0893.py .github/workflows/patch-coast-v0893.yml
+          git config user.name "COFFEE BATTLES bot"
+          git config user.email "actions@github.com"
+          git add -A
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'No changes to commit'
+            exit 0
+          fi
+          git commit -m "Add coast generation and border continuity v0.89.3"
+          git push origin main
