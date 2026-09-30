@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 
+// One-shot P0 migration: language persistence must never crash the game.
 const path = 'COFFEE_BATTLES.html';
 let src = fs.readFileSync(path, 'utf8');
 
