@@ -1,5 +1,6 @@
 name: P0 branch determinism smoke
 
+# Gate: identical seed must remain identical across driver cadence and reversed unit array.
 concurrency:
   group: refactor-p0-smoke
   cancel-in-progress: true
