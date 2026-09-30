@@ -1,0 +1,35 @@
+name: Apply P0 safe storage patch
+
+on:
+  push:
+    branches:
+      - refactor/p0-determinism
+    paths:
+      - 'tools/apply-p0-storage-safe.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply safe storage patch
+        run: node tools/apply-p0-storage-safe.mjs
+
+      - name: Commit patch
+        run: |
+          if git diff --quiet -- COFFEE_BATTLES.html; then
+            echo 'No storage changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add COFFEE_BATTLES.html
+          git commit -m 'fix: make language storage fail-safe'
+          git push origin HEAD:refactor/p0-determinism
