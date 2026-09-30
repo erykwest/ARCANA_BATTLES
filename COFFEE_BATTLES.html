@@ -1591,6 +1591,7 @@ I18n.current=I18n.detect();
     ARMY_AI_REFRESH_S: 5,
     VISION_RANGE_U: 20,
     BATTLE_TIME_LIMIT_S: 600,
+    SIM_FIXED_DT: 1 / 30,
     FORMATIONS: Object.freeze({
       base:   Object.freeze({ label: 'BASE',    front: 3, depth: 2 }),
       column: Object.freeze({ label: 'COLONNA', front: 2, depth: 3 }),
@@ -1670,6 +1671,7 @@ I18n.current=I18n.detect();
     primaryId: null,
     selectedSide: 'blue',
     simTime: 0,
+    simAccumulator: 0,
     lastFrameAt: performance.now(),
     timeScale: 1,
     combatClocks: new Map(),
@@ -8334,6 +8336,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       State.deployment.drag = null;
       State.deployment.snapshot = null;
       State.simTime = 0;
+      State.simAccumulator = 0;
       State.combatClocks.clear();
       State.projectiles = [];
       State.view = { scale: 1, x: 0, y: 0 };
@@ -9703,6 +9706,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         State.primaryId = 'blue-1';
       }
       State.simTime = 0;
+      State.simAccumulator = 0;
       State.combatClocks.clear();
       State.projectiles = [];
       State.view = { scale: 1, x: 0, y: 0 };
@@ -9762,7 +9766,26 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       }
     },
 
-    update(dt) {
+    preStepHook: null,
+
+    canonicalizeUnitOrder() {
+      State.units.sort((a, b) => {
+        const ai = String(a?.id ?? '');
+        const bi = String(b?.id ?? '');
+        return ai < bi ? -1 : ai > bi ? 1 : 0;
+      });
+    },
+
+    setPreStepHook(fn = null) {
+      this.preStepHook = typeof fn === 'function' ? fn : null;
+      return this.preStepHook;
+    },
+
+    fixedStep(dt = CFG.SIM_FIXED_DT) {
+      // Canonical order makes pair resolution independent from insertion/reversal order.
+      this.canonicalizeUnitOrder();
+      if (this.preStepHook) this.preStepHook(dt);
+
       Intel.update();
       ArmyAI.update();
       State.units.forEach(Formations.update);
@@ -9794,12 +9817,34 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       Battle.checkTimeLimit();
     },
 
+    advance(elapsedDt) {
+      const elapsed = Math.max(0, Number(elapsedDt) || 0);
+      if (elapsed <= 0 || State.battle.ended) return 0;
+
+      const step = CFG.SIM_FIXED_DT;
+      State.simAccumulator += elapsed;
+      let steps = 0;
+
+      while (!State.battle.ended && State.simAccumulator + 1e-12 >= step) {
+        State.simAccumulator -= step;
+        if (Math.abs(State.simAccumulator) < 1e-12) State.simAccumulator = 0;
+        State.simTime += step;
+        this.fixedStep(step);
+        steps++;
+      }
+      return steps;
+    },
+
+    // Compatibility entry point for debug tooling. Physics remains fixed-step.
+    update(dt) {
+      return this.advance(dt);
+    }
+
     frame(now) {
       const realDt = Math.min(0.05, (now - State.lastFrameAt) / 1000);
       State.lastFrameAt = now;
       const dt = realDt * State.timeScale;
-      State.simTime += dt;
-      if (dt > 0) Simulation.update(dt);
+      if (dt > 0) Simulation.advance(dt);
       UI.updateSelectedInfo();
       Battle.updateVictoryBar();
       Renderer.draw();
