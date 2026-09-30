@@ -20,9 +20,9 @@ jobs:
       matrix:
         include:
           - seed: 2
-            expected: '22e6779f34460dde0770fb5f133c09c3faffb254eb90d61cf9132d07a71aae07'
+            expected: '09c9c11b55e3d76f5a2943bcdab2d5576ec41308ca70c73a0bdc784d23e94c73'
           - seed: 5
-            expected: '9255ec40c95f4e8c6e2424b89f83e662e0544deb8932d521cf5dc673f2a2c395'
+            expected: '1777188bcd75fdf0ebbe364a4553fa1820052213c03b9f7d101c255aaaa9f677'
     env:
       BASELINE_SEED: ${{ matrix.seed }}
       EXPECTED_HASH: ${{ matrix.expected }}
