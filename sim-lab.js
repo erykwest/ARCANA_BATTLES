@@ -5,7 +5,7 @@
   if (!D) throw new Error('COFFEE BATTLES debug API non disponibile.');
 
   const {
-    State, Units, ArmyAI, Simulation, CFG,
+    State, Random, Units, ArmyAI, Simulation, CFG,
     Battle, BattleSetup, Deployment, DoctrineEngine
   } = D;
 
@@ -15,7 +15,7 @@
   const COAST_MODES = new Set(['random','none','gulf','landing']);
 
   const SimLab = {
-    version: '0.2',
+    version: '0.3',
     running: false,
     batchRunning: false,
     stopRequested: false,
@@ -40,17 +40,6 @@
       yieldEvery: 1
     }),
 
-    rng(seed = 1) {
-      let a = (Number(seed) || 1) >>> 0;
-      return function mulberry32() {
-        a |= 0;
-        a = a + 0x6D2B79F5 | 0;
-        let t = Math.imul(a ^ a >>> 15, 1 | a);
-        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-        return ((t ^ t >>> 14) >>> 0) / 4294967296;
-      };
-    },
-
     normalizeOptions(input = {}) {
       const o = { ...this.DEFAULTS, ...input };
       o.points = BattleSetup.sanitizePoints(o.points);
@@ -73,7 +62,7 @@
     beginRuntime(o) {
       const logEl = document.getElementById('log');
       const saved = {
-        random: Math.random,
+        randomState: Random.capture(),
         updateVictoryBar: Battle.updateVictoryBar,
         showResult: Battle.showResult,
         armyEnabled: State.armyAI.enabled,
@@ -82,7 +71,7 @@
         logShadowed: false
       };
 
-      Math.random = this.rng(o.seed);
+      Random.setSeed(o.seed);
       this._endLead = null;
 
       if (o.silent && logEl) {
@@ -112,7 +101,7 @@
     },
 
     endRuntime(saved) {
-      Math.random = saved.random;
+      Random.restore(saved.randomState);
       Battle.updateVictoryBar = saved.updateVictoryBar;
       Battle.showResult = saved.showResult;
       State.armyAI.enabled = saved.armyEnabled;
