@@ -1,0 +1,36 @@
+name: Apply P0 Intel cache patch
+
+on:
+  push:
+    branches:
+      - refactor/p0-determinism
+    paths:
+      - 'tools/apply-p0-intel-cache.mjs'
+      - '.github/workflows/apply-p0-intel-cache.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply Intel cache patch
+        run: node tools/apply-p0-intel-cache.mjs
+
+      - name: Commit patched engine
+        run: |
+          if git diff --quiet -- COFFEE_BATTLES.html; then
+            echo 'No engine changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add COFFEE_BATTLES.html
+          git commit -m 'perf: cache Intel LOS pair checks'
+          git push origin HEAD:refactor/p0-determinism
