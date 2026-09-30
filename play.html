@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,follow">
+<title>COFFEE BATTLES — Play</title>
+<style>
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#11151b}
+  #coffeeBattlesFrame{display:block;width:100%;height:100%;border:0;background:#11151b}
+</style>
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+<iframe
+  id="coffeeBattlesFrame"
+  src="/COFFEE_BATTLES.html"
+  title="COFFEE BATTLES"
+  allow="fullscreen"
+  allowfullscreen
+></iframe>
+<script>
+(() => {
+  'use strict';
+
+  const frame = document.getElementById('coffeeBattlesFrame');
+  const BATTLE_COUNT_KEY = 'coffee-battles-session-battle-count';
+  let battleCount = Number.parseInt(sessionStorage.getItem(BATTLE_COUNT_KEY) || '0', 10) || 0;
+  let lastCompletedBattle = 0;
+
+  const track = (name, data = undefined) => {
+    try {
+      if (data && Object.keys(data).length) window.va('event', { name, data });
+      else window.va('event', { name });
+    } catch (_) {
+      // Analytics must never interfere with gameplay.
+    }
+  };
+
+  const getMode = doc =>
+    doc.querySelector('#setupModes button.active')?.dataset?.mode || 'unknown';
+
+  const getPoints = doc => {
+    const raw = doc.getElementById('setupPointsSummary')?.textContent || '';
+    const value = Number.parseInt(raw.replace(/\D+/g, ''), 10);
+    return Number.isFinite(value) ? value : 0;
+  };
+
+  const getBiome = doc =>
+    doc.getElementById('mapBiomeSelect')?.value || 'unknown';
+
+  const getResult = doc => {
+    const title = doc.getElementById('battleEndTitle');
+    if (!title) return 'unknown';
+    if (title.classList.contains('victory')) return 'victory';
+    if (title.classList.contains('defeat')) return 'defeat';
+    if (title.classList.contains('draw')) return 'draw';
+    return (title.textContent || 'unknown').trim().toLowerCase().slice(0, 24);
+  };
+
+  function attachTrafficHooks() {
+    const doc = frame.contentDocument;
+    if (!doc) return;
+
+    const createBattleBtn = doc.getElementById('createBattleBtn');
+    const startBattleBtn = doc.getElementById('startBattleFromDeployBtn');
+    const endOverlay = doc.getElementById('battleEndOverlay');
+
+    createBattleBtn?.addEventListener('click', () => {
+      // The game's own click listener was registered first. If deployment is
+      // actually open now, Step 1 completed successfully.
+      if (!doc.body.classList.contains('deployment-active')) return;
+      track('deployment_opened', {
+        mode: getMode(doc),
+        points: getPoints(doc)
+      });
+    });
+
+    startBattleBtn?.addEventListener('click', () => {
+      // A valid deployment removes this class synchronously in Deployment.finish().
+      if (doc.body.classList.contains('deployment-active')) return;
+
+      battleCount += 1;
+      sessionStorage.setItem(BATTLE_COUNT_KEY, String(battleCount));
+
+      track('battle_started', {
+        battle: battleCount,
+        biome: getBiome(doc)
+      });
+
+      if (battleCount === 2) {
+        track('second_battle_started', {
+          mode: getMode(doc),
+          biome: getBiome(doc)
+        });
+      }
+    });
+
+    if (endOverlay) {
+      let wasOpen = endOverlay.classList.contains('open');
+      const observer = new MutationObserver(() => {
+        const isOpen = endOverlay.classList.contains('open');
+        if (isOpen && !wasOpen && battleCount > lastCompletedBattle) {
+          lastCompletedBattle = battleCount;
+          track('battle_completed', {
+            battle: battleCount,
+            result: getResult(doc)
+          });
+        }
+        wasOpen = isOpen;
+      });
+      observer.observe(endOverlay, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    // Keep keyboard shortcuts (including SPACE) naturally directed at the game.
+    try { frame.contentWindow.focus(); } catch (_) {}
+  }
+
+  frame.addEventListener('load', attachTrafficHooks);
+})();
+</script>
+</body>
+</html>
