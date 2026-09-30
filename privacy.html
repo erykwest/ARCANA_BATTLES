@@ -10,43 +10,211 @@
 <link rel="stylesheet" href="/site.css">
 </head>
 <body>
-<header class="site-header"><nav class="nav" aria-label="Main navigation"><a class="brand" href="/">Coffee Battles</a><div class="nav-links"><a href="/how-to-play">How to play</a><a href="/about">About</a><a class="play" href="/play">Play</a></div></nav></header>
+<header class="site-header"><nav class="nav" aria-label="Main navigation"><a class="brand" href="/">Coffee Battles</a><div class="nav-links"><a href="/how-to-play" data-i18n="nav.how">How to play</a><a href="/about" data-i18n="nav.about">About</a><select id="siteLanguageSelect" class="lang-select" aria-label="Language" title="Language"><option value="en">English</option><option value="it">Italiano</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="ru">Русский</option></select><a class="play" href="/play" data-i18n="nav.play">Play</a></div></nav></header>
 <main class="shell"><article class="prose">
-<h1>Privacy</h1>
-<p class="meta">Last updated: 30 September 2026</p>
-<p class="lead">Coffee Battles has no accounts, no sign-up forms and no user database. This page lists the data that is still processed when you visit, and by whom.</p>
-
-<h2>Who this covers</h2>
-<p>This policy covers the website and game at coffeebattles.online. The project is maintained in the public <a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">COFFEE_BATTLES repository</a> on GitHub. You can reach the project through the channels on the <a href="/contact">Contact</a> page.</p>
-
-<h2>Hosting</h2>
-<p>The site is hosted on Vercel. Like any web host, Vercel processes technical data for each request, such as your IP address, browser and device details, the page requested and the time. This is used to deliver the site, keep it reliable and protect it from abuse.</p>
-
-<h2>Data stored in your browser</h2>
-<p>The site and the game save your chosen language in your browser’s local storage, so you do not have to pick it again. It never leaves your device. You can remove it by clearing this site’s data in your browser. Fonts are served from this site, not from a third party.</p>
-
-<h2>Google AdSense</h2>
-<p>The site includes Google AdSense code, currently for publisher verification; no ads are placed in the game. When ads are shown, Google and its partners may use cookies or similar technologies to serve and measure them, including ads based on your visits to this and other sites. Depending on your region and choices, ads may be personalised or not.</p>
-<p>Google explains how it uses data from partner sites on its <a href="https://policies.google.com/technologies/partner-sites" rel="noopener">partner sites page</a>, and you can manage ad personalisation in <a href="https://adssettings.google.com/" rel="noopener">Google Ads Settings</a>.</p>
-
-<h2>Consent in the EEA, UK and Switzerland</h2>
-<p>Where the law requires consent, advertising storage and processing will be offered through a consent tool certified for Google’s publisher requirements, where you can accept, reject or choose individual purposes and vendors.</p>
-
-<h2>Analytics</h2>
-<p>Coffee Battles does not run its own analytics. If that changes, this page will be updated when the tool is switched on, with its purpose and consent requirements.</p>
-
-<h2>Things you send us</h2>
-<p>If you contact the project through GitHub or another service, what you submit is handled under that service’s own terms. GitHub issues are public: never post passwords, payment details, health information or other sensitive data there.</p>
-
-<h2>Links to other sites</h2>
-<p>Links to GitHub, Google and other services take you off this site; their own privacy policies apply there.</p>
-
-<h2>Children</h2>
-<p>Coffee Battles is not aimed at children and does not build profiles of anyone. Advertising is configured to follow Google’s publisher policies, including limits on personalised ads where they apply.</p>
-
-<h2>Changes</h2>
-<p>This policy changes when the site adds or removes hosting, analytics, advertising, payment or account features. The date at the top shows the latest version.</p>
+<h1 data-i18n-html="p.h1">Privacy</h1>
+<p class="meta" data-i18n-html="p.meta">Last updated: 30 September 2026</p>
+<p class="lead" data-i18n-html="p.lead">Coffee Battles has no accounts, no sign-up forms and no user database. This page lists the data that is still processed when you visit, and by whom.</p>
+<p class="meta" data-i18n-html="p.version">This page is available in several languages; if versions differ, the English one applies.</p>
+<h2 data-i18n-html="p.h2.scope">Who this covers</h2>
+<p data-i18n-html="p.p.scope">This policy covers the website and game at coffeebattles.online. The project is maintained in the public <a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">COFFEE_BATTLES repository</a> on GitHub. You can reach the project through the channels on the <a href="/contact">Contact</a> page.</p>
+<h2 data-i18n-html="p.h2.hosting">Hosting</h2>
+<p data-i18n-html="p.p.hosting">The site is hosted on Vercel. Like any web host, Vercel processes technical data for each request, such as your IP address, browser and device details, the page requested and the time. This is used to deliver the site, keep it reliable and protect it from abuse.</p>
+<h2 data-i18n-html="p.h2.storage">Data stored in your browser</h2>
+<p data-i18n-html="p.p.storage">The site and the game save your chosen language in your browser’s local storage, so you do not have to pick it again. It never leaves your device. You can remove it by clearing this site’s data in your browser. Fonts are served from this site, not from a third party.</p>
+<h2 data-i18n-html="p.h2.ads">Google AdSense</h2>
+<p data-i18n-html="p.p.ads1">The site includes Google AdSense code, currently for publisher verification; no ads are placed in the game. When ads are shown, Google and its partners may use cookies or similar technologies to serve and measure them, including ads based on your visits to this and other sites. Depending on your region and choices, ads may be personalised or not.</p>
+<p data-i18n-html="p.p.ads2">Google explains how it uses data from partner sites on its <a href="https://policies.google.com/technologies/partner-sites" rel="noopener">partner sites page</a>, and you can manage ad personalisation in <a href="https://adssettings.google.com/" rel="noopener">Google Ads Settings</a>.</p>
+<h2 data-i18n-html="p.h2.consent">Consent in the EEA, UK and Switzerland</h2>
+<p data-i18n-html="p.p.consent">Where the law requires consent, advertising storage and processing will be offered through a consent tool certified for Google’s publisher requirements, where you can accept, reject or choose individual purposes and vendors.</p>
+<h2 data-i18n-html="p.h2.analytics">Analytics</h2>
+<p data-i18n-html="p.p.analytics">Coffee Battles does not run its own analytics. If that changes, this page will be updated when the tool is switched on, with its purpose and consent requirements.</p>
+<h2 data-i18n-html="p.h2.sent">Things you send us</h2>
+<p data-i18n-html="p.p.sent">If you contact the project through GitHub or another service, what you submit is handled under that service’s own terms. GitHub issues are public: never post passwords, payment details, health information or other sensitive data there.</p>
+<h2 data-i18n-html="p.h2.links">Links to other sites</h2>
+<p data-i18n-html="p.p.links">Links to GitHub, Google and other services take you off this site; their own privacy policies apply there.</p>
+<h2 data-i18n-html="p.h2.children">Children</h2>
+<p data-i18n-html="p.p.children">Coffee Battles is not aimed at children and does not build profiles of anyone. Advertising is configured to follow Google’s publisher policies, including limits on personalised ads where they apply.</p>
+<h2 data-i18n-html="p.h2.changes">Changes</h2>
+<p data-i18n-html="p.p.changes">This policy changes when the site adds or removes hosting, analytics, advertising, payment or account features. The date at the top shows the latest version.</p>
 </article></main>
-<footer class="footer"><div class="footer-inner"><span>© 2026 Coffee Battles</span><div class="footer-links"><a href="/about">About</a><a href="/how-to-play">How to play</a><a href="/privacy">Privacy</a><a href="/contact">Contact</a><a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">GitHub</a></div></div></footer>
+<footer class="footer"><div class="footer-inner"><span>© 2026 Coffee Battles</span><div class="footer-links"><a href="/about" data-i18n="nav.about">About</a><a href="/how-to-play" data-i18n="nav.how">How to play</a><a href="/privacy" data-i18n="nav.privacy">Privacy</a><a href="/contact" data-i18n="nav.contact">Contact</a><a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">GitHub</a></div></div></footer>
+<script>window.PAGE_STRINGS={
+ "en": {
+  "meta.title": "Privacy — Coffee Battles",
+  "meta.description": "How Coffee Battles handles data: hosting, local storage, Google AdSense and consent.",
+  "p.h1": "Privacy",
+  "p.meta": "Last updated: 30 September 2026",
+  "p.lead": "Coffee Battles has no accounts, no sign-up forms and no user database. This page lists the data that is still processed when you visit, and by whom.",
+  "p.version": "This page is available in several languages; if versions differ, the English one applies.",
+  "p.h2.scope": "Who this covers",
+  "p.p.scope": "This policy covers the website and game at coffeebattles.online. The project is maintained in the public <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">COFFEE_BATTLES repository<\/a> on GitHub. You can reach the project through the channels on the <a href=\"/contact\">Contact<\/a> page.",
+  "p.h2.hosting": "Hosting",
+  "p.p.hosting": "The site is hosted on Vercel. Like any web host, Vercel processes technical data for each request, such as your IP address, browser and device details, the page requested and the time. This is used to deliver the site, keep it reliable and protect it from abuse.",
+  "p.h2.storage": "Data stored in your browser",
+  "p.p.storage": "The site and the game save your chosen language in your browser’s local storage, so you do not have to pick it again. It never leaves your device. You can remove it by clearing this site’s data in your browser. Fonts are served from this site, not from a third party.",
+  "p.h2.ads": "Google AdSense",
+  "p.p.ads1": "The site includes Google AdSense code, currently for publisher verification; no ads are placed in the game. When ads are shown, Google and its partners may use cookies or similar technologies to serve and measure them, including ads based on your visits to this and other sites. Depending on your region and choices, ads may be personalised or not.",
+  "p.p.ads2": "Google explains how it uses data from partner sites on its <a href=\"https://policies.google.com/technologies/partner-sites\" rel=\"noopener\">partner sites page<\/a>, and you can manage ad personalisation in <a href=\"https://adssettings.google.com/\" rel=\"noopener\">Google Ads Settings<\/a>.",
+  "p.h2.consent": "Consent in the EEA, UK and Switzerland",
+  "p.p.consent": "Where the law requires consent, advertising storage and processing will be offered through a consent tool certified for Google’s publisher requirements, where you can accept, reject or choose individual purposes and vendors.",
+  "p.h2.analytics": "Analytics",
+  "p.p.analytics": "Coffee Battles does not run its own analytics. If that changes, this page will be updated when the tool is switched on, with its purpose and consent requirements.",
+  "p.h2.sent": "Things you send us",
+  "p.p.sent": "If you contact the project through GitHub or another service, what you submit is handled under that service’s own terms. GitHub issues are public: never post passwords, payment details, health information or other sensitive data there.",
+  "p.h2.links": "Links to other sites",
+  "p.p.links": "Links to GitHub, Google and other services take you off this site; their own privacy policies apply there.",
+  "p.h2.children": "Children",
+  "p.p.children": "Coffee Battles is not aimed at children and does not build profiles of anyone. Advertising is configured to follow Google’s publisher policies, including limits on personalised ads where they apply.",
+  "p.h2.changes": "Changes",
+  "p.p.changes": "This policy changes when the site adds or removes hosting, analytics, advertising, payment or account features. The date at the top shows the latest version."
+ },
+ "it": {
+  "meta.title": "Privacy — Coffee Battles",
+  "meta.description": "Come Coffee Battles tratta i dati: hosting, archiviazione locale, Google AdSense e consenso.",
+  "p.h1": "Privacy",
+  "p.meta": "Ultimo aggiornamento: 30 settembre 2026",
+  "p.lead": "Coffee Battles non ha account, moduli di registrazione né un database di utenti. Questa pagina elenca i dati che vengono comunque trattati quando visiti il sito, e da chi.",
+  "p.version": "Questa pagina è disponibile in più lingue; in caso di differenze vale la versione inglese.",
+  "p.h2.scope": "A cosa si applica",
+  "p.p.scope": "Questa informativa riguarda il sito e il gioco su coffeebattles.online. Il progetto è mantenuto nel <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">repository pubblico COFFEE_BATTLES<\/a> su GitHub. Puoi contattare il progetto tramite i canali indicati nella pagina <a href=\"/contact\">Contatti<\/a>.",
+  "p.h2.hosting": "Hosting",
+  "p.p.hosting": "Il sito è ospitato su Vercel. Come ogni servizio di hosting, Vercel tratta dati tecnici per ogni richiesta, come indirizzo IP, dettagli di browser e dispositivo, pagina richiesta e orario. Servono a fornire il sito, mantenerlo affidabile e proteggerlo dagli abusi.",
+  "p.h2.storage": "Dati salvati nel browser",
+  "p.p.storage": "Il sito e il gioco salvano la lingua scelta nel local storage del browser, così non devi selezionarla di nuovo. Il dato non lascia mai il tuo dispositivo e puoi eliminarlo cancellando i dati di questo sito dal browser. I caratteri tipografici sono serviti da questo sito, non da terze parti.",
+  "p.h2.ads": "Google AdSense",
+  "p.p.ads1": "Il sito include il codice di Google AdSense, al momento per la verifica dell’editore; nel gioco non sono inseriti annunci. Quando vengono mostrati annunci, Google e i suoi partner possono usare cookie o tecnologie simili per erogarli e misurarli, anche in base alle tue visite a questo e ad altri siti. A seconda della tua area geografica e delle tue scelte, gli annunci possono essere personalizzati o meno.",
+  "p.p.ads2": "Google spiega come usa i dati dei siti partner nella sua <a href=\"https://policies.google.com/technologies/partner-sites\" rel=\"noopener\">pagina dedicata<\/a>, e puoi gestire la personalizzazione degli annunci nelle <a href=\"https://adssettings.google.com/\" rel=\"noopener\">Impostazioni annunci di Google<\/a>.",
+  "p.h2.consent": "Consenso in SEE, Regno Unito e Svizzera",
+  "p.p.consent": "Dove la legge richiede il consenso, l’archiviazione e il trattamento a fini pubblicitari saranno proposti tramite uno strumento di consenso certificato per i requisiti di Google per gli editori, in cui potrai accettare, rifiutare o scegliere singole finalità e fornitori.",
+  "p.h2.analytics": "Statistiche",
+  "p.p.analytics": "Coffee Battles non usa strumenti di statistica propri. Se la situazione cambierà, questa pagina sarà aggiornata quando lo strumento verrà attivato, indicando finalità e requisiti di consenso.",
+  "p.h2.sent": "Ciò che ci invii",
+  "p.p.sent": "Se contatti il progetto tramite GitHub o un altro servizio, ciò che invii è gestito secondo le condizioni di quel servizio. Le issue di GitHub sono pubbliche: non pubblicare mai password, dati di pagamento, informazioni sulla salute o altri dati sensibili.",
+  "p.h2.links": "Link ad altri siti",
+  "p.p.links": "I link a GitHub, Google e altri servizi ti portano fuori da questo sito; lì valgono le loro informative sulla privacy.",
+  "p.h2.children": "Minori",
+  "p.p.children": "Coffee Battles non è rivolto ai minori e non crea profili di nessuno. La pubblicità è configurata per rispettare le norme di Google per gli editori, compresi i limiti agli annunci personalizzati dove previsti.",
+  "p.h2.changes": "Modifiche",
+  "p.p.changes": "Questa informativa cambia quando il sito aggiunge o rimuove funzioni di hosting, statistica, pubblicità, pagamento o account. La data in alto indica la versione più recente."
+ },
+ "es": {
+  "meta.title": "Privacidad — Coffee Battles",
+  "meta.description": "Cómo trata Coffee Battles los datos: alojamiento, almacenamiento local, Google AdSense y consentimiento.",
+  "p.h1": "Privacidad",
+  "p.meta": "Última actualización: 30 de septiembre de 2026",
+  "p.lead": "Coffee Battles no tiene cuentas, formularios de registro ni base de datos de usuarios. Esta página enumera los datos que aun así se tratan cuando lo visitas, y quién los trata.",
+  "p.version": "Esta página está disponible en varios idiomas; si hay diferencias, prevalece la versión en inglés.",
+  "p.h2.scope": "A qué se aplica",
+  "p.p.scope": "Esta política cubre el sitio web y el juego de coffeebattles.online. El proyecto se mantiene en el <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">repositorio público COFFEE_BATTLES<\/a> de GitHub. Puedes contactar con el proyecto a través de los canales de la página de <a href=\"/contact\">Contacto<\/a>.",
+  "p.h2.hosting": "Alojamiento",
+  "p.p.hosting": "El sitio está alojado en Vercel. Como cualquier proveedor de alojamiento, Vercel trata datos técnicos de cada solicitud, como tu dirección IP, datos del navegador y del dispositivo, la página solicitada y la hora. Se usan para servir el sitio, mantenerlo fiable y protegerlo de abusos.",
+  "p.h2.storage": "Datos guardados en tu navegador",
+  "p.p.storage": "El sitio y el juego guardan el idioma elegido en el almacenamiento local de tu navegador, para que no tengas que elegirlo de nuevo. Ese dato nunca sale de tu dispositivo y puedes borrarlo eliminando los datos de este sitio en el navegador. Las fuentes se sirven desde este sitio, no desde terceros.",
+  "p.h2.ads": "Google AdSense",
+  "p.p.ads1": "El sitio incluye código de Google AdSense, por ahora para la verificación del editor; en el juego no se colocan anuncios. Cuando se muestran anuncios, Google y sus socios pueden usar cookies o tecnologías similares para servirlos y medirlos, incluidos anuncios basados en tus visitas a este y otros sitios. Según tu región y tus elecciones, los anuncios pueden ser personalizados o no.",
+  "p.p.ads2": "Google explica cómo usa los datos de los sitios asociados en su <a href=\"https://policies.google.com/technologies/partner-sites\" rel=\"noopener\">página sobre sitios de socios<\/a>, y puedes gestionar la personalización de anuncios en la <a href=\"https://adssettings.google.com/\" rel=\"noopener\">Configuración de anuncios de Google<\/a>.",
+  "p.h2.consent": "Consentimiento en el EEE, el Reino Unido y Suiza",
+  "p.p.consent": "Donde la ley exija consentimiento, el almacenamiento y el tratamiento con fines publicitarios se ofrecerán mediante una herramienta de consentimiento certificada para los requisitos de Google para editores, en la que podrás aceptar, rechazar o elegir finalidades y proveedores concretos.",
+  "p.h2.analytics": "Analítica",
+  "p.p.analytics": "Coffee Battles no utiliza analítica propia. Si eso cambia, esta página se actualizará cuando se active la herramienta, con su finalidad y los requisitos de consentimiento.",
+  "p.h2.sent": "Lo que nos envías",
+  "p.p.sent": "Si contactas con el proyecto a través de GitHub u otro servicio, lo que envíes se rige por las condiciones de ese servicio. Las issues de GitHub son públicas: nunca publiques contraseñas, datos de pago, información de salud u otros datos sensibles.",
+  "p.h2.links": "Enlaces a otros sitios",
+  "p.p.links": "Los enlaces a GitHub, Google y otros servicios te llevan fuera de este sitio; allí se aplican sus propias políticas de privacidad.",
+  "p.h2.children": "Menores",
+  "p.p.children": "Coffee Battles no está dirigido a menores y no crea perfiles de nadie. La publicidad se configura para cumplir las políticas de Google para editores, incluidos los límites a los anuncios personalizados cuando corresponda.",
+  "p.h2.changes": "Cambios",
+  "p.p.changes": "Esta política cambia cuando el sitio añade o elimina funciones de alojamiento, analítica, publicidad, pagos o cuentas. La fecha de arriba indica la versión más reciente."
+ },
+ "fr": {
+  "meta.title": "Confidentialité — Coffee Battles",
+  "meta.description": "Comment Coffee Battles traite les données : hébergement, stockage local, Google AdSense et consentement.",
+  "p.h1": "Confidentialité",
+  "p.meta": "Dernière mise à jour : 30 septembre 2026",
+  "p.lead": "Coffee Battles n’a ni comptes, ni formulaires d’inscription, ni base de données d’utilisateurs. Cette page indique les données qui sont malgré tout traitées lors de votre visite, et par qui.",
+  "p.version": "Cette page existe en plusieurs langues ; en cas de divergence, la version anglaise fait foi.",
+  "p.h2.scope": "Champ d’application",
+  "p.p.scope": "Cette politique couvre le site et le jeu disponibles sur coffeebattles.online. Le projet est maintenu dans le <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">dépôt public COFFEE_BATTLES<\/a> sur GitHub. Vous pouvez joindre le projet par les moyens indiqués sur la page <a href=\"/contact\">Contact<\/a>.",
+  "p.h2.hosting": "Hébergement",
+  "p.p.hosting": "Le site est hébergé par Vercel. Comme tout hébergeur, Vercel traite des données techniques pour chaque requête : adresse IP, informations sur le navigateur et l’appareil, page demandée et heure. Elles servent à fournir le site, à assurer sa fiabilité et à le protéger contre les abus.",
+  "p.h2.storage": "Données enregistrées dans votre navigateur",
+  "p.p.storage": "Le site et le jeu enregistrent la langue choisie dans le stockage local de votre navigateur, pour que vous n’ayez pas à la choisir à nouveau. Cette donnée ne quitte jamais votre appareil ; vous pouvez la supprimer en effaçant les données de ce site dans votre navigateur. Les polices sont servies par ce site, et non par un tiers.",
+  "p.h2.ads": "Google AdSense",
+  "p.p.ads1": "Le site contient le code Google AdSense, pour l’instant à des fins de vérification de l’éditeur ; aucune publicité n’est placée dans le jeu. Lorsque des annonces sont diffusées, Google et ses partenaires peuvent utiliser des cookies ou des technologies similaires pour les diffuser et les mesurer, y compris des annonces fondées sur vos visites sur ce site et d’autres. Selon votre région et vos choix, les annonces peuvent être personnalisées ou non.",
+  "p.p.ads2": "Google explique comment il utilise les données des sites partenaires sur sa <a href=\"https://policies.google.com/technologies/partner-sites\" rel=\"noopener\">page dédiée<\/a>, et vous pouvez gérer la personnalisation des annonces dans les <a href=\"https://adssettings.google.com/\" rel=\"noopener\">Paramètres des annonces Google<\/a>.",
+  "p.h2.consent": "Consentement dans l’EEE, au Royaume-Uni et en Suisse",
+  "p.p.consent": "Lorsque la loi exige un consentement, le stockage et le traitement publicitaires seront proposés via un outil de consentement certifié pour les exigences de Google envers les éditeurs, où vous pourrez accepter, refuser ou choisir des finalités et des fournisseurs précis.",
+  "p.h2.analytics": "Mesure d’audience",
+  "p.p.analytics": "Coffee Battles n’utilise pas son propre outil de mesure d’audience. Si cela change, cette page sera mise à jour lors de son activation, avec sa finalité et les exigences de consentement.",
+  "p.h2.sent": "Ce que vous nous envoyez",
+  "p.p.sent": "Si vous contactez le projet via GitHub ou un autre service, ce que vous envoyez relève des conditions de ce service. Les issues GitHub sont publiques : n’y publiez jamais de mots de passe, de données de paiement, d’informations de santé ni d’autres données sensibles.",
+  "p.h2.links": "Liens vers d’autres sites",
+  "p.p.links": "Les liens vers GitHub, Google et d’autres services vous font quitter ce site ; leurs propres politiques de confidentialité s’y appliquent.",
+  "p.h2.children": "Enfants",
+  "p.p.children": "Coffee Battles ne s’adresse pas aux enfants et ne crée de profil sur personne. La publicité est configurée pour respecter les règles de Google pour les éditeurs, y compris les limites sur les annonces personnalisées lorsqu’elles s’appliquent.",
+  "p.h2.changes": "Modifications",
+  "p.p.changes": "Cette politique évolue lorsque le site ajoute ou retire des fonctions d’hébergement, de mesure d’audience, de publicité, de paiement ou de compte. La date en haut indique la version la plus récente."
+ },
+ "de": {
+  "meta.title": "Datenschutz — Coffee Battles",
+  "meta.description": "Wie Coffee Battles mit Daten umgeht: Hosting, lokaler Speicher, Google AdSense und Einwilligung.",
+  "p.h1": "Datenschutz",
+  "p.meta": "Zuletzt aktualisiert: 30. September 2026",
+  "p.lead": "Coffee Battles hat keine Konten, keine Anmeldeformulare und keine Nutzerdatenbank. Diese Seite nennt die Daten, die bei deinem Besuch trotzdem verarbeitet werden, und von wem.",
+  "p.version": "Diese Seite gibt es in mehreren Sprachen; bei Abweichungen gilt die englische Fassung.",
+  "p.h2.scope": "Geltungsbereich",
+  "p.p.scope": "Diese Erklärung gilt für die Website und das Spiel unter coffeebattles.online. Das Projekt wird im öffentlichen <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">Repository COFFEE_BATTLES<\/a> auf GitHub gepflegt. Erreichbar ist es über die Kanäle auf der Seite <a href=\"/contact\">Kontakt<\/a>.",
+  "p.h2.hosting": "Hosting",
+  "p.p.hosting": "Die Website wird bei Vercel gehostet. Wie jeder Hoster verarbeitet Vercel bei jeder Anfrage technische Daten wie IP-Adresse, Browser- und Geräteangaben, die aufgerufene Seite und die Uhrzeit. Sie dienen dazu, die Website auszuliefern, zuverlässig zu betreiben und vor Missbrauch zu schützen.",
+  "p.h2.storage": "Daten in deinem Browser",
+  "p.p.storage": "Website und Spiel speichern die gewählte Sprache im lokalen Speicher deines Browsers, damit du sie nicht erneut auswählen musst. Diese Angabe verlässt dein Gerät nie; du kannst sie löschen, indem du die Daten dieser Website im Browser entfernst. Schriften werden von dieser Website ausgeliefert, nicht von Dritten.",
+  "p.h2.ads": "Google AdSense",
+  "p.p.ads1": "Die Website enthält Google-AdSense-Code, derzeit zur Verifizierung als Publisher; im Spiel wird keine Werbung platziert. Wenn Anzeigen ausgeliefert werden, können Google und seine Partner Cookies oder ähnliche Technologien nutzen, um sie auszuliefern und zu messen, auch auf Grundlage deiner Besuche auf dieser und anderen Websites. Je nach Region und deinen Einstellungen können Anzeigen personalisiert sein oder nicht.",
+  "p.p.ads2": "Google erklärt auf seiner <a href=\"https://policies.google.com/technologies/partner-sites\" rel=\"noopener\">Seite zu Partner-Websites<\/a>, wie es deren Daten nutzt; die Personalisierung von Anzeigen verwaltest du in den <a href=\"https://adssettings.google.com/\" rel=\"noopener\">Google-Anzeigeneinstellungen<\/a>.",
+  "p.h2.consent": "Einwilligung im EWR, im Vereinigten Königreich und in der Schweiz",
+  "p.p.consent": "Wo das Gesetz eine Einwilligung verlangt, werden Speicherung und Verarbeitung zu Werbezwecken über ein für Googles Publisher-Anforderungen zertifiziertes Einwilligungstool angeboten, in dem du einzelne Zwecke und Anbieter annehmen, ablehnen oder auswählen kannst.",
+  "p.h2.analytics": "Analyse",
+  "p.p.analytics": "Coffee Battles betreibt keine eigene Analyse. Sollte sich das ändern, wird diese Seite beim Einschalten des Tools aktualisiert, mit Zweck und Einwilligungsanforderungen.",
+  "p.h2.sent": "Was du uns schickst",
+  "p.p.sent": "Wenn du das Projekt über GitHub oder einen anderen Dienst kontaktierst, gelten für deine Angaben die Bedingungen dieses Dienstes. GitHub-Issues sind öffentlich: Veröffentliche dort niemals Passwörter, Zahlungsdaten, Gesundheitsinformationen oder andere sensible Daten.",
+  "p.h2.links": "Links zu anderen Websites",
+  "p.p.links": "Links zu GitHub, Google und anderen Diensten führen von dieser Website weg; dort gelten deren eigene Datenschutzerklärungen.",
+  "p.h2.children": "Kinder",
+  "p.p.children": "Coffee Battles richtet sich nicht an Kinder und erstellt von niemandem Profile. Die Werbung ist so eingerichtet, dass sie Googles Publisher-Richtlinien folgt, einschließlich der Einschränkungen für personalisierte Anzeigen, wo sie gelten.",
+  "p.h2.changes": "Änderungen",
+  "p.p.changes": "Diese Erklärung ändert sich, wenn die Website Funktionen für Hosting, Analyse, Werbung, Zahlungen oder Konten hinzufügt oder entfernt. Das Datum oben zeigt die aktuelle Fassung."
+ },
+ "ru": {
+  "meta.title": "Конфиденциальность — Coffee Battles",
+  "meta.description": "Как Coffee Battles обращается с данными: хостинг, локальное хранилище, Google AdSense и согласие.",
+  "p.h1": "Конфиденциальность",
+  "p.meta": "Последнее обновление: 30 сентября 2026 г.",
+  "p.lead": "В Coffee Battles нет аккаунтов, форм регистрации и базы данных пользователей. На этой странице перечислено, какие данные всё же обрабатываются при посещении сайта и кем.",
+  "p.version": "Эта страница доступна на нескольких языках; при расхождениях действует английская версия.",
+  "p.h2.scope": "Область действия",
+  "p.p.scope": "Эта политика распространяется на сайт и игру по адресу coffeebattles.online. Проект ведётся в <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">публичном репозитории COFFEE_BATTLES<\/a> на GitHub. Связаться с проектом можно через каналы, указанные на странице <a href=\"/contact\">Контакты<\/a>.",
+  "p.h2.hosting": "Хостинг",
+  "p.p.hosting": "Сайт размещён на Vercel. Как и любой хостинг, Vercel обрабатывает технические данные каждого запроса: IP-адрес, сведения о браузере и устройстве, запрошенную страницу и время. Они нужны, чтобы доставлять сайт, обеспечивать его стабильность и защищать от злоупотреблений.",
+  "p.h2.storage": "Данные в вашем браузере",
+  "p.p.storage": "Сайт и игра сохраняют выбранный язык в локальном хранилище браузера, чтобы не выбирать его заново. Эти данные не покидают ваше устройство; их можно удалить, очистив данные этого сайта в браузере. Шрифты загружаются с этого сайта, а не со сторонних сервисов.",
+  "p.h2.ads": "Google AdSense",
+  "p.p.ads1": "На сайте есть код Google AdSense, пока только для подтверждения владельца; в самой игре реклама не размещается. Когда реклама показывается, Google и его партнёры могут использовать cookie и похожие технологии для её показа и измерения, в том числе на основе ваших посещений этого и других сайтов. В зависимости от региона и ваших настроек реклама может быть персонализированной или нет.",
+  "p.p.ads2": "Google рассказывает, как использует данные сайтов-партнёров, на <a href=\"https://policies.google.com/technologies/partner-sites\" rel=\"noopener\">отдельной странице<\/a>, а управлять персонализацией рекламы можно в <a href=\"https://adssettings.google.com/\" rel=\"noopener\">настройках рекламы Google<\/a>.",
+  "p.h2.consent": "Согласие в ЕЭЗ, Великобритании и Швейцарии",
+  "p.p.consent": "Там, где закон требует согласия, хранение и обработка данных для рекламы будут предлагаться через инструмент получения согласия, сертифицированный по требованиям Google для издателей: в нём можно принять, отклонить или выбрать отдельные цели и поставщиков.",
+  "p.h2.analytics": "Аналитика",
+  "p.p.analytics": "Coffee Battles не использует собственную аналитику. Если это изменится, страница будет обновлена при включении инструмента с указанием целей и требований к согласию.",
+  "p.h2.sent": "То, что вы нам отправляете",
+  "p.p.sent": "Если вы связываетесь с проектом через GitHub или другой сервис, отправленные данные обрабатываются по правилам этого сервиса. Issues на GitHub публичны: никогда не публикуйте там пароли, платёжные данные, сведения о здоровье и другую конфиденциальную информацию.",
+  "p.h2.links": "Ссылки на другие сайты",
+  "p.p.links": "Ссылки на GitHub, Google и другие сервисы ведут за пределы сайта; там действуют их собственные политики конфиденциальности.",
+  "p.h2.children": "Дети",
+  "p.p.children": "Coffee Battles не предназначен для детей и ни на кого не составляет профилей. Реклама настроена в соответствии с правилами Google для издателей, включая ограничения на персонализированную рекламу там, где они действуют.",
+  "p.h2.changes": "Изменения",
+  "p.p.changes": "Политика меняется, когда на сайте добавляются или убираются функции хостинга, аналитики, рекламы, платежей или аккаунтов. Дата вверху указывает на актуальную версию."
+ }
+};</script>
+<script src="/site-i18n.js"></script>
 </body>
 </html>

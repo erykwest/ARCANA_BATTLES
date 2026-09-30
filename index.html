@@ -32,138 +32,92 @@
 </div></section>
 </main>
 <footer class="footer"><div class="footer-inner"><span>© 2026 Coffee Battles</span><div class="footer-links"><a href="/about" data-i18n="nav.about">About</a><a href="/how-to-play" data-i18n="nav.how">How to play</a><a href="/privacy" data-i18n="nav.privacy">Privacy</a><a href="/contact" data-i18n="nav.contact">Contact</a><a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">GitHub</a></div></div></footer>
-<script>
-const STORAGE_KEY='coffee-battles-language';
-const STRINGS={
+<script>window.PAGE_STRINGS={
  "en": {
-  "nav.about": "About",
-  "nav.how": "How to play",
-  "nav.privacy": "Privacy",
-  "nav.contact": "Contact",
-  "nav.play": "Play",
   "hero.title": "Take a break.<br>Grab a coffee.<br>Fight a battle.",
   "hero.lead": "Real-time tactical battles that fit in a coffee break: ten minutes at most, in your browser, no account.",
   "hero.alt": "A battle in progress: blue and red regiments meet across a road between hills.",
-  "cta.play": "Play now",
-  "cta.how": "How to play",
   "steps.title": "How a battle goes",
   "step1.title": "Set up",
   "step1.body": "Choose army size and terrain, and whether you attack or defend.",
   "step2.title": "Deploy",
   "step2.body": "Drag infantry, spearmen, archers and cavalry into your zone. The enemy deploys out of sight.",
   "step3.title": "Fight",
-  "step3.body": "Give orders in real time. Facing, charges, fatigue and morale decide who breaks first."
+  "step3.body": "Give orders in real time. Facing, charges, fatigue and morale decide who breaks first.",
+  "meta.title": "Coffee Battles — tactical battles for a coffee break",
+  "meta.description": "Real-time tactical battles that fit in a coffee break: ten minutes at most, in your browser, no account."
  },
  "it": {
-  "nav.about": "Info",
-  "nav.how": "Come si gioca",
-  "nav.privacy": "Privacy",
-  "nav.contact": "Contatti",
-  "nav.play": "Gioca",
   "hero.title": "Fai una pausa.<br>Prendi un caffè.<br>Combatti una battaglia.",
   "hero.lead": "Battaglie tattiche in tempo reale che stanno in una pausa caffè: dieci minuti al massimo, nel browser, senza account.",
   "hero.alt": "Una battaglia in corso: reggimenti blu e rossi si affrontano lungo una strada tra le colline.",
-  "cta.play": "Gioca ora",
-  "cta.how": "Come si gioca",
   "steps.title": "Com’è fatta una battaglia",
   "step1.title": "Prepara",
   "step1.body": "Scegli dimensione dell’esercito e terreno, e se attacchi o difendi.",
   "step2.title": "Schiera",
   "step2.body": "Trascina fanteria, lanceri, arcieri e cavalleria nella tua zona. Il nemico si schiera senza farsi vedere.",
   "step3.title": "Combatti",
-  "step3.body": "Dai ordini in tempo reale. Orientamento, cariche, fatica e morale decidono chi cede per primo."
+  "step3.body": "Dai ordini in tempo reale. Orientamento, cariche, fatica e morale decidono chi cede per primo.",
+  "meta.title": "Coffee Battles — battaglie tattiche per una pausa caffè",
+  "meta.description": "Battaglie tattiche in tempo reale che stanno in una pausa caffè: dieci minuti al massimo, nel browser, senza account."
  },
  "es": {
-  "nav.about": "Acerca de",
-  "nav.how": "Cómo jugar",
-  "nav.privacy": "Privacidad",
-  "nav.contact": "Contacto",
-  "nav.play": "Jugar",
   "hero.title": "Haz una pausa.<br>Toma un café.<br>Libra una batalla.",
   "hero.lead": "Batallas tácticas en tiempo real que caben en una pausa para el café: diez minutos como máximo, en tu navegador, sin cuenta.",
   "hero.alt": "Una batalla en curso: regimientos azules y rojos se enfrentan junto a un camino entre colinas.",
-  "cta.play": "Jugar ahora",
-  "cta.how": "Cómo se juega",
   "steps.title": "Cómo es una batalla",
   "step1.title": "Prepara",
   "step1.body": "Elige el tamaño del ejército y el terreno, y si atacas o defiendes.",
   "step2.title": "Despliega",
   "step2.body": "Arrastra infantería, lanceros, arqueros y caballería a tu zona. El enemigo se despliega sin ser visto.",
   "step3.title": "Combate",
-  "step3.body": "Da órdenes en tiempo real. La orientación, las cargas, el cansancio y la moral deciden quién cede primero."
+  "step3.body": "Da órdenes en tiempo real. La orientación, las cargas, el cansancio y la moral deciden quién cede primero.",
+  "meta.title": "Coffee Battles — batallas tácticas para una pausa de café",
+  "meta.description": "Batallas tácticas en tiempo real que caben en una pausa para el café: diez minutos como máximo, en tu navegador, sin cuenta."
  },
  "fr": {
-  "nav.about": "À propos",
-  "nav.how": "Comment jouer",
-  "nav.privacy": "Confidentialité",
-  "nav.contact": "Contact",
-  "nav.play": "Jouer",
   "hero.title": "Faites une pause.<br>Prenez un café.<br>Livrez bataille.",
   "hero.lead": "Des batailles tactiques en temps réel qui tiennent dans une pause café : dix minutes au plus, dans votre navigateur, sans compte.",
   "hero.alt": "Une bataille en cours : des régiments bleus et rouges s’affrontent le long d’une route entre des collines.",
-  "cta.play": "Jouer maintenant",
-  "cta.how": "Comment jouer",
   "steps.title": "Le déroulé d’une bataille",
   "step1.title": "Préparez",
   "step1.body": "Choisissez la taille de l’armée et le terrain, et si vous attaquez ou défendez.",
   "step2.title": "Déployez",
-  "step2.body": "Placez infanterie, piquiers, archers et cavalerie dans votre zone. L’ennemi se déploie hors de vue.",
+  "step2.body": "Placez infanterie, lanciers, archers et cavalerie dans votre zone. L’ennemi se déploie hors de vue.",
   "step3.title": "Combattez",
-  "step3.body": "Donnez vos ordres en temps réel. Orientation, charges, fatigue et moral décident qui cède le premier."
+  "step3.body": "Donnez vos ordres en temps réel. Orientation, charges, fatigue et moral décident qui cède le premier.",
+  "meta.title": "Coffee Battles — des batailles tactiques pour la pause café",
+  "meta.description": "Des batailles tactiques en temps réel qui tiennent dans une pause café : dix minutes au plus, dans votre navigateur, sans compte."
  },
  "de": {
-  "nav.about": "Über",
-  "nav.how": "Spielanleitung",
-  "nav.privacy": "Datenschutz",
-  "nav.contact": "Kontakt",
-  "nav.play": "Spielen",
   "hero.title": "Mach eine Pause.<br>Hol dir einen Kaffee.<br>Kämpfe eine Schlacht.",
   "hero.lead": "Taktische Echtzeitschlachten für die Kaffeepause: höchstens zehn Minuten, im Browser, ohne Konto.",
   "hero.alt": "Eine laufende Schlacht: blaue und rote Regimenter treffen an einer Straße zwischen Hügeln aufeinander.",
-  "cta.play": "Jetzt spielen",
-  "cta.how": "Spielanleitung",
   "steps.title": "So läuft eine Schlacht",
   "step1.title": "Vorbereiten",
   "step1.body": "Wähle Armeegröße und Gelände und ob du angreifst oder verteidigst.",
   "step2.title": "Aufstellen",
   "step2.body": "Ziehe Infanterie, Speerträger, Bogenschützen und Kavallerie in deine Zone. Der Gegner stellt sich unbemerkt auf.",
   "step3.title": "Kämpfen",
-  "step3.body": "Gib Befehle in Echtzeit. Ausrichtung, Angriffe, Erschöpfung und Moral entscheiden, wer zuerst bricht."
+  "step3.body": "Gib Befehle in Echtzeit. Ausrichtung, Angriffe, Erschöpfung und Moral entscheiden, wer zuerst bricht.",
+  "meta.title": "Coffee Battles — taktische Schlachten für die Kaffeepause",
+  "meta.description": "Taktische Echtzeitschlachten für die Kaffeepause: höchstens zehn Minuten, im Browser, ohne Konto."
  },
  "ru": {
-  "nav.about": "О проекте",
-  "nav.how": "Как играть",
-  "nav.privacy": "Конфиденциальность",
-  "nav.contact": "Контакты",
-  "nav.play": "Играть",
   "hero.title": "Сделай перерыв.<br>Возьми кофе.<br>Вступи в бой.",
   "hero.lead": "Тактические бои в реальном времени на один кофе-брейк: не дольше десяти минут, прямо в браузере, без регистрации.",
   "hero.alt": "Идёт бой: синие и красные полки сходятся у дороги между холмами.",
-  "cta.play": "Играть",
-  "cta.how": "Как играть",
   "steps.title": "Как проходит бой",
   "step1.title": "Подготовка",
   "step1.body": "Выберите размер армии, местность и роль: атака или оборона.",
   "step2.title": "Расстановка",
   "step2.body": "Перетащите пехоту, копейщиков, лучников и кавалерию в свою зону. Противник расставляется скрытно.",
   "step3.title": "Бой",
-  "step3.body": "Отдавайте приказы в реальном времени. Построение, атаки, усталость и боевой дух решают, кто дрогнет первым."
+  "step3.body": "Отдавайте приказы в реальном времени. Построение, атаки, усталость и боевой дух решают, кто дрогнет первым.",
+  "meta.title": "Coffee Battles — тактические бои на кофе-брейк",
+  "meta.description": "Тактические бои в реальном времени на один кофе-брейк: не дольше десяти минут, прямо в браузере, без регистрации."
  }
-};
-function storedLanguage(){try{return localStorage.getItem(STORAGE_KEY);}catch(_){return null;}}
-function applyLanguage(lang,persist){
-  if(!STRINGS[lang])lang='en';
-  if(persist){try{localStorage.setItem(STORAGE_KEY,lang);}catch(_){}}
-  document.documentElement.lang=lang;
-  const t=STRINGS[lang];
-  document.querySelectorAll('[data-i18n]').forEach(el=>{const v=t[el.dataset.i18n];if(v!==undefined)el.textContent=v;});
-  document.querySelectorAll('[data-i18n-html]').forEach(el=>{const v=t[el.dataset.i18nHtml];if(v!==undefined)el.innerHTML=v;});
-  document.querySelectorAll('[data-i18n-alt]').forEach(el=>{const v=t[el.dataset.i18nAlt];if(v!==undefined)el.alt=v;});
-  const select=document.getElementById('siteLanguageSelect');if(select)select.value=lang;
-}
-const select=document.getElementById('siteLanguageSelect');
-if(select)select.addEventListener('change',e=>applyLanguage(e.target.value,true));
-applyLanguage(storedLanguage()||'en',false);
-</script>
+};</script>
+<script src="/site-i18n.js"></script>
 </body>
 </html>

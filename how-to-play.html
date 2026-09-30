@@ -10,54 +10,233 @@
 <link rel="stylesheet" href="/site.css">
 </head>
 <body>
-<header class="site-header"><nav class="nav" aria-label="Main navigation"><a class="brand" href="/">Coffee Battles</a><div class="nav-links"><a href="/how-to-play">How to play</a><a href="/about">About</a><a class="play" href="/play">Play</a></div></nav></header>
+<header class="site-header"><nav class="nav" aria-label="Main navigation"><a class="brand" href="/">Coffee Battles</a><div class="nav-links"><a href="/how-to-play" data-i18n="nav.how">How to play</a><a href="/about" data-i18n="nav.about">About</a><select id="siteLanguageSelect" class="lang-select" aria-label="Language" title="Language"><option value="en">English</option><option value="it">Italiano</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="ru">Русский</option></select><a class="play" href="/play" data-i18n="nav.play">Play</a></div></nav></header>
 <main class="shell"><article class="prose">
-<h1>How to play</h1>
-<p class="lead">A battle has three steps: set up, deploy, fight. This page covers each one, then the rules that decide who wins.</p>
-
-<h2>1. Set up</h2>
-<p><strong>Army size</strong> is the budget in points each side can spend, from 500 to 2000 or a custom amount. <strong>Terrain</strong> picks the kind of field; Random chooses one for you.</p>
-<p><strong>Armies</strong> decides who builds what. In Auto the computer builds the enemy army and you build yours. In Mirror the enemy copies your army. In Custom you build both.</p>
-<p><strong>Your role</strong> sets the win condition. As the attacker you must win before time runs out; as the defender you win by holding out until it does. Random draws the role when the battle starts.</p>
-
-<h2>2. Deploy</h2>
-<p>Drag regiments from the cards onto the field and drop them inside your deployment zone. Each card shows what the regiment is good at and what it costs. Drag a placed regiment to move it, turn it in 15° steps, or remove it. In Auto mode the enemy is already deployed and stays hidden until the battle starts.</p>
-
-<h2>3. Controls</h2>
-<dl class="controls-list">
-<dt>Select</dt><dd>Left click a regiment. Ctrl + click adds or removes one; hold the right button and drag to draw a box.</dd>
-<dt>Move</dt><dd>Right click the ground. Shift + right click adds a waypoint to the route.</dd>
-<dt>Attack</dt><dd>Right click an enemy. Shift + right click an enemy makes it the attack at the end of the route.</dd>
-<dt>Camera</dt><dd>Mouse wheel to zoom, drag with the middle button to pan.</dd>
-<dt>Speed</dt><dd>The buttons at the top pause the battle or run it at 1×, 2× or 3×.</dd>
-<dt>Space</dt><dd>Pauses and shows the game’s full HTML source. Space again closes it.</dd>
-<dt>Touch</dt><dd>Tap to select, move or attack. Long press to add to the selection or add a waypoint. One finger dragged from the ground draws a box; two fingers pan and zoom.</dd>
-</dl>
-
-<h2>4. Orders</h2>
-<p>The panel in the bottom left gives orders to the selected regiments. Distances are in field units (U); each grid square is 1U.</p>
-<h3>Stance</h3>
-<p><strong>Hold</strong> waits for your orders. <strong>Aggressive</strong> attacks enemies within 10U and charges within 5U. <strong>Elusive</strong> keeps away, falling back from enemies within 9U. A stance never cancels an order you gave by hand.</p>
-<h3>Formation</h3>
-<p><strong>Base</strong> is 3U wide and 2U deep, <strong>Column</strong> 2U wide and 3U deep, <strong>Line</strong> 6U wide and 1U deep. A wider front brings more soldiers into contact. Changing formation takes 2 seconds and is allowed during combat.</p>
-<h3>Charge, retreat, fire</h3>
-<p><strong>Charge</strong> switches the regiment to charge speed until it hits; the impact adds shock to the target, and cavalry doubles it. <strong>Retreat</strong> breaks contact and pulls back at least 11U from the enemy. <strong>Fire at will</strong> lets archers, crossbowmen, light infantry and light cavalry shoot automatically at anything in range. A target you pick yourself is shot at even with fire at will off.</p>
-
-<h2>5. What decides a fight</h2>
-<p><strong>Facing.</strong> A regiment attacked in the flank fights worse, and attacks on the flank or rear add much more shock than a frontal clash.</p>
-<p><strong>Energy.</strong> Marching and fighting use energy; standing still recovers it. With no energy left a regiment cannot move and stops fighting effectively.</p>
-<p><strong>Morale.</strong> Losses and shock wear morale down from steady to shaken, wavering and finally rout, when the regiment flees on its own. A routed regiment that gets away from the enemy can rally. One that crosses the dashed edge of the field will not rally again.</p>
-
-<h2>6. Terrain and sight</h2>
-<p>Rivers can only be crossed at bridges and fords. Streams are rough ground. Mountains and buildings are solid obstacles, and cavalry cannot enter forests. Your regiments see about 20U around them; enemies out of sight disappear, and their last known position stays marked.</p>
-
-<h2>7. Winning</h2>
-<p>The bar at the top of the field shows each side’s progress. When a side reaches 100%, because half of the enemy army’s points have been destroyed or have fled, the whole enemy army breaks and runs. The battle ends when one army has no regiments left on the field.</p>
-<p>If ten minutes of game time pass first, the defender wins. At 2× or 3× speed that takes less in real time.</p>
-
-<p class="note">Something behaved oddly? <a href="/contact">Report it</a> with the steps to reproduce it.</p>
-<div class="cta-row"><a class="btn primary" href="/play">Play now</a></div>
+<h1 data-i18n-html="h.h1">How to play</h1>
+<p class="lead" data-i18n-html="h.lead">A battle has three steps: set up, deploy, fight. This page covers each one, then the rules that decide who wins.</p>
+<h2 data-i18n-html="h.h2.setup">1. Set up</h2>
+<p data-i18n-html="h.p.setup1"><strong>Army size</strong> is the budget in points each side can spend, from 500 to 2000 or a custom amount. <strong>Terrain</strong> picks the kind of field; Random chooses one for you.</p>
+<p data-i18n-html="h.p.setup2"><strong>Armies</strong> decides who builds what. In Auto the computer builds the enemy army and you build yours. In Mirror the enemy copies your army. In Custom you build both.</p>
+<p data-i18n-html="h.p.setup3"><strong>Your role</strong> sets the win condition. As the attacker you must win before time runs out; as the defender you win by holding out until it does. Random draws the role when the battle starts.</p>
+<h2 data-i18n-html="h.h2.deploy">2. Deploy</h2>
+<p data-i18n-html="h.p.deploy">Drag regiments from the cards onto the field and drop them inside your deployment zone. Each card shows what the regiment is good at and what it costs. Drag a placed regiment to move it, turn it in 15° steps, or remove it. In Auto mode the enemy is already deployed and stays hidden until the battle starts.</p>
+<h2 data-i18n-html="h.h2.controls">3. Controls</h2>
+<dl class="controls-list" data-i18n-html="h.dl.controls"><dt>Select</dt><dd>Left click a regiment. Ctrl + click adds or removes one; hold the right button and drag to draw a box.</dd><dt>Move</dt><dd>Right click the ground. Shift + right click adds a waypoint to the route.</dd><dt>Attack</dt><dd>Right click an enemy. Shift + right click an enemy makes it the attack at the end of the route.</dd><dt>Camera</dt><dd>Mouse wheel to zoom, drag with the middle button to pan.</dd><dt>Speed</dt><dd>The buttons at the top pause the battle or run it at 1×, 2× or 3×.</dd><dt>Space</dt><dd>Pauses and shows the game’s full HTML source. Space again closes it.</dd><dt>Touch</dt><dd>Tap to select, move or attack. Long press to add to the selection or add a waypoint. One finger dragged from the ground draws a box; two fingers pan and zoom.</dd></dl>
+<h2 data-i18n-html="h.h2.orders">4. Orders</h2>
+<p data-i18n-html="h.p.orders">The panel in the bottom left gives orders to the selected regiments. Distances are in field units (U); each grid square is 1U.</p>
+<h3 data-i18n-html="h.h3.stance">Stance</h3>
+<p data-i18n-html="h.p.stance"><strong>Hold</strong> waits for your orders. <strong>Aggressive</strong> attacks enemies within 10U and charges within 5U. <strong>Elusive</strong> keeps away, falling back from enemies within 9U. A stance never cancels an order you gave by hand.</p>
+<h3 data-i18n-html="h.h3.formation">Formation</h3>
+<p data-i18n-html="h.p.formation"><strong>Base</strong> is 3U wide and 2U deep, <strong>Column</strong> 2U wide and 3U deep, <strong>Line</strong> 6U wide and 1U deep. A wider front brings more soldiers into contact. Changing formation takes 2 seconds and is allowed during combat.</p>
+<h3 data-i18n-html="h.h3.cmd">Charge, retreat, fire</h3>
+<p data-i18n-html="h.p.cmd"><strong>Charge</strong> switches the regiment to charge speed until it hits; the impact adds shock to the target, and cavalry doubles it. <strong>Retreat</strong> breaks contact and pulls back at least 11U from the enemy. <strong>Fire at will</strong> lets archers, crossbowmen, light infantry and light cavalry shoot automatically at anything in range. A target you pick yourself is shot at even with fire at will off.</p>
+<h2 data-i18n-html="h.h2.fight">5. What decides a fight</h2>
+<p data-i18n-html="h.p.facing"><strong>Facing.</strong> A regiment attacked in the flank fights worse, and attacks on the flank or rear add much more shock than a frontal clash.</p>
+<p data-i18n-html="h.p.energy"><strong>Energy.</strong> Marching and fighting use energy; standing still recovers it. With no energy left a regiment cannot move and stops fighting effectively.</p>
+<p data-i18n-html="h.p.morale"><strong>Morale.</strong> Losses and shock wear morale down from steady to shaken, wavering and finally rout, when the regiment flees on its own. A routed regiment that gets away from the enemy can rally. One that crosses the dashed edge of the field will not rally again.</p>
+<h2 data-i18n-html="h.h2.terrain">6. Terrain and sight</h2>
+<p data-i18n-html="h.p.terrain">Rivers can only be crossed at bridges and fords. Streams are rough ground. Mountains and buildings are solid obstacles, and cavalry cannot enter forests. Your regiments see about 20U around them; enemies out of sight disappear, and their last known position stays marked.</p>
+<h2 data-i18n-html="h.h2.win">7. Winning</h2>
+<p data-i18n-html="h.p.win1">The bar at the top of the field shows each side’s progress. When a side reaches 100%, because half of the enemy army’s points have been destroyed or have fled, the whole enemy army breaks and runs. The battle ends when one army has no regiments left on the field.</p>
+<p data-i18n-html="h.p.win2">If ten minutes of game time pass first, the defender wins. At 2× or 3× speed that takes less in real time.</p>
+<p class="note" data-i18n-html="h.note">Something behaved oddly? <a href="/contact">Report it</a> with the steps to reproduce it.</p>
+<div class="cta-row"><a class="btn primary" href="/play" data-i18n="cta.play">Play now</a></div>
 </article></main>
-<footer class="footer"><div class="footer-inner"><span>© 2026 Coffee Battles</span><div class="footer-links"><a href="/about">About</a><a href="/how-to-play">How to play</a><a href="/privacy">Privacy</a><a href="/contact">Contact</a><a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">GitHub</a></div></div></footer>
+<footer class="footer"><div class="footer-inner"><span>© 2026 Coffee Battles</span><div class="footer-links"><a href="/about" data-i18n="nav.about">About</a><a href="/how-to-play" data-i18n="nav.how">How to play</a><a href="/privacy" data-i18n="nav.privacy">Privacy</a><a href="/contact" data-i18n="nav.contact">Contact</a><a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">GitHub</a></div></div></footer>
+<script>window.PAGE_STRINGS={
+ "en": {
+  "meta.title": "How to play — Coffee Battles",
+  "meta.description": "How to play Coffee Battles: setup, deployment, controls, orders, morale, terrain and how to win.",
+  "h.h1": "How to play",
+  "h.lead": "A battle has three steps: set up, deploy, fight. This page covers each one, then the rules that decide who wins.",
+  "h.h2.setup": "1. Set up",
+  "h.p.setup1": "<strong>Army size<\/strong> is the budget in points each side can spend, from 500 to 2000 or a custom amount. <strong>Terrain<\/strong> picks the kind of field; Random chooses one for you.",
+  "h.p.setup2": "<strong>Armies<\/strong> decides who builds what. In Auto the computer builds the enemy army and you build yours. In Mirror the enemy copies your army. In Custom you build both.",
+  "h.p.setup3": "<strong>Your role<\/strong> sets the win condition. As the attacker you must win before time runs out; as the defender you win by holding out until it does. Random draws the role when the battle starts.",
+  "h.h2.deploy": "2. Deploy",
+  "h.p.deploy": "Drag regiments from the cards onto the field and drop them inside your deployment zone. Each card shows what the regiment is good at and what it costs. Drag a placed regiment to move it, turn it in 15° steps, or remove it. In Auto mode the enemy is already deployed and stays hidden until the battle starts.",
+  "h.h2.controls": "3. Controls",
+  "h.dl.controls": "<dt>Select<\/dt><dd>Left click a regiment. Ctrl + click adds or removes one; hold the right button and drag to draw a box.<\/dd><dt>Move<\/dt><dd>Right click the ground. Shift + right click adds a waypoint to the route.<\/dd><dt>Attack<\/dt><dd>Right click an enemy. Shift + right click an enemy makes it the attack at the end of the route.<\/dd><dt>Camera<\/dt><dd>Mouse wheel to zoom, drag with the middle button to pan.<\/dd><dt>Speed<\/dt><dd>The buttons at the top pause the battle or run it at 1×, 2× or 3×.<\/dd><dt>Space<\/dt><dd>Pauses and shows the game’s full HTML source. Space again closes it.<\/dd><dt>Touch<\/dt><dd>Tap to select, move or attack. Long press to add to the selection or add a waypoint. One finger dragged from the ground draws a box; two fingers pan and zoom.<\/dd>",
+  "h.h2.orders": "4. Orders",
+  "h.p.orders": "The panel in the bottom left gives orders to the selected regiments. Distances are in field units (U); each grid square is 1U.",
+  "h.h3.stance": "Stance",
+  "h.p.stance": "<strong>Hold<\/strong> waits for your orders. <strong>Aggressive<\/strong> attacks enemies within 10U and charges within 5U. <strong>Elusive<\/strong> keeps away, falling back from enemies within 9U. A stance never cancels an order you gave by hand.",
+  "h.h3.formation": "Formation",
+  "h.p.formation": "<strong>Base<\/strong> is 3U wide and 2U deep, <strong>Column<\/strong> 2U wide and 3U deep, <strong>Line<\/strong> 6U wide and 1U deep. A wider front brings more soldiers into contact. Changing formation takes 2 seconds and is allowed during combat.",
+  "h.h3.cmd": "Charge, retreat, fire",
+  "h.p.cmd": "<strong>Charge<\/strong> switches the regiment to charge speed until it hits; the impact adds shock to the target, and cavalry doubles it. <strong>Retreat<\/strong> breaks contact and pulls back at least 11U from the enemy. <strong>Fire at will<\/strong> lets archers, crossbowmen, light infantry and light cavalry shoot automatically at anything in range. A target you pick yourself is shot at even with fire at will off.",
+  "h.h2.fight": "5. What decides a fight",
+  "h.p.facing": "<strong>Facing.<\/strong> A regiment attacked in the flank fights worse, and attacks on the flank or rear add much more shock than a frontal clash.",
+  "h.p.energy": "<strong>Energy.<\/strong> Marching and fighting use energy; standing still recovers it. With no energy left a regiment cannot move and stops fighting effectively.",
+  "h.p.morale": "<strong>Morale.<\/strong> Losses and shock wear morale down from steady to shaken, wavering and finally rout, when the regiment flees on its own. A routed regiment that gets away from the enemy can rally. One that crosses the dashed edge of the field will not rally again.",
+  "h.h2.terrain": "6. Terrain and sight",
+  "h.p.terrain": "Rivers can only be crossed at bridges and fords. Streams are rough ground. Mountains and buildings are solid obstacles, and cavalry cannot enter forests. Your regiments see about 20U around them; enemies out of sight disappear, and their last known position stays marked.",
+  "h.h2.win": "7. Winning",
+  "h.p.win1": "The bar at the top of the field shows each side’s progress. When a side reaches 100%, because half of the enemy army’s points have been destroyed or have fled, the whole enemy army breaks and runs. The battle ends when one army has no regiments left on the field.",
+  "h.p.win2": "If ten minutes of game time pass first, the defender wins. At 2× or 3× speed that takes less in real time.",
+  "h.note": "Something behaved oddly? <a href=\"/contact\">Report it<\/a> with the steps to reproduce it."
+ },
+ "it": {
+  "meta.title": "Come si gioca — Coffee Battles",
+  "meta.description": "Come si gioca a Coffee Battles: preparazione, schieramento, comandi, ordini, morale, terreno e come si vince.",
+  "h.h1": "Come si gioca",
+  "h.lead": "Una battaglia ha tre fasi: preparazione, schieramento, combattimento. Qui trovi ciascuna fase e poi le regole che decidono chi vince.",
+  "h.h2.setup": "1. Preparazione",
+  "h.p.setup1": "<strong>Dimensione esercito<\/strong> è il budget in punti che ogni schieramento può spendere, da 500 a 2000 o un valore a scelta. <strong>Terreno<\/strong> sceglie il tipo di campo; Casuale lo sceglie per te.",
+  "h.p.setup2": "<strong>Eserciti<\/strong> decide chi costruisce cosa. In Auto il computer costruisce l’esercito nemico e tu il tuo. In Specchio il nemico copia il tuo esercito. In Libero li costruisci entrambi.",
+  "h.p.setup3": "<strong>Il tuo ruolo<\/strong> stabilisce come si vince. In attacco devi vincere prima che scada il tempo; in difesa vinci resistendo fino alla scadenza. Casuale estrae il ruolo all’inizio della battaglia.",
+  "h.h2.deploy": "2. Schieramento",
+  "h.p.deploy": "Trascina i reggimenti dalle schede sul campo e rilasciali nella tua zona di schieramento. Ogni scheda indica in cosa è forte il reggimento e quanto costa. Puoi trascinare di nuovo un reggimento per spostarlo, ruotarlo a scatti di 15° o rimuoverlo. In modalità Auto il nemico è già schierato e resta nascosto fino all’inizio della battaglia.",
+  "h.h2.controls": "3. Comandi",
+  "h.dl.controls": "<dt>Seleziona<\/dt><dd>Clic sinistro su un reggimento. Ctrl + clic lo aggiunge o lo toglie; tieni premuto il tasto destro e trascina per tracciare un riquadro.<\/dd><dt>Muovi<\/dt><dd>Clic destro sul terreno. Shift + clic destro aggiunge una tappa al percorso.<\/dd><dt>Attacca<\/dt><dd>Clic destro su un nemico. Shift + clic destro su un nemico lo rende l’attacco finale del percorso.<\/dd><dt>Visuale<\/dt><dd>Rotella per lo zoom, trascina col tasto centrale per spostarti.<\/dd><dt>Velocità<\/dt><dd>I pulsanti in alto mettono in pausa la battaglia o la fanno scorrere a 1×, 2× o 3×.<\/dd><dt>Spazio<\/dt><dd>Mette in pausa e mostra il codice HTML completo del gioco. Premi di nuovo Spazio per chiuderlo.<\/dd><dt>Touch<\/dt><dd>Tocca per selezionare, muovere o attaccare. Con una pressione lunga aggiungi alla selezione o aggiungi una tappa. Un dito trascinato dal terreno traccia un riquadro; due dita spostano e zoomano.<\/dd>",
+  "h.h2.orders": "4. Ordini",
+  "h.p.orders": "Il pannello in basso a sinistra dà ordini ai reggimenti selezionati. Le distanze sono in unità di campo (U); ogni quadrato della griglia è 1U.",
+  "h.h3.stance": "Postura",
+  "h.p.stance": "<strong>Mantieni la linea<\/strong> attende i tuoi ordini. <strong>Aggressivo<\/strong> attacca i nemici entro 10U e carica entro 5U. <strong>Elusivo<\/strong> tiene le distanze e arretra dai nemici entro 9U. Una postura non annulla mai un ordine dato a mano.",
+  "h.h3.formation": "Formazione",
+  "h.p.formation": "<strong>Base<\/strong> è larga 3U e profonda 2U, <strong>Colonna<\/strong> larga 2U e profonda 3U, <strong>Linea<\/strong> larga 6U e profonda 1U. Un fronte più largo porta più soldati a contatto. Cambiare formazione richiede 2 secondi ed è possibile anche in combattimento.",
+  "h.h3.cmd": "Carica, ritirata, fuoco",
+  "h.p.cmd": "<strong>Carica<\/strong> porta il reggimento alla velocità di carica finché non colpisce; l’impatto aggiunge shock al bersaglio, e la cavalleria lo raddoppia. <strong>Ritirata<\/strong> rompe il contatto e arretra di almeno 11U dal nemico. <strong>Fuoco a volontà<\/strong> fa tirare automaticamente arcieri, balestrieri, fanteria leggera e cavalleria leggera su qualsiasi bersaglio a portata. Un bersaglio scelto da te viene colpito anche con il fuoco a volontà spento.",
+  "h.h2.fight": "5. Cosa decide uno scontro",
+  "h.p.facing": "<strong>Orientamento.<\/strong> Un reggimento attaccato sul fianco combatte peggio, e gli attacchi sul fianco o sul retro aggiungono molto più shock di uno scontro frontale.",
+  "h.p.energy": "<strong>Energia.<\/strong> Marciare e combattere consumano energia; restare fermi la recupera. Senza energia un reggimento non può muoversi e smette di combattere in modo efficace.",
+  "h.p.morale": "<strong>Morale.<\/strong> Perdite e shock logorano il morale: da saldo a scosso, vacillante e infine in rotta, quando il reggimento fugge da solo. Un reggimento in rotta che si allontana dal nemico può riorganizzarsi. Se supera il bordo tratteggiato del campo, non si riorganizza più.",
+  "h.h2.terrain": "6. Terreno e visibilità",
+  "h.p.terrain": "I fiumi si attraversano solo su ponti e guadi. I torrenti sono terreno accidentato. Montagne ed edifici sono ostacoli pieni, e la cavalleria non può entrare nelle foreste. I tuoi reggimenti vedono per circa 20U intorno a sé; i nemici fuori vista scompaiono, e la loro ultima posizione nota resta segnata.",
+  "h.h2.win": "7. Vincere",
+  "h.p.win1": "La barra in cima al campo mostra i progressi di ogni schieramento. Quando uno arriva al 100%, perché metà dei punti dell’esercito nemico è stata distrutta o è fuggita, l’intero esercito nemico cede e fugge. La battaglia finisce quando un esercito non ha più reggimenti sul campo.",
+  "h.p.win2": "Se prima passano dieci minuti di tempo di gioco, vince il difensore. A velocità 2× o 3× ci vuole meno tempo reale.",
+  "h.note": "Qualcosa si è comportato in modo strano? <a href=\"/contact\">Segnalalo<\/a> con i passaggi per riprodurlo."
+ },
+ "es": {
+  "meta.title": "Cómo se juega — Coffee Battles",
+  "meta.description": "Cómo se juega a Coffee Battles: preparación, despliegue, controles, órdenes, moral, terreno y cómo ganar.",
+  "h.h1": "Cómo se juega",
+  "h.lead": "Una batalla tiene tres fases: preparación, despliegue y combate. Aquí se explica cada una y después las reglas que deciden quién gana.",
+  "h.h2.setup": "1. Preparación",
+  "h.p.setup1": "<strong>Tamaño del ejército<\/strong> es el presupuesto en puntos que puede gastar cada bando, de 500 a 2000 o una cantidad a tu elección. <strong>Terreno<\/strong> elige el tipo de campo; Aleatorio lo elige por ti.",
+  "h.p.setup2": "<strong>Ejércitos<\/strong> decide quién crea qué. En Auto el ordenador crea el ejército enemigo y tú el tuyo. En Espejo el enemigo copia tu ejército. En Libre creas los dos.",
+  "h.p.setup3": "<strong>Tu papel<\/strong> fija la condición de victoria. Si atacas, debes ganar antes de que se acabe el tiempo; si defiendes, ganas resistiendo hasta que se acabe. Aleatorio sortea el papel al empezar la batalla.",
+  "h.h2.deploy": "2. Despliegue",
+  "h.p.deploy": "Arrastra los regimientos desde las tarjetas al campo y suéltalos dentro de tu zona de despliegue. Cada tarjeta indica en qué destaca el regimiento y cuánto cuesta. Puedes arrastrar un regimiento colocado para moverlo, girarlo de 15° en 15° o quitarlo. En el modo Auto el enemigo ya está desplegado y permanece oculto hasta que empieza la batalla.",
+  "h.h2.controls": "3. Controles",
+  "h.dl.controls": "<dt>Seleccionar<\/dt><dd>Clic izquierdo en un regimiento. Ctrl + clic lo añade o lo quita; mantén el botón derecho y arrastra para trazar un recuadro.<\/dd><dt>Mover<\/dt><dd>Clic derecho en el terreno. Mayús + clic derecho añade un punto de paso a la ruta.<\/dd><dt>Atacar<\/dt><dd>Clic derecho en un enemigo. Mayús + clic derecho en un enemigo lo convierte en el ataque final de la ruta.<\/dd><dt>Cámara<\/dt><dd>Rueda del ratón para el zoom; arrastra con el botón central para desplazarte.<\/dd><dt>Velocidad<\/dt><dd>Los botones de arriba pausan la batalla o la hacen avanzar a 1×, 2× o 3×.<\/dd><dt>Espacio<\/dt><dd>Pausa y muestra el código HTML completo del juego. Pulsa Espacio otra vez para cerrarlo.<\/dd><dt>Táctil<\/dt><dd>Toca para seleccionar, mover o atacar. Mantén pulsado para añadir a la selección o añadir un punto de paso. Un dedo arrastrado desde el terreno traza un recuadro; dos dedos desplazan y hacen zoom.<\/dd>",
+  "h.h2.orders": "4. Órdenes",
+  "h.p.orders": "El panel de abajo a la izquierda da órdenes a los regimientos seleccionados. Las distancias se miden en unidades de campo (U); cada casilla de la cuadrícula es 1U.",
+  "h.h3.stance": "Postura",
+  "h.p.stance": "<strong>Mantener la línea<\/strong> espera tus órdenes. <strong>Agresivo<\/strong> ataca a los enemigos a menos de 10U y carga a menos de 5U. <strong>Evasivo<\/strong> guarda las distancias y se retira de los enemigos a menos de 9U. Una postura nunca anula una orden dada a mano.",
+  "h.h3.formation": "Formación",
+  "h.p.formation": "<strong>Base<\/strong> mide 3U de ancho y 2U de fondo, <strong>Columna<\/strong> 2U de ancho y 3U de fondo, <strong>Línea<\/strong> 6U de ancho y 1U de fondo. Un frente más ancho pone a más soldados en contacto. Cambiar de formación lleva 2 segundos y se puede hacer en pleno combate.",
+  "h.h3.cmd": "Carga, retirada, fuego",
+  "h.p.cmd": "<strong>Carga<\/strong> lleva al regimiento a velocidad de carga hasta que impacta; el choque añade conmoción al objetivo, y la caballería la duplica. <strong>Retirada<\/strong> rompe el contacto y se aleja al menos 11U del enemigo. <strong>Fuego libre<\/strong> hace que arqueros, ballesteros, infantería ligera y caballería ligera disparen solos a todo lo que esté a su alcance. Un objetivo que elijas tú recibe disparos aunque el fuego libre esté desactivado.",
+  "h.h2.fight": "5. Qué decide un combate",
+  "h.p.facing": "<strong>Orientación.<\/strong> Un regimiento atacado por el flanco combate peor, y los ataques por el flanco o la retaguardia causan mucha más conmoción que un choque frontal.",
+  "h.p.energy": "<strong>Energía.<\/strong> Marchar y combatir gastan energía; quedarse quieto la recupera. Sin energía, un regimiento no puede moverse y deja de combatir con eficacia.",
+  "h.p.morale": "<strong>Moral.<\/strong> Las bajas y la conmoción desgastan la moral: de firme a inquieta, vacilante y por último en huida, cuando el regimiento escapa por su cuenta. Un regimiento en huida que se aleja del enemigo puede reagruparse. Si cruza el borde discontinuo del campo, ya no se reagrupa.",
+  "h.h2.terrain": "6. Terreno y visión",
+  "h.p.terrain": "Los ríos solo se cruzan por puentes y vados. Los arroyos son terreno abrupto. Las montañas y los edificios son obstáculos sólidos, y la caballería no puede entrar en los bosques. Tus regimientos ven unos 20U a su alrededor; los enemigos fuera de la vista desaparecen y su última posición conocida queda marcada.",
+  "h.h2.win": "7. Ganar",
+  "h.p.win1": "La barra de la parte superior del campo muestra el progreso de cada bando. Cuando uno llega al 100 %, porque la mitad de los puntos del ejército enemigo ha sido destruida o ha huido, todo el ejército enemigo se rompe y huye. La batalla termina cuando un ejército no tiene regimientos en el campo.",
+  "h.p.win2": "Si antes pasan diez minutos de tiempo de juego, gana el defensor. A velocidad 2× o 3× eso lleva menos tiempo real.",
+  "h.note": "¿Algo se ha comportado de forma extraña? <a href=\"/contact\">Infórmalo<\/a> con los pasos para reproducirlo."
+ },
+ "fr": {
+  "meta.title": "Comment jouer — Coffee Battles",
+  "meta.description": "Comment jouer à Coffee Battles : préparation, déploiement, commandes, ordres, moral, terrain et conditions de victoire.",
+  "h.h1": "Comment jouer",
+  "h.lead": "Une bataille se joue en trois temps : préparation, déploiement, combat. Cette page les décrit, puis présente les règles qui désignent le vainqueur.",
+  "h.h2.setup": "1. Préparation",
+  "h.p.setup1": "<strong>Taille de l’armée<\/strong> est le budget en points de chaque camp, de 500 à 2000 ou une valeur libre. <strong>Terrain<\/strong> choisit le type de champ de bataille ; Aléatoire le choisit pour vous.",
+  "h.p.setup2": "<strong>Armées<\/strong> décide qui compose quoi. En Auto, l’ordinateur compose l’armée ennemie et vous la vôtre. En Miroir, l’ennemi copie votre armée. En Libre, vous composez les deux.",
+  "h.p.setup3": "<strong>Votre rôle<\/strong> fixe la condition de victoire. En attaque, vous devez gagner avant la fin du temps ; en défense, vous gagnez en tenant jusqu’au bout. Aléatoire tire le rôle au début de la bataille.",
+  "h.h2.deploy": "2. Déploiement",
+  "h.p.deploy": "Faites glisser les régiments des cartes vers le terrain et déposez-les dans votre zone de déploiement. Chaque carte indique le point fort du régiment et son coût. Un régiment placé peut être déplacé, pivoté par pas de 15° ou retiré. En mode Auto, l’ennemi est déjà déployé et reste caché jusqu’au début de la bataille.",
+  "h.h2.controls": "3. Commandes",
+  "h.dl.controls": "<dt>Sélection<\/dt><dd>Clic gauche sur un régiment. Ctrl + clic l’ajoute ou le retire ; maintenez le bouton droit et faites glisser pour tracer un cadre.<\/dd><dt>Déplacement<\/dt><dd>Clic droit sur le terrain. Maj + clic droit ajoute une étape à l’itinéraire.<\/dd><dt>Attaque<\/dt><dd>Clic droit sur un ennemi. Maj + clic droit sur un ennemi en fait l’attaque finale de l’itinéraire.<\/dd><dt>Caméra<\/dt><dd>Molette pour zoomer ; glisser avec le bouton du milieu pour se déplacer.<\/dd><dt>Vitesse<\/dt><dd>Les boutons en haut mettent la bataille en pause ou la font défiler à 1×, 2× ou 3×.<\/dd><dt>Espace<\/dt><dd>Met en pause et affiche le code HTML complet du jeu. Appuyez de nouveau sur Espace pour le fermer.<\/dd><dt>Tactile<\/dt><dd>Touchez pour sélectionner, déplacer ou attaquer. Un appui long ajoute à la sélection ou ajoute une étape. Un doigt glissé depuis le terrain trace un cadre ; deux doigts déplacent et zooment.<\/dd>",
+  "h.h2.orders": "4. Ordres",
+  "h.p.orders": "Le panneau en bas à gauche donne des ordres aux régiments sélectionnés. Les distances sont en unités de terrain (U) ; chaque case de la grille fait 1U.",
+  "h.h3.stance": "Posture",
+  "h.p.stance": "<strong>Tenir la ligne<\/strong> attend vos ordres. <strong>Agressif<\/strong> attaque les ennemis à moins de 10U et charge à moins de 5U. <strong>Évasif<\/strong> garde ses distances et recule devant les ennemis à moins de 9U. Une posture n’annule jamais un ordre donné à la main.",
+  "h.h3.formation": "Formation",
+  "h.p.formation": "<strong>Base<\/strong> fait 3U de large et 2U de profondeur, <strong>Colonne<\/strong> 2U de large et 3U de profondeur, <strong>Ligne<\/strong> 6U de large et 1U de profondeur. Un front plus large met plus de soldats au contact. Changer de formation prend 2 secondes et reste possible en plein combat.",
+  "h.h3.cmd": "Charge, retraite, tir",
+  "h.p.cmd": "<strong>Charge<\/strong> fait passer le régiment à la vitesse de charge jusqu’à l’impact ; le choc ébranle la cible, deux fois plus avec la cavalerie. <strong>Retraite<\/strong> rompt le contact et recule d’au moins 11U devant l’ennemi. <strong>Feu à volonté<\/strong> laisse archers, arbalétriers, infanterie légère et cavalerie légère tirer seuls sur tout ce qui est à portée. Une cible que vous désignez vous-même est visée même feu à volonté désactivé.",
+  "h.h2.fight": "5. Ce qui décide d’un combat",
+  "h.p.facing": "<strong>Orientation.<\/strong> Un régiment attaqué de flanc se bat moins bien, et les attaques de flanc ou de dos ébranlent bien plus qu’un choc frontal.",
+  "h.p.energy": "<strong>Énergie.<\/strong> Marcher et combattre consomment de l’énergie ; rester immobile la restaure. Sans énergie, un régiment ne peut plus bouger et ne se bat plus efficacement.",
+  "h.p.morale": "<strong>Moral.<\/strong> Les pertes et le choc usent le moral : ferme, ébranlé, chancelant, puis en déroute, quand le régiment s’enfuit de lui-même. Un régiment en déroute qui s’éloigne de l’ennemi peut se rallier. S’il franchit le bord en pointillés du terrain, il ne se ralliera plus.",
+  "h.h2.terrain": "6. Terrain et vision",
+  "h.p.terrain": "Les rivières ne se franchissent qu’aux ponts et aux gués. Les ruisseaux sont un terrain accidenté. Montagnes et bâtiments sont des obstacles pleins, et la cavalerie ne peut pas entrer dans les forêts. Vos régiments voient à environ 20U autour d’eux ; les ennemis hors de vue disparaissent, et leur dernière position connue reste marquée.",
+  "h.h2.win": "7. Gagner",
+  "h.p.win1": "La barre en haut du terrain montre la progression de chaque camp. Quand l’un atteint 100 %, parce que la moitié des points de l’armée ennemie a été détruite ou a fui, toute l’armée ennemie cède et s’enfuit. La bataille se termine quand une armée n’a plus aucun régiment sur le terrain.",
+  "h.p.win2": "Si dix minutes de temps de jeu s’écoulent d’abord, le défenseur gagne. En vitesse 2× ou 3×, cela prend moins de temps réel.",
+  "h.note": "Un comportement étrange ? <a href=\"/contact\">Signalez-le<\/a> avec les étapes pour le reproduire."
+ },
+ "de": {
+  "meta.title": "Spielanleitung — Coffee Battles",
+  "meta.description": "So spielst du Coffee Battles: Vorbereitung, Aufstellung, Steuerung, Befehle, Moral, Gelände und wie man gewinnt.",
+  "h.h1": "Spielanleitung",
+  "h.lead": "Eine Schlacht hat drei Schritte: Vorbereitung, Aufstellung, Kampf. Hier wird jeder Schritt erklärt, danach die Regeln, die über den Sieg entscheiden.",
+  "h.h2.setup": "1. Vorbereitung",
+  "h.p.setup1": "<strong>Armeegröße<\/strong> ist das Punktebudget jeder Seite, von 500 bis 2000 oder ein eigener Wert. <strong>Gelände<\/strong> legt die Art des Schlachtfelds fest; Zufall wählt eines für dich.",
+  "h.p.setup2": "<strong>Armeen<\/strong> legt fest, wer was zusammenstellt. Bei Auto stellt der Computer die feindliche Armee zusammen und du deine. Bei Spiegel kopiert der Gegner deine Armee. Bei Frei stellst du beide zusammen.",
+  "h.p.setup3": "<strong>Deine Rolle<\/strong> bestimmt die Siegbedingung. Als Angreifer musst du gewinnen, bevor die Zeit abläuft; als Verteidiger gewinnst du, wenn du bis dahin durchhältst. Zufall lost die Rolle zu Beginn der Schlacht aus.",
+  "h.h2.deploy": "2. Aufstellung",
+  "h.p.deploy": "Ziehe Regimenter von den Karten aufs Feld und lege sie in deiner Aufstellungszone ab. Jede Karte zeigt, worin das Regiment stark ist und was es kostet. Ein aufgestelltes Regiment kannst du verschieben, in 15°-Schritten drehen oder entfernen. Im Modus Auto steht der Gegner bereits und bleibt bis zum Beginn der Schlacht verborgen.",
+  "h.h2.controls": "3. Steuerung",
+  "h.dl.controls": "<dt>Auswählen<\/dt><dd>Linksklick auf ein Regiment. Strg + Klick fügt es hinzu oder entfernt es; rechte Taste gedrückt halten und ziehen zeichnet einen Rahmen.<\/dd><dt>Bewegen<\/dt><dd>Rechtsklick auf das Gelände. Umschalt + Rechtsklick fügt der Route einen Wegpunkt hinzu.<\/dd><dt>Angreifen<\/dt><dd>Rechtsklick auf einen Gegner. Umschalt + Rechtsklick auf einen Gegner macht ihn zum Angriffsziel am Ende der Route.<\/dd><dt>Kamera<\/dt><dd>Mausrad zum Zoomen, mit der mittleren Taste ziehen zum Verschieben.<\/dd><dt>Tempo<\/dt><dd>Die Schaltflächen oben pausieren die Schlacht oder lassen sie mit 1×, 2× oder 3× laufen.<\/dd><dt>Leertaste<\/dt><dd>Pausiert und zeigt den vollständigen HTML-Quelltext des Spiels. Erneut drücken, um ihn zu schließen.<\/dd><dt>Touch<\/dt><dd>Tippen zum Auswählen, Bewegen oder Angreifen. Lange drücken fügt zur Auswahl oder einen Wegpunkt hinzu. Ein Finger, der vom Gelände aus zieht, zeichnet einen Rahmen; zwei Finger verschieben und zoomen.<\/dd>",
+  "h.h2.orders": "4. Befehle",
+  "h.p.orders": "Das Feld unten links gibt den ausgewählten Regimentern Befehle. Entfernungen werden in Feldeinheiten (U) gemessen; jedes Gitterquadrat ist 1U.",
+  "h.h3.stance": "Haltung",
+  "h.p.stance": "<strong>Linie halten<\/strong> wartet auf deine Befehle. <strong>Aggressiv<\/strong> greift Gegner innerhalb von 10U an und stürmt innerhalb von 5U. <strong>Ausweichend<\/strong> hält Abstand und weicht vor Gegnern innerhalb von 9U zurück. Eine Haltung hebt nie einen Befehl auf, den du selbst gegeben hast.",
+  "h.h3.formation": "Formation",
+  "h.p.formation": "<strong>Basis<\/strong> ist 3U breit und 2U tief, <strong>Kolonne<\/strong> 2U breit und 3U tief, <strong>Linie<\/strong> 6U breit und 1U tief. Eine breitere Front bringt mehr Soldaten in Kontakt. Ein Formationswechsel dauert 2 Sekunden und ist auch im Kampf möglich.",
+  "h.h3.cmd": "Angriff, Rückzug, Feuer",
+  "h.p.cmd": "<strong>Angriff<\/strong> bringt das Regiment auf Sturmtempo, bis es aufprallt; der Aufprall fügt dem Ziel Schock zu, bei Kavallerie doppelt so viel. <strong>Rückzug<\/strong> löst den Kontakt und zieht sich mindestens 11U vom Gegner zurück. <strong>Feuer frei<\/strong> lässt Bogenschützen, Armbrustschützen, leichte Infanterie und leichte Kavallerie selbstständig auf alles in Reichweite schießen. Auf ein Ziel, das du selbst wählst, wird auch bei ausgeschaltetem Feuer frei geschossen.",
+  "h.h2.fight": "5. Was einen Kampf entscheidet",
+  "h.p.facing": "<strong>Ausrichtung.<\/strong> Ein in der Flanke angegriffenes Regiment kämpft schlechter, und Angriffe in Flanke oder Rücken verursachen viel mehr Schock als ein Frontalzusammenstoß.",
+  "h.p.energy": "<strong>Energie.<\/strong> Marschieren und Kämpfen kosten Energie; Stillstehen stellt sie wieder her. Ohne Energie kann sich ein Regiment nicht bewegen und kämpft nicht mehr wirksam.",
+  "h.p.morale": "<strong>Moral.<\/strong> Verluste und Schock zehren an der Moral: standhaft, erschüttert, wankend und schließlich auf der Flucht, wenn das Regiment von selbst davonläuft. Ein fliehendes Regiment, das vom Gegner wegkommt, kann sich wieder sammeln. Überquert es den gestrichelten Rand des Feldes, sammelt es sich nicht mehr.",
+  "h.h2.terrain": "6. Gelände und Sicht",
+  "h.p.terrain": "Flüsse lassen sich nur an Brücken und Furten überqueren. Bäche sind unwegsames Gelände. Berge und Gebäude sind feste Hindernisse, und Kavallerie kann keine Wälder betreten. Deine Regimenter sehen etwa 20U weit; Gegner außer Sicht verschwinden, ihre letzte bekannte Position bleibt markiert.",
+  "h.h2.win": "7. Gewinnen",
+  "h.p.win1": "Der Balken oben am Feld zeigt den Fortschritt jeder Seite. Erreicht eine Seite 100 %, weil die Hälfte der Punkte der feindlichen Armee vernichtet oder geflohen ist, bricht die ganze feindliche Armee und flieht. Die Schlacht endet, wenn eine Armee keine Regimenter mehr auf dem Feld hat.",
+  "h.p.win2": "Vergehen zuerst zehn Minuten Spielzeit, gewinnt der Verteidiger. Bei 2× oder 3× dauert das in Echtzeit entsprechend kürzer.",
+  "h.note": "Hat sich etwas seltsam verhalten? <a href=\"/contact\">Melde es<\/a> mit den Schritten, um es nachzustellen."
+ },
+ "ru": {
+  "meta.title": "Как играть — Coffee Battles",
+  "meta.description": "Как играть в Coffee Battles: подготовка, расстановка, управление, приказы, боевой дух, местность и условия победы.",
+  "h.h1": "Как играть",
+  "h.lead": "Бой проходит в три этапа: подготовка, расстановка, сражение. Здесь описан каждый этап, а затем правила, которые решают исход.",
+  "h.h2.setup": "1. Подготовка",
+  "h.p.setup1": "<strong>Размер армии<\/strong> — бюджет в очках для каждой стороны: от 500 до 2000 или своё значение. <strong>Местность<\/strong> задаёт тип поля; «Случайно» выберет его за вас.",
+  "h.p.setup2": "<strong>Армии<\/strong> определяет, кто что собирает. В режиме «Авто» компьютер собирает армию противника, а вы — свою. В режиме «Зеркало» противник копирует вашу армию. В режиме «Свободно» вы собираете обе.",
+  "h.p.setup3": "<strong>Ваша роль<\/strong> задаёт условие победы. В атаке нужно победить до истечения времени, в обороне — продержаться до конца. «Случайно» определяет роль в начале боя.",
+  "h.h2.deploy": "2. Расстановка",
+  "h.p.deploy": "Перетащите полки с карточек на поле и отпустите их в своей зоне расстановки. На каждой карточке указано, в чём полк силён и сколько он стоит. Поставленный полк можно передвинуть, повернуть с шагом 15° или убрать. В режиме «Авто» противник уже расставлен и скрыт до начала боя.",
+  "h.h2.controls": "3. Управление",
+  "h.dl.controls": "<dt>Выбор<\/dt><dd>ЛКМ по полку. Ctrl + клик добавляет или убирает его; зажмите ПКМ и тяните, чтобы выделить рамкой.<\/dd><dt>Движение<\/dt><dd>ПКМ по местности. Shift + ПКМ добавляет к маршруту точку пути.<\/dd><dt>Атака<\/dt><dd>ПКМ по врагу. Shift + ПКМ по врагу делает его целью атаки в конце маршрута.<\/dd><dt>Камера<\/dt><dd>Колесо мыши — масштаб, перетаскивание средней кнопкой — сдвиг.<\/dd><dt>Скорость<\/dt><dd>Кнопки вверху ставят бой на паузу или запускают его на 1×, 2× или 3×.<\/dd><dt>Пробел<\/dt><dd>Ставит на паузу и показывает полный HTML-код игры. Повторное нажатие закрывает его.<\/dd><dt>Касание<\/dt><dd>Касание — выбрать, двигаться или атаковать. Долгое нажатие добавляет к выделению или ставит точку пути. Один палец, проведённый от местности, рисует рамку; двумя пальцами — сдвиг и масштаб.<\/dd>",
+  "h.h2.orders": "4. Приказы",
+  "h.p.orders": "Панель внизу слева отдаёт приказы выбранным полкам. Расстояния измеряются в единицах поля (U); одна клетка сетки — 1U.",
+  "h.h3.stance": "Стойка",
+  "h.p.stance": "<strong>Держать строй<\/strong> — ждать ваших приказов. <strong>Агрессивно<\/strong> — атаковать врагов в радиусе 10U и бросаться в атаку с хода в радиусе 5U. <strong>Уклонение<\/strong> — держать дистанцию и отходить от врагов ближе 9U. Стойка никогда не отменяет приказ, отданный вручную.",
+  "h.h3.formation": "Построение",
+  "h.p.formation": "<strong>База<\/strong> — 3U в ширину и 2U в глубину, <strong>Колонна<\/strong> — 2U в ширину и 3U в глубину, <strong>Линия<\/strong> — 6U в ширину и 1U в глубину. Чем шире фронт, тем больше солдат вступает в контакт. Смена построения занимает 2 секунды и возможна даже в бою.",
+  "h.h3.cmd": "Атака, отступление, огонь",
+  "h.p.cmd": "<strong>Атака<\/strong> переводит полк на скорость атаки с хода до удара; удар добавляет цели потрясение, у кавалерии — вдвое больше. <strong>Отступление<\/strong> разрывает контакт и отводит полк не меньше чем на 11U от врага. <strong>Огонь<\/strong> позволяет лучникам, арбалетчикам, лёгкой пехоте и лёгкой кавалерии самим стрелять по всему в пределах дальности. По цели, выбранной вами, стреляют даже при выключенном огне.",
+  "h.h2.fight": "5. Что решает схватку",
+  "h.p.facing": "<strong>Направление.<\/strong> Полк, атакованный во фланг, сражается хуже, а удары во фланг или в тыл вызывают гораздо больше потрясения, чем лобовое столкновение.",
+  "h.p.energy": "<strong>Энергия.<\/strong> Марш и бой расходуют энергию, а на месте полк её восстанавливает. Без энергии полк не может двигаться и перестаёт эффективно сражаться.",
+  "h.p.morale": "<strong>Боевой дух.<\/strong> Потери и потрясения подтачивают боевой дух: стойкий, поколебленный, дрогнувший и, наконец, бегство, когда полк бежит сам. Бегущий полк, оторвавшийся от врага, может собраться снова. Если он пересечёт пунктирную границу поля, собраться уже не сможет.",
+  "h.h2.terrain": "6. Местность и обзор",
+  "h.p.terrain": "Реки можно пересечь только по мостам и бродам. Ручьи — пересечённая местность. Горы и здания — сплошные препятствия, а кавалерия не может входить в леса. Ваши полки видят примерно на 20U вокруг; враги вне поля зрения исчезают, а их последнее известное положение остаётся отмеченным.",
+  "h.h2.win": "7. Победа",
+  "h.p.win1": "Полоса вверху поля показывает успехи каждой стороны. Когда одна из них доходит до 100 % — потому что половина очков вражеской армии уничтожена или бежала, — вся армия противника дрогнет и побежит. Бой заканчивается, когда у одной из армий не остаётся полков на поле.",
+  "h.p.win2": "Если раньше пройдёт десять минут игрового времени, побеждает защитник. На скорости 2× или 3× в реальном времени это быстрее.",
+  "h.note": "Что-то повело себя странно? <a href=\"/contact\">Сообщите об этом<\/a> и опишите, как это повторить."
+ }
+};</script>
+<script src="/site-i18n.js"></script>
 </body>
 </html>
