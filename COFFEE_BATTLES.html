@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -514,10 +514,10 @@
   <span data-i18n="header.subtitle">REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
 
   <div id="languageSwitcher">
-    <button id="languageButton" type="button" aria-haspopup="menu" aria-expanded="false" title="Lingua">
-      <span id="languageFlag" class="flag">🇮🇹</span><b id="languageCode">IT</b>
+    <button id="languageButton" type="button" aria-haspopup="menu" aria-expanded="false" title="Language">
+      <span id="languageFlag" class="flag">🇬🇧</span><b id="languageCode">EN</b>
     </button>
-    <div id="languageMenu" role="menu" aria-label="Lingua">
+    <div id="languageMenu" role="menu" aria-label="Language">
       <button type="button" data-lang="it" role="menuitem"><span class="flag">🇮🇹</span><span>Italiano</span><span class="code">IT</span></button>
       <button type="button" data-lang="en" role="menuitem"><span class="flag">🇬🇧</span><span>English</span><span class="code">EN</span></button>
       <button type="button" data-lang="es" role="menuitem"><span class="flag">🇪🇸</span><span>Español</span><span class="code">ES</span></button>
@@ -1342,8 +1342,7 @@ const I18n = {
   detect(){
     const saved=localStorage.getItem(this.STORAGE_KEY);
     if(saved&&I18N.languages[saved])return saved;
-    const browser=(navigator.language||'en').toLowerCase().split('-')[0];
-    return I18N.languages[browser]?browser:'en';
+    return 'en';
   },
   t(key){
     return I18N.strings[this.current]?.[key] ?? I18N.strings.en?.[key] ?? I18N.strings.it?.[key] ?? key;
