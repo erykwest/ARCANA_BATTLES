@@ -2,23 +2,23 @@ name: Patch splash language selector
 
 on:
   push:
-    branches: [ main ]
+    paths:
+      - '.github/workflows/patch-splash-language.yml'
 
 permissions:
   contents: write
 
 jobs:
   patch:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Patch splash language selector
+        shell: bash
         run: |
-          python3 - <<'PY'
+          python - <<'PY'
           from pathlib import Path
 
           p = Path('COFFEE_BATTLES.html')
@@ -26,49 +26,56 @@ jobs:
 
           panel = "  .setup-panel{\n"
           if 'position:relative;\n    width:min(580px,100%)' not in s:
-              assert panel in s, 'setup-panel anchor missing'
+              if panel not in s:
+                  raise SystemExit('setup-panel anchor missing')
               s = s.replace(panel, panel + "    position:relative;\n", 1)
 
           if '#splashLanguageSelect{' not in s:
               anchor = "  .setup-kicker{font-size:11px;letter-spacing:.18em;color:#8ea1b5;font-weight:800;margin-bottom:8px}\n"
-              assert anchor in s, 'setup-kicker CSS anchor missing'
-              css = """  #splashLanguageSelect{
-    position:absolute;top:18px;right:18px;width:auto;min-width:88px;height:34px;
-    padding:0 28px 0 10px;border:1px solid #394555;border-radius:9px;
-    background:#171e27;color:var(--text);font:700 11px/1 Inter,Segoe UI,Arial,sans-serif;
-    letter-spacing:.04em;cursor:pointer;z-index:2
-  }
-  #splashLanguageSelect:hover{background:#202936}
-  #splashLanguageSelect:focus{outline:2px solid #f0d36f;outline-offset:1px}
-  @media (max-width:700px){#splashLanguageSelect{top:14px;right:14px;min-width:76px;height:32px;font-size:10px}}
-"""
+              css = (
+                  "  #splashLanguageSelect{\n"
+                  "    position:absolute;top:18px;right:18px;width:auto;min-width:88px;height:34px;\n"
+                  "    padding:0 28px 0 10px;border:1px solid #394555;border-radius:9px;\n"
+                  "    background:#171e27;color:var(--text);font:700 11px/1 Inter,Segoe UI,Arial,sans-serif;\n"
+                  "    letter-spacing:.04em;cursor:pointer;z-index:2\n"
+                  "  }\n"
+                  "  #splashLanguageSelect:hover{background:#202936}\n"
+                  "  #splashLanguageSelect:focus{outline:2px solid #f0d36f;outline-offset:1px}\n"
+                  "  @media (max-width:700px){#splashLanguageSelect{top:14px;right:14px;min-width:76px;height:32px;font-size:10px}}\n"
+              )
+              if anchor not in s:
+                  raise SystemExit('setup-kicker CSS anchor missing')
               s = s.replace(anchor, css + anchor, 1)
 
           if 'id="splashLanguageSelect"' not in s:
               anchor = '  <div class="setup-panel">\n'
-              assert anchor in s, 'setup-panel HTML anchor missing'
-              html = '''  <div class="setup-panel">
-    <select id="splashLanguageSelect" aria-label="Language" title="Language" onchange="I18n.set(this.value,true)">
-      <option value="en">🇬🇧 EN</option>
-      <option value="it">🇮🇹 IT</option>
-      <option value="es">🇪🇸 ES</option>
-      <option value="fr">🇫🇷 FR</option>
-      <option value="de">🇩🇪 DE</option>
-      <option value="ru">🇷🇺 RU</option>
-    </select>
-'''
+              html = (
+                  '  <div class="setup-panel">\n'
+                  '    <select id="splashLanguageSelect" aria-label="Language" title="Language" onchange="I18n.set(this.value,true)">\n'
+                  '      <option value="en">🇬🇧 EN</option>\n'
+                  '      <option value="it">🇮🇹 IT</option>\n'
+                  '      <option value="es">🇪🇸 ES</option>\n'
+                  '      <option value="fr">🇫🇷 FR</option>\n'
+                  '      <option value="de">🇩🇪 DE</option>\n'
+                  '      <option value="ru">🇷🇺 RU</option>\n'
+                  '    </select>\n'
+              )
+              if anchor not in s:
+                  raise SystemExit('setup-panel HTML anchor missing')
               s = s.replace(anchor, html, 1)
 
           decl = "    const splashSelect=document.getElementById('splashLanguageSelect');\n"
           if decl not in s:
               anchor = "    const button=document.getElementById('languageButton');\n"
-              assert anchor in s, 'I18n button declaration anchor missing'
+              if anchor not in s:
+                  raise SystemExit('I18n declaration anchor missing')
               s = s.replace(anchor, anchor + decl, 1)
 
           update = "    if(splashSelect){splashSelect.value=this.current;splashSelect.title=this.t('language');splashSelect.setAttribute('aria-label',this.t('language'));}\n"
           if update not in s:
               anchor = "    if(button){button.title=this.t('language');button.setAttribute('aria-label',this.t('language'));}\n"
-              assert anchor in s, 'I18n button update anchor missing'
+              if anchor not in s:
+                  raise SystemExit('I18n update anchor missing')
               s = s.replace(anchor, anchor + update, 1)
 
           p.write_text(s, encoding='utf-8')
@@ -77,11 +84,12 @@ jobs:
           grep -q 'id="splashLanguageSelect"' COFFEE_BATTLES.html
           grep -q "const splashSelect=document.getElementById('splashLanguageSelect')" COFFEE_BATTLES.html
 
-      - name: Commit and push
+      - name: Commit patch and remove temporary workflows
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm .github/workflows/patch-splash-language.yml
+          git rm -f .github/workflows/patch-splash-language.yml .github/workflows/add-splash-language.yml .github/workflows/apply-splash-language-v2.yml
           git add COFFEE_BATTLES.html
           git commit -m "feat: add language selector to splash"
           git push
