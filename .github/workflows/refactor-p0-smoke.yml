@@ -10,6 +10,7 @@ on:
       - refactor/p0-determinism
     paths:
       - '.github/workflows/refactor-p0-smoke.yml'
+      - 'tools/run-refactor-smoke.mjs'
   workflow_dispatch:
 
 permissions:
@@ -22,7 +23,6 @@ jobs:
     env:
       BASELINE_COMMIT: 079e944f162eaebaabfd3d833ea085d920b2d4e0
       BRANCH_COMMIT: ${{ github.sha }}
-      BASELINE_COUNT: '10'
       BASELINE_SEED: '1'
       BASELINE_POINTS: '1000'
 
@@ -50,12 +50,12 @@ jobs:
           done
           exit 1
 
-      - name: Run smoke comparison
-        run: node tools/run-refactor-comparison.mjs
+      - name: Run exact smoke comparison
+        run: node tools/run-refactor-smoke.mjs
 
       - name: Publish summary
         if: always()
-        run: test -f results/refactor-p0-summary.md && cat results/refactor-p0-summary.md >> "$GITHUB_STEP_SUMMARY" || true
+        run: test -f results/refactor-p0-smoke.md && cat results/refactor-p0-smoke.md >> "$GITHUB_STEP_SUMMARY" || true
 
       - name: Upload smoke comparison
         if: always()
