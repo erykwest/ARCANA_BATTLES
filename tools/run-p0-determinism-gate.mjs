@@ -67,24 +67,27 @@ function fingerprint(run) {
 }
 
 const browser = await chromium.launch({ headless:true, executablePath, args:['--no-sandbox'] });
-const page = await browser.newPage();
 const results = {};
 try {
-  await page.goto(url, { waitUntil:'domcontentloaded', timeout:60000 });
-  await page.addScriptTag({ url:new URL('/sim-lab.js', url).href });
-  await page.waitForFunction(() => !!window.__COFFEE_BATTLES_SIM__, null, { timeout:30000 });
-
-  for (const s of scenarios) {
-    console.log(`RUN ${s.key}`);
-    const run = await page.evaluate(({ seed, points, maxTime, dt, reverseUnits }) =>
-      window.__COFFEE_BATTLES_SIM__.runOne({ seed, points, maxTime, dt, reverseUnits, silent:true }),
-      { seed, points, maxTime, ...s }
-    );
-    results[s.key] = run;
-    console.log(`DONE ${s.key}: ${run.winner || 'unresolved'} @ ${run.simTime}s`);
-  }
+  const pairs = await Promise.all(scenarios.map(async s => {
+    const page = await browser.newPage();
+    try {
+      await page.goto(url, { waitUntil:'domcontentloaded', timeout:60000 });
+      await page.addScriptTag({ url:new URL('/sim-lab.js', url).href });
+      await page.waitForFunction(() => !!window.__COFFEE_BATTLES_SIM__, null, { timeout:30000 });
+      console.log(`RUN ${s.key}`);
+      const run = await page.evaluate(({ seed, points, maxTime, dt, reverseUnits }) =>
+        window.__COFFEE_BATTLES_SIM__.runOne({ seed, points, maxTime, dt, reverseUnits, silent:true }),
+        { seed, points, maxTime, ...s }
+      );
+      console.log(`DONE ${s.key}: ${run.winner || 'unresolved'} @ ${run.simTime}s`);
+      return [s.key, run];
+    } finally {
+      await page.close();
+    }
+  }));
+  for (const [key, run] of pairs) results[key] = run;
 } finally {
-  await page.close();
   await browser.close();
 }
 
