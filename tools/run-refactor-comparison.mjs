@@ -10,6 +10,7 @@ const targets = [
   { name: 'branch', url: 'http://127.0.0.1:8001/COFFEE_BATTLES.html' }
 ];
 const dts = [0.05, 1 / 30, 1 / 60];
+const series = dts.flatMap(dt => [false, true].map(reverseUnits => ({ dt, reverseUnits })));
 
 function keyFor(dt, reverseUnits) {
   const hz = Math.round(1 / dt);
@@ -66,47 +67,46 @@ function diffSummaries(a, b) {
 
 const browser = await chromium.launch({ headless: true, executablePath, args: ['--no-sandbox'] });
 const all = {};
-try {
-  for (const target of targets) {
-    const page = await browser.newPage();
+
+async function runSeries(target, dt, reverseUnits) {
+  const key = keyFor(dt, reverseUnits);
+  const page = await browser.newPage();
+  try {
     page.on('console', msg => {
       const text = msg.text();
-      if (/SIM Lab|error|warning/i.test(text)) console.log(`[${target.name}] ${text}`);
+      if (/error|warning/i.test(text)) console.log(`[${target.name}/${key}] ${text}`);
     });
     await page.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
     await page.addScriptTag({ url: new URL('/sim-lab.js', target.url).href });
     await page.waitForFunction(() => !!window.__COFFEE_BATTLES_SIM__, null, { timeout: 30000 });
-
-    all[target.name] = {};
-    for (const dt of dts) {
-      for (const reverseUnits of [false, true]) {
-        const key = keyFor(dt, reverseUnits);
-        console.log(`RUN ${target.name} ${key}: ${count} seeds`);
-        const result = await page.evaluate(async ({ count, seed, points, dt, reverseUnits }) => {
-          const sim = window.__COFFEE_BATTLES_SIM__;
-          const batch = await sim.runBatch(count, {
-            points,
-            seed,
-            dt,
-            reverseUnits,
-            silent: true,
-            yieldEvery: 10
-          });
-          return {
-            options: batch.options,
-            summary: batch.summary,
-            runs: batch.runs
-          };
-        }, { count, seed, points, dt, reverseUnits });
-        all[target.name][key] = {
-          options: result.options,
-          summary: result.summary,
-          fingerprints: result.runs.map(fingerprint)
-        };
-        console.log(`DONE ${target.name} ${key}:`, JSON.stringify(result.summary));
-      }
-    }
+    console.log(`RUN ${target.name} ${key}: ${count} seeds`);
+    const result = await page.evaluate(async ({ count, seed, points, dt, reverseUnits }) => {
+      const batch = await window.__COFFEE_BATTLES_SIM__.runBatch(count, {
+        points,
+        seed,
+        dt,
+        reverseUnits,
+        silent: true,
+        yieldEvery: 20
+      });
+      return { options: batch.options, summary: batch.summary, runs: batch.runs };
+    }, { count, seed, points, dt, reverseUnits });
+    console.log(`DONE ${target.name} ${key}:`, JSON.stringify(result.summary));
+    return [key, {
+      options: result.options,
+      summary: result.summary,
+      fingerprints: result.runs.map(fingerprint)
+    }];
+  } finally {
     await page.close();
+  }
+}
+
+try {
+  for (const target of targets) {
+    console.log(`TARGET ${target.name}: launching ${series.length} isolated series in parallel`);
+    const entries = await Promise.all(series.map(s => runSeries(target, s.dt, s.reverseUnits)));
+    all[target.name] = Object.fromEntries(entries);
   }
 } finally {
   await browser.close();
@@ -121,11 +121,7 @@ for (const key of Object.keys(all.baseline)) {
   const n = Math.min(base.fingerprints.length, branch.fingerprints.length);
   for (let i = 0; i < n; i++) {
     if (JSON.stringify(base.fingerprints[i]) !== JSON.stringify(branch.fingerprints[i])) {
-      mismatches.push({
-        seed: base.fingerprints[i].seed,
-        baseline: base.fingerprints[i],
-        branch: branch.fingerprints[i]
-      });
+      mismatches.push({ seed: base.fingerprints[i].seed, baseline: base.fingerprints[i], branch: branch.fingerprints[i] });
     }
   }
   totalMismatches += mismatches.length;
@@ -145,7 +141,7 @@ const output = {
   points,
   baselineCommit: process.env.BASELINE_COMMIT || null,
   branchCommit: process.env.BRANCH_COMMIT || null,
-  totalRunsPerTarget: count * dts.length * 2,
+  totalRunsPerTarget: count * series.length,
   totalMismatches,
   all,
   comparison
@@ -158,12 +154,12 @@ let md = `# P0 baseline vs branch comparison\n\n`;
 md += `- Baseline: \`${output.baselineCommit}\`\n`;
 md += `- Branch: \`${output.branchCommit}\`\n`;
 md += `- Seeds per series: **${count}**\n`;
-md += `- Series per target: **6** (20/30/60 Hz × normal/reverse)\n`;
+md += `- Series per target: **${series.length}** (20/30/60 Hz × normal/reverse)\n`;
 md += `- Runs per target: **${output.totalRunsPerTarget}**\n`;
 md += `- Fingerprint mismatches: **${totalMismatches}**\n\n`;
 md += `| Series | Baseline B/R/D/U | Branch B/R/D/U | Δ mean time | stuck Δ | exact |\n`;
 md += `|---|---:|---:|---:|---:|---:|\n`;
-for (const key of Object.keys(comparison)) {
+for (const key of Object.keys(comparison).sort()) {
   const a = all.baseline[key].summary;
   const b = all.branch[key].summary;
   const c = comparison[key];
