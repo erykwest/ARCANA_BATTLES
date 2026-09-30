@@ -93,12 +93,12 @@
   }
   #victoryBar .victory-half.blue{
     left:0;
-    background:rgba(63,121,216,.16);
+    background:rgba(91,143,209,.16);
     border-right:1px solid rgba(255,255,255,.22);
   }
   #victoryBar .victory-half.red{
     right:0;
-    background:rgba(207,77,77,.16);
+    background:rgba(217,86,58,.16);
   }
   #blueVictoryFill{
     position:absolute;
@@ -106,7 +106,7 @@
     bottom:0;
     right:0;
     width:0%;
-    background:#3f79d8;
+    background:#5b8fd1;
     transition:width .18s linear;
   }
   #redVictoryFill{
@@ -115,7 +115,7 @@
     bottom:0;
     left:0;
     width:0%;
-    background:#cf4d4d;
+    background:#d9563a;
     transition:width .18s linear;
   }
   #victoryCenter{
@@ -469,7 +469,7 @@
   .unit-card:active{cursor:grabbing}
   .unit-card.disabled{opacity:.35;cursor:not-allowed}
   .unit-card-preview{position:relative;width:48px;height:48px;border-radius:7px;background:var(--sunken);border:1px solid var(--line-strong);overflow:hidden}
-  .unit-card-preview .reg{position:absolute;left:9px;top:14px;width:30px;height:20px;border:1px solid rgba(255,255,255,.65);background:rgba(63,121,216,.48)}
+  .unit-card-preview .reg{position:absolute;left:9px;top:14px;width:30px;height:20px;border:1px solid rgba(255,255,255,.65);background:rgba(91,143,209,.5)}
   .unit-card-preview .reg:before{content:"";position:absolute;left:-1px;right:-1px;top:-2px;border-top:3px solid #eef4fb}
   .unit-card-preview .reg-icon{position:absolute;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);display:grid;place-items:center;border:1px solid rgba(255,255,255,.92);border-radius:50%;background:rgba(27,19,15,.78);padding:2px;color:#fff;pointer-events:none}
   .unit-card-preview .reg-icon svg{display:block;width:100%;height:100%;overflow:visible}
@@ -4245,9 +4245,9 @@ I18n.current=I18n.detect();
 
       const factories=[
         (forced=null,ang=null)=>{const p=forced||randomPos();return{id:'hill-1',type:'hill',x:p.x,y:p.y,angle:ang??this.rand(-0.6,0.6),rx:10*U,ry:5*U,fill:'#7a5b34',edge:'#a77f49'};},
-        (forced=null,ang=null)=>{const p=forced||randomPos();return{id:'forest-1',type:'forest',x:p.x,y:p.y,angle:ang??this.rand(-0.8,0.8),fill:'#204622',edge:'#3e7f42',blob:this.makeBlob(10*U,5*U,22,0.20)};},
+        (forced=null,ang=null)=>{const p=forced||randomPos();return{id:'forest-1',type:'forest',x:p.x,y:p.y,angle:ang??this.rand(-0.8,0.8),fill:'#2e3c1d',edge:'#5c7438',blob:this.makeBlob(10*U,5*U,22,0.20)};},
         (forced=null,ang=null)=>{const p=forced||randomPos();return{id:'rough-1',type:'rough',x:p.x,y:p.y,angle:ang??this.rand(-0.9,0.9),rx:6*U,ry:4*U,fill:'#7c6940',edge:'#a18a5a'};},
-        (forced=null,ang=null)=>{const p=forced||randomPos();return{id:'pond-1',type:'pond',x:p.x,y:p.y,angle:ang??this.rand(-0.7,0.7),fill:'#4d9fcb',edge:'#94d0ef',blob:this.makeBlob(5*U,3*U,20,0.22)};},
+        (forced=null,ang=null)=>{const p=forced||randomPos();return{id:'pond-1',type:'pond',x:p.x,y:p.y,angle:ang??this.rand(-0.7,0.7),fill:'#3f7f8a',edge:'#8ab9bd',blob:this.makeBlob(5*U,3*U,20,0.22)};},
         (forced=null,ang=null)=>{const p=forced||randomPos();return{id:'wall-1',type:'wall',x:p.x,y:p.y,angle:ang??this.rand(-Math.PI,Math.PI),w:8*U,h:0.5*U,fill:'#9d8b71',edge:'#ddd0b5'};}
       ];
 
@@ -4697,7 +4697,7 @@ I18n.current=I18n.detect();
         ctx.fillStyle=t.fill;ctx.strokeStyle=t.edge;ctx.lineWidth=2;ctx.fill();ctx.stroke();
         if(t.type==='forest'){
           ctx.save();ctx.globalAlpha=.18;
-          for(let i=-2;i<=2;i++){ctx.beginPath();ctx.ellipse(t.x+i*16,t.y+Math.sin(i)*10,18,10,0,0,Math.PI*2);ctx.fillStyle='#7cbc58';ctx.fill();}
+          for(let i=-2;i<=2;i++){ctx.beginPath();ctx.ellipse(t.x+i*16,t.y+Math.sin(i)*10,18,10,0,0,Math.PI*2);ctx.fillStyle='#7f9a4a';ctx.fill();}
           ctx.restore();
         }
         if(t.type==='hill'){
@@ -4713,14 +4713,14 @@ I18n.current=I18n.detect();
   // ============================================================
   const MapEngine = {
     BIOMES: Object.freeze({
-      plains:    Object.freeze({ label:'Pianura',   field:'#1b281c' }),
-      hills:     Object.freeze({ label:'Colline',   field:'#26301e' }),
-      valley:    Object.freeze({ label:'Vallata',   field:'#20291d' }),
-      river:     Object.freeze({ label:'Fiume',     field:'#1c2a22' }),
-      forest:    Object.freeze({ label:'Foresta',   field:'#16271a' }),
-      mountains: Object.freeze({ label:'Montagne',  field:'#252823' }),
-      village:   Object.freeze({ label:'Villaggio', field:'#29261d' }),
-      sea:       Object.freeze({ label:'Mare',       field:'#1b281c' })
+      plains:    Object.freeze({ label:'Pianura',   field:'#2a2818' }),
+      hills:     Object.freeze({ label:'Colline',   field:'#2f2a19' }),
+      valley:    Object.freeze({ label:'Vallata',   field:'#28271a' }),
+      river:     Object.freeze({ label:'Fiume',     field:'#24271c' }),
+      forest:    Object.freeze({ label:'Foresta',   field:'#1f2516' }),
+      mountains: Object.freeze({ label:'Montagne',  field:'#2b2620' }),
+      village:   Object.freeze({ label:'Villaggio', field:'#2f271b' }),
+      sea:       Object.freeze({ label:'Mare',       field:'#2a2818' })
     }),
 
     GENERATION_PHASES: Object.freeze(['Coast','Orography','Hydrology','Settlement','Buildings','Roads','Crossings','Tactical','Fields']),
@@ -4743,7 +4743,7 @@ I18n.current=I18n.detect();
       if (resolved) return I18n.biome(resolved);
       return I18n.biome(State.battleSetup.biome || 'random');
     },
-    fieldColor() { return this.BIOMES[this.current()]?.field || '#18211a'; },
+    fieldColor() { return this.BIOMES[this.current()]?.field || '#27251a'; },
 
     worldZone() {
       const b = Geometry.worldBounds();
@@ -4844,8 +4844,8 @@ I18n.current=I18n.detect();
       return {
         id:id||`${type}-1`, type, controlPoints:controls, samples,
         width:(type==='river'?3.2:1.25)*CFG.U,
-        fill:type==='river'?'#3b86ad':'#5aa4c4',
-        edge:type==='river'?'#8ac5df':'#9dd4e5'
+        fill:type==='river'?'#3a7684':'#4f8d95',
+        edge:type==='river'?'#88b4b8':'#9cc6c6'
       };
     },
 
@@ -4886,9 +4886,9 @@ I18n.current=I18n.detect();
   return {id,type:'hill',x,y,angle:a,rx:rx*CFG.U,ry:ry*CFG.U,summit,blob,smoothBlob:Terrain.smoothClosedBlob(blob,8),fill:'#7a5b34',edge:'#a77f49'};
 },
 makeRough(id,x,y,rx=6,ry=4,angle=null){return{id,type:'rough',x,y,angle:angle??this.rand(-.9,.9),rx:rx*CFG.U,ry:ry*CFG.U,fill:'#7c6940',edge:'#a18a5a'};},
-makeForest(id,x,y,rx=10,ry=5,angle=null){const blob=Terrain.makeBlob(rx*CFG.U,ry*CFG.U,30,.09);return{id,type:'forest',x,y,angle:angle??this.rand(-.8,.8),fill:'#204622',edge:'#3e7f42',blob,smoothBlob:Terrain.smoothClosedBlob(blob,9)};},
-makePond(id,x,y,rx=5,ry=3,angle=null){return{id,type:'pond',x,y,angle:angle??this.rand(-.7,.7),fill:'#4d9fcb',edge:'#94d0ef',blob:Terrain.makeBlob(rx*CFG.U,ry*CFG.U,20,.22)};},
-makeMountain(id,x,y,rx=8,ry=5,angle=null){const blob=Terrain.makeBlob(rx*CFG.U,ry*CFG.U,26,.11);return{id,type:'mountain',x,y,angle:angle??this.rand(-.35,.35),fill:'#50534c',edge:'#8b9185',blob,smoothBlob:Terrain.smoothClosedBlob(blob,7)};},
+makeForest(id,x,y,rx=10,ry=5,angle=null){const blob=Terrain.makeBlob(rx*CFG.U,ry*CFG.U,30,.09);return{id,type:'forest',x,y,angle:angle??this.rand(-.8,.8),fill:'#2e3c1d',edge:'#5c7438',blob,smoothBlob:Terrain.smoothClosedBlob(blob,9)};},
+makePond(id,x,y,rx=5,ry=3,angle=null){return{id,type:'pond',x,y,angle:angle??this.rand(-.7,.7),fill:'#3f7f8a',edge:'#8ab9bd',blob:Terrain.makeBlob(rx*CFG.U,ry*CFG.U,20,.22)};},
+makeMountain(id,x,y,rx=8,ry=5,angle=null){const blob=Terrain.makeBlob(rx*CFG.U,ry*CFG.U,26,.11);return{id,type:'mountain',x,y,angle:angle??this.rand(-.35,.35),fill:'#56493c',edge:'#968470',blob,smoothBlob:Terrain.smoothClosedBlob(blob,7)};},
 makeWall(id,x,y,w=8,h=.5,angle=null){return{id,type:'wall',x,y,angle:angle??this.rand(-Math.PI,Math.PI),w:w*CFG.U,h:h*CFG.U,fill:'#9d8b71',edge:'#ddd0b5'};},
 makeBuilding(id,x,y,w=4,h=3,angle=0){return{id,type:'building',x,y,angle,w:w*CFG.U,h:h*CFG.U,fill:'#725647',edge:'#c39a79'};},
 makeField(id,x,y,wU,hU,angle=0){return{id,type:'field',x,y,angle,w:wU*CFG.U,h:hU*CFG.U,fill:'rgba(203,181,128,.34)',edge:'rgba(232,211,164,.46)'};},
@@ -5034,7 +5034,7 @@ makeCoastScenario(){
 
   const sea={
     id:'sea-1',type:'sea',mode,side,attackerSide,points,coastline:coast,
-    fill:'#245d78',edge:'#8bcbdc'
+    fill:'#23505a',edge:'#86b3b5'
   };
   const shipCount=mode==='landing'?Math.max(1,Math.ceil(State.battleSetup.points/500)):0;
   const ships=mode==='landing'?this.makeLandingShips(sea,shipCount):[];
@@ -5466,7 +5466,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         if(t.coastline?.length){
           ctx.beginPath();t.coastline.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
           ctx.strokeStyle=t.edge;ctx.lineWidth=3;ctx.stroke();
-          ctx.globalAlpha=.28;ctx.strokeStyle='#d8f2f4';ctx.lineWidth=1;
+          ctx.globalAlpha=.28;ctx.strokeStyle='#dcebe4';ctx.lineWidth=1;
           for(let k=1;k<=2;k++){
             ctx.beginPath();
             t.coastline.forEach((p,i)=>{
@@ -7599,7 +7599,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(12,18,28,.78)';
+      ctx.fillStyle = 'rgba(27,19,15,.8)';
       ctx.fill();
       ctx.lineWidth = Math.max(1.4, radius * 0.14);
       ctx.strokeStyle = 'rgba(255,255,255,.94)';
@@ -7648,27 +7648,27 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const rz = Deployment.zone('red');
       const hideRed = Deployment.enemyHiddenDuringSetup();
       ctx.save();
-      ctx.fillStyle = 'rgba(63,121,216,.10)';
+      ctx.fillStyle = 'rgba(91,143,209,.12)';
       ctx.fillRect(bz.x, bz.y, bz.w, bz.h);
       if (!hideRed) {
-        ctx.fillStyle = 'rgba(207,77,77,.10)';
+        ctx.fillStyle = 'rgba(217,86,58,.12)';
         ctx.fillRect(rz.x, rz.y, rz.w, rz.h);
       }
       ctx.setLineDash([7,6]);
       ctx.lineWidth = 2;
-      ctx.strokeStyle = 'rgba(103,158,244,.70)';
+      ctx.strokeStyle = 'rgba(128,170,224,.70)';
       ctx.strokeRect(bz.x, bz.y, bz.w, bz.h);
       if (!hideRed) {
-        ctx.strokeStyle = 'rgba(235,104,104,.70)';
+        ctx.strokeStyle = 'rgba(232,120,92,.70)';
         ctx.strokeRect(rz.x, rz.y, rz.w, rz.h);
       }
       ctx.setLineDash([]);
       ctx.font = 'bold 13px Segoe UI, Arial';
       ctx.textBaseline = 'top';
-      ctx.fillStyle = 'rgba(160,198,255,.85)';
+      ctx.fillStyle = 'rgba(176,204,238,.88)';
       ctx.fillText(I18n.t('deploy.zoneBlue'), bz.x + 8, bz.y + 8);
       if (!hideRed) {
-        ctx.fillStyle = 'rgba(255,170,170,.85)';
+        ctx.fillStyle = 'rgba(246,184,160,.88)';
         ctx.fillText(I18n.t('deploy.zoneRed'), rz.x + 8, rz.y + 8);
       }
 
@@ -7697,7 +7697,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
 
     grid(w, h) {
       ctx.save();
-      ctx.strokeStyle = 'rgba(255,255,255,0.055)';
+      ctx.strokeStyle = 'rgba(242,230,211,0.045)';
       ctx.lineWidth = 1;
       for (let x = 0; x <= w; x += CFG.U) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
@@ -7831,7 +7831,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const fctx = layer.getContext('2d');
       fctx.clearRect(0, 0, iw, ih);
       fctx.globalCompositeOperation = 'source-over';
-      fctx.fillStyle = 'rgba(72,76,82,.72)';
+      fctx.fillStyle = 'rgba(33,23,18,.6)';
       fctx.fillRect(0, 0, iw, ih);
 
       fctx.globalCompositeOperation = 'destination-out';
@@ -7901,7 +7901,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       ctx.setLineDash([6, 5]);
       ctx.strokeRect(-d.depth, -d.front / 2, d.depth, d.front);
       ctx.setLineDash([]);
-      ctx.strokeStyle = 'rgba(241,211,107,.68)';
+      ctx.strokeStyle = 'rgba(224,138,60,.75)';
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(0, -d.front / 2);
@@ -7931,7 +7931,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
                   : (Selection.isSelected(u) ? '#ffffff' : 'rgba(255,255,255,.55)')));
         ctx.lineWidth = u.status.routing ? 5 : ((moraleState === 'wavering' || moraleState === 'shaken') ? 4 : (Selection.isSelected(u) ? 4 : 2));
         ctx.strokeRect(-d.depth, -d.front / 2, d.depth, d.front);
-        ctx.strokeStyle = '#f1d36b';
+        ctx.strokeStyle = '#f2e6d3';
         ctx.lineWidth = 6;
         ctx.beginPath(); ctx.moveTo(0, -d.front / 2); ctx.lineTo(0, d.front / 2); ctx.stroke();
         UnitIcons.drawBadge(ctx, u);
@@ -7977,10 +7977,10 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       // Health always; energy and brain only for selected units (all units in debug).
       const detailed = DEBUG || (u.side === State.selectedSide && Selection.isSelected(u));
       const top = detailed ? y : y + (barH + gap) * 2;
-      bar(top, u.stats.hp / u.stats.maxHp, '#d84545');
+      bar(top, u.stats.hp / u.stats.maxHp, '#e25b4b');
       if (detailed) {
-        bar(y + barH + gap, u.stats.energy / CFG.MAX_ENERGY, '#e6c84f');
-        bar(y + (barH + gap) * 2, u.stats.brain / CFG.MAX_BRAIN, '#8e5ad7');
+        bar(y + barH + gap, u.stats.energy / CFG.MAX_ENERGY, '#e3b644');
+        bar(y + (barH + gap) * 2, u.stats.brain / CFG.MAX_BRAIN, '#a488d0');
       }
     },
 
@@ -8170,7 +8170,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       State.deployment.counters[side] += 1;
       const n = State.deployment.counters[side];
       const spec = this.spec(type);
-      const color = side === 'blue' ? '#3f79d8' : '#cf4d4d';
+      const color = side === 'blue' ? '#5b8fd1' : '#d9563a';
       const a = angle === null ? (side === 'blue' ? -Math.PI / 2 : Math.PI / 2) : angle;
       const prefix = side === 'blue' ? 'BLU' : 'ROSSA';
       const suffix = spec.short ? ` ${spec.short}` : '';
@@ -9666,12 +9666,12 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const row = 8 * CFG.U;
       const restoredDeployment = !State.deployment.active && Deployment.restoreSnapshot();
       if (!restoredDeployment) State.units = [
-        makeUnit('blue-1', 'BLU 1', 'blue', cx - sep, cy - row, 0, '#3f79d8', 'infantry'),
-        makeUnit('blue-2', 'BLU ARC', 'blue', cx - sep, cy,       0, '#3f79d8', 'archer'),
-        makeUnit('blue-3', 'BLU CAV', 'blue', cx - sep, cy + row, 0, '#3f79d8', 'cavalry'),
-        makeUnit('red-1', 'ROSSA 1', 'red', cx + sep, cy - row, Math.PI, '#cf4d4d', 'infantry'),
-        makeUnit('red-2', 'ROSSA ARC', 'red', cx + sep, cy,       Math.PI, '#cf4d4d', 'archer'),
-        makeUnit('red-3', 'ROSSA CAV', 'red', cx + sep, cy + row, Math.PI, '#cf4d4d', 'cavalry')
+        makeUnit('blue-1', 'BLU 1', 'blue', cx - sep, cy - row, 0, '#5b8fd1', 'infantry'),
+        makeUnit('blue-2', 'BLU ARC', 'blue', cx - sep, cy,       0, '#5b8fd1', 'archer'),
+        makeUnit('blue-3', 'BLU CAV', 'blue', cx - sep, cy + row, 0, '#5b8fd1', 'cavalry'),
+        makeUnit('red-1', 'ROSSA 1', 'red', cx + sep, cy - row, Math.PI, '#d9563a', 'infantry'),
+        makeUnit('red-2', 'ROSSA ARC', 'red', cx + sep, cy,       Math.PI, '#d9563a', 'archer'),
+        makeUnit('red-3', 'ROSSA CAV', 'red', cx + sep, cy + row, Math.PI, '#d9563a', 'cavalry')
       ];
       if (!restoredDeployment) {
         State.selectedSide = 'blue';
