@@ -9838,7 +9838,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     // Compatibility entry point for debug tooling. Physics remains fixed-step.
     update(dt) {
       return this.advance(dt);
-    }
+    },
 
     frame(now) {
       const realDt = Math.min(0.05, (now - State.lastFrameAt) / 1000);
