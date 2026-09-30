@@ -1,0 +1,46 @@
+name: P0 canonical fingerprint verification
+
+on:
+  push:
+    branches:
+      - refactor/p0-determinism
+    paths:
+      - '.github/workflows/refactor-p0-canonical-fingerprint.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - seed: 2
+            expected: '22e6779f34460dde0770fb5f133c09c3faffb254eb90d61cf9132d07a71aae07'
+          - seed: 5
+            expected: '9255ec40c95f4e8c6e2424b89f83e662e0544deb8932d521cf5dc673f2a2c395'
+    env:
+      BASELINE_SEED: ${{ matrix.seed }}
+      EXPECTED_HASH: ${{ matrix.expected }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare Chromium runner
+        run: |
+          CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_BIN"
+          echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
+          npm install --no-save --no-package-lock playwright-core@1.55.0
+      - name: Serve branch
+        run: |
+          nohup python3 -m http.server 8001 --bind 127.0.0.1 --directory . </dev/null >/tmp/branch.log 2>&1 &
+          for i in {1..20}; do
+            if curl -sf --max-time 2 http://127.0.0.1:8001/sim-lab.js >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Verify canonical fingerprint
+        run: node tools/run-p0-canonical-fingerprint.mjs
