@@ -1,22 +1,13 @@
 name: P0 quick baseline comparison
 
-concurrency:
-  group: refactor-p0-quick
-  cancel-in-progress: true
-
 on:
-  push:
-    branches:
-      - refactor/p0-determinism
-    paths:
-      - '.github/workflows/refactor-p0-quick.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  supersede:
+  note:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "50-seed matrix suspended until instant comparator is validated."
+      - run: echo "Use P0 smoke for per-change gating and P0 baseline vs branch comparison for on-demand multi-seed benchmarks."
