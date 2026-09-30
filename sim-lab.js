@@ -341,10 +341,13 @@
         });
 
         try {
-          while (!State.battle.ended && driverTime + 1e-9 < o.maxTime) {
-            const dt = Math.min(o.dt, o.maxTime - driverTime);
-            driverTime += dt;
-            Simulation.advance(dt);
+          const fixedDt = CFG.SIM_FIXED_DT || o.dt;
+          // Stop on canonical simulation time, not on driver elapsed time.
+          // This guarantees the final fixed tick is executed identically at
+          // 20/30/60 Hz (e.g. the battle-limit tick at exactly 600 s).
+          while (!State.battle.ended && State.simTime + fixedDt * 0.5 < o.maxTime) {
+            driverTime += o.dt;
+            Simulation.advance(o.dt);
           }
         } finally {
           Simulation.setPreStepHook?.(previousPreStepHook);
