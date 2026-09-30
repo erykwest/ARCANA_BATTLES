@@ -1,6 +1,19 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
+  "git": {
+    "deploymentEnabled": {
+      "monkey": false,
+      "monkey-*": false,
+      "monkey/**": false,
+      "sim": false,
+      "sim-*": false,
+      "sim/**": false,
+      "test": false,
+      "test-*": false,
+      "test/**": false
+    }
+  },
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
     { "source": "/play", "destination": "/COFFEE_BATTLES.html" },
