@@ -1,0 +1,67 @@
+name: Set default language to English
+
+on:
+  push:
+    paths:
+      - '.github/workflows/default-language-en.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch default language
+        shell: python
+        run: |
+          from pathlib import Path
+          p=Path('COFFEE_BATTLES.html')
+          s=p.read_text(encoding='utf-8')
+          old="""  detect(){
+    const saved=localStorage.getItem(this.STORAGE_KEY);
+    if(saved&&I18N.languages[saved])return saved;
+    const browser=(navigator.language||'en').toLowerCase().split('-')[0];
+    return I18N.languages[browser]?browser:'en';
+  },"""
+          new="""  detect(){
+    const saved=localStorage.getItem(this.STORAGE_KEY);
+    if(saved&&I18N.languages[saved])return saved;
+    return 'en';
+  },"""
+          if old not in s:
+              raise SystemExit('language detect marker not found')
+          s=s.replace(old,new,1)
+          s=s.replace('<html lang="it">','<html lang="en">',1)
+          s=s.replace('title="Lingua">\n      <span id="languageFlag" class="flag">🇮🇹</span><b id="languageCode">IT</b>', 'title="Language">\n      <span id="languageFlag" class="flag">🇬🇧</span><b id="languageCode">EN</b>',1)
+          s=s.replace('<div id="languageMenu" role="menu" aria-label="Lingua">','<div id="languageMenu" role="menu" aria-label="Language">',1)
+          p.write_text(s,encoding='utf-8')
+
+      - name: Validate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('COFFEE_BATTLES.html').read_text(encoding='utf-8')
+          assert '<html lang="en">' in s
+          assert "return 'en';" in s
+          assert 'navigator.language' not in s
+          scripts=re.findall(r'<script>(.*?)</script>',s,re.S)
+          Path('/tmp/main.js').write_text(scripts[-1],encoding='utf-8')
+          PY
+          node --check /tmp/main.js
+
+      - name: Commit clean change
+        shell: bash
+        run: |
+          git config user.name "COFFEE BATTLES bot"
+          git config user.email "138891543+erykwest@users.noreply.github.com"
+          git rm .github/workflows/default-language-en.yml
+          git add COFFEE_BATTLES.html
+          git commit -m "Set English as default language"
+          git push origin HEAD:main
