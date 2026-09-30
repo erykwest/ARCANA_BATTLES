@@ -1,4 +1,4 @@
-name: P0 smoke baseline comparison
+name: P0 branch determinism smoke
 
 concurrency:
   group: refactor-p0-smoke
@@ -10,7 +10,6 @@ on:
       - refactor/p0-determinism
     paths:
       - '.github/workflows/refactor-p0-smoke.yml'
-      - 'tools/run-refactor-smoke.mjs'
       - 'COFFEE_BATTLES.html'
       - 'sim-lab.js'
   workflow_dispatch:
@@ -19,44 +18,50 @@ permissions:
   contents: read
 
 jobs:
-  compare-smoke:
+  determinism-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      BASELINE_COMMIT: 079e944f162eaebaabfd3d833ea085d920b2d4e0
       BRANCH_COMMIT: ${{ github.sha }}
       BASELINE_SEED: '1'
       BASELINE_POINTS: '1000'
+      BASELINE_MAX_TIME: '600'
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - run: git worktree add ../coffee-baseline "$BASELINE_COMMIT"
+
       - name: Prepare Chromium runner
         run: |
           CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           test -n "$CHROME_BIN"
           echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
           npm install --no-save --no-package-lock playwright-core@1.55.0
-      - name: Start static servers
+
+      - name: Serve branch
         run: |
-          nohup python3 -m http.server 8000 --bind 127.0.0.1 --directory ../coffee-baseline </dev/null >/tmp/base.log 2>&1 &
           nohup python3 -m http.server 8001 --bind 127.0.0.1 --directory . </dev/null >/tmp/branch.log 2>&1 &
           for i in {1..20}; do
-            if curl -sf --max-time 2 http://127.0.0.1:8000/sim-lab.js >/dev/null && curl -sf --max-time 2 http://127.0.0.1:8001/sim-lab.js >/dev/null; then exit 0; fi
+            if curl -sf --max-time 2 http://127.0.0.1:8001/sim-lab.js >/dev/null; then exit 0; fi
             sleep 1
           done
+          cat /tmp/branch.log || true
           exit 1
-      - name: Run exact smoke comparison
-        run: node tools/run-refactor-smoke.mjs
+
+      - name: Run determinism matrix
+        run: node tools/run-p0-determinism-gate.mjs
+
       - name: Publish summary
         if: always()
-        run: test -f results/refactor-p0-smoke.md && cat results/refactor-p0-smoke.md >> "$GITHUB_STEP_SUMMARY" || true
-      - name: Upload smoke comparison
+        run: test -f results/p0-determinism-gate.md && cat results/p0-determinism-gate.md >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Upload determinism artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: refactor-p0-smoke-${{ github.sha }}
-          path: results/
+          name: p0-determinism-${{ github.sha }}
+          path: |
+            results/p0-determinism-gate.json
+            results/p0-determinism-gate.md
           if-no-files-found: warn
