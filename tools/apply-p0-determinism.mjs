@@ -75,6 +75,12 @@ if (!html.includes('canonicalizeUnitOrder()')) {
   );
 }
 
+// Repair separator if an earlier P0 patch revision wrote update() without its trailing comma.
+html = html.replace(
+  '    update(dt) {\n      return this.advance(dt);\n    }\n\n    frame(now) {',
+  '    update(dt) {\n      return this.advance(dt);\n    },\n\n    frame(now) {'
+);
+
 // ---------------------------------------------------------------------------
 // sim-lab.js — dt becomes driver cadence, never physics cadence.
 // AI refresh happens on fixed-step boundaries, not on driver boundaries.
