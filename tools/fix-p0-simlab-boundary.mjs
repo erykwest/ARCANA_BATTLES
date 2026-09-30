@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 
+// One-shot P0 migration: align headless maxTime with canonical simulation ticks.
 const path = 'sim-lab.js';
 let src = fs.readFileSync(path, 'utf8');
 
