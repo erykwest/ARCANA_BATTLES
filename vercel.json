@@ -3,7 +3,7 @@
   "framework": null,
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
-    { "source": "/play", "destination": "/COFFEE_BATTLES.html" },
+    { "source": "/play", "destination": "/play.html" },
     { "source": "/about", "destination": "/about.html" },
     { "source": "/how-to-play", "destination": "/how-to-play.html" },
     { "source": "/privacy", "destination": "/privacy.html" },
