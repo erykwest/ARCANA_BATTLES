@@ -15,13 +15,14 @@ function replaceOnce(source, search, replacement, label) {
 }
 
 function replaceRegexOnce(source, regex, replacement, label) {
-  const matches = [...source.matchAll(new RegExp(regex.source, regex.flags.includes('g') ? regex.flags : regex.flags + 'g'))];
+  const flags = regex.flags.includes('g') ? regex.flags : regex.flags + 'g';
+  const matches = [...source.matchAll(new RegExp(regex.source, flags))];
   if (matches.length !== 1) throw new Error(`Expected exactly one ${label} match, found ${matches.length}`);
   return source.replace(regex, replacement);
 }
 
 // ---------------------------------------------------------------------------
-// COFFEE_BATTLES.html — physics cadence and stable iteration order
+// COFFEE_BATTLES.html — fixed physics cadence + canonical unit iteration.
 // ---------------------------------------------------------------------------
 if (!html.includes('SIM_FIXED_DT:')) {
   html = replaceOnce(
@@ -41,107 +42,42 @@ if (!html.includes('simAccumulator: 0,')) {
   );
 }
 
-// Reset the accumulator wherever a fresh simulation timeline is created.
+// Any fresh simulation timeline must also flush fractional elapsed time.
 html = html.replace(
   /      State\.simTime = 0;\n      State\.combatClocks\.clear\(\);/g,
   '      State.simTime = 0;\n      State.simAccumulator = 0;\n      State.combatClocks.clear();'
 );
 
 if (!html.includes('canonicalizeUnitOrder()')) {
-  const simulationRegex = /    update\(dt\) \{\n      ArmyAI\.update\(\);[\s\S]*?      Battle\.checkTimeLimit\(\);\n    \},\n\n    frame\(now\) \{\n      const realDt = Math\.min\(0\.05, \(now - State\.lastFrameAt\) \/ 1000\);\n      State\.lastFrameAt = now;\n      const dt = realDt \* State\.timeScale;\n      State\.simTime \+= dt;\n      if \(dt > 0\) Simulation\.update\(dt\);\n      UI\.updateSelectedInfo\(\);\n      Battle\.updateVictoryBar\(\);\n      Renderer\.draw\(\);\n      requestAnimationFrame\(Simulation\.frame\);\n    \}/;
+  const simStart = html.indexOf('  const Simulation = {');
+  if (simStart < 0) throw new Error('Simulation object not found');
 
-  const replacement = `    preStepHook: null,
+  const updateStart = html.indexOf('    update(dt) {\n', simStart);
+  if (updateStart < 0) throw new Error('Simulation.update not found');
 
-    canonicalizeUnitOrder() {
-      State.units.sort((a, b) => {
-        const ai = String(a?.id ?? '');
-        const bi = String(b?.id ?? '');
-        return ai < bi ? -1 : ai > bi ? 1 : 0;
-      });
-    },
+  const updateBodyStart = updateStart + '    update(dt) {\n'.length;
+  const updateEndMarker = '\n    },\n\n    frame(now) {';
+  const updateEnd = html.indexOf(updateEndMarker, updateBodyStart);
+  if (updateEnd < 0) throw new Error('Simulation.update end marker not found');
 
-    setPreStepHook(fn = null) {
-      this.preStepHook = typeof fn === 'function' ? fn : null;
-      return this.preStepHook;
-    },
+  const originalBody = html.slice(updateBodyStart, updateEnd);
+  const fixedBody = `      // Canonical order makes pair resolution independent from insertion/reversal order.\n      this.canonicalizeUnitOrder();\n      if (this.preStepHook) this.preStepHook(dt);\n\n${originalBody}`;
 
-    fixedStep(dt = CFG.SIM_FIXED_DT) {
-      // Every physics tick starts from the same canonical unit ordering.
-      // This removes array insertion/reversal order from combat, collision,
-      // targeting and resource resolution without changing unit identities.
-      this.canonicalizeUnitOrder();
-      if (this.preStepHook) this.preStepHook(dt);
+  const replacement = `    preStepHook: null,\n\n    canonicalizeUnitOrder() {\n      State.units.sort((a, b) => {\n        const ai = String(a?.id ?? '');\n        const bi = String(b?.id ?? '');\n        return ai < bi ? -1 : ai > bi ? 1 : 0;\n      });\n    },\n\n    setPreStepHook(fn = null) {\n      this.preStepHook = typeof fn === 'function' ? fn : null;\n      return this.preStepHook;\n    },\n\n    fixedStep(dt = CFG.SIM_FIXED_DT) {\n${fixedBody}\n    },\n\n    advance(elapsedDt) {\n      const elapsed = Math.max(0, Number(elapsedDt) || 0);\n      if (elapsed <= 0 || State.battle.ended) return 0;\n\n      const step = CFG.SIM_FIXED_DT;\n      State.simAccumulator += elapsed;\n      let steps = 0;\n\n      while (!State.battle.ended && State.simAccumulator + 1e-12 >= step) {\n        State.simAccumulator -= step;\n        if (Math.abs(State.simAccumulator) < 1e-12) State.simAccumulator = 0;\n        State.simTime += step;\n        this.fixedStep(step);\n        steps++;\n      }\n      return steps;\n    },\n\n    // Compatibility entry point for debug tooling. Physics remains fixed-step.\n    update(dt) {\n      return this.advance(dt);\n    }`;
 
-      ArmyAI.update();
-      State.units.forEach(Formations.update);
-      State.units.forEach(AI.update.bind(AI));
-      State.units.forEach(u => Movement.update(u, dt));
-      State.units.forEach(u => Engagements.updateDefensiveState(u, dt));
-      Collision.solveGlobal();
-      State.units.forEach(u => Engagements.maintain(u, dt));
-      Collision.solveGlobal();
-      this.updateFreeContacts();
-      Ranged.update(dt);
+  html = html.slice(0, updateStart) + replacement + html.slice(updateEnd + '\n    },'.length);
 
-      for (const u of State.units) {
-        if (u.status.chargeUntil && State.simTime >= u.status.chargeUntil) {
-          u.status.chargeUntil = 0;
-          u.motion.chargeMode = false;
-          u.motion.chargeOverride = null;
-          if (u.order.kind !== 'retreat' && !u.status.routing) {
-            u.motion.moveMult = u.profile.marchMult;
-          }
-        }
-        Resources.update(u, dt);
-      }
-      Combat.update(dt);
-      Battle.checkArmyCollapse();
-      Battle.checkOutcome();
-      Battle.checkTimeLimit();
-    },
-
-    advance(elapsedDt) {
-      const elapsed = Math.max(0, Number(elapsedDt) || 0);
-      if (elapsed <= 0 || State.battle.ended) return 0;
-
-      const step = CFG.SIM_FIXED_DT;
-      State.simAccumulator += elapsed;
-      let steps = 0;
-
-      while (!State.battle.ended && State.simAccumulator + 1e-12 >= step) {
-        State.simAccumulator -= step;
-        if (Math.abs(State.simAccumulator) < 1e-12) State.simAccumulator = 0;
-        State.simTime += step;
-        this.fixedStep(step);
-        steps++;
-      }
-      return steps;
-    },
-
-    // Compatibility entry point for debug tooling: update() now means
-    // "advance elapsed time", never "run one variable physics step".
-    update(dt) {
-      return this.advance(dt);
-    },
-
-    frame(now) {
-      const realDt = Math.min(0.05, (now - State.lastFrameAt) / 1000);
-      State.lastFrameAt = now;
-      const dt = realDt * State.timeScale;
-      if (dt > 0) Simulation.advance(dt);
-      UI.updateSelectedInfo();
-      Battle.updateVictoryBar();
-      Renderer.draw();
-      requestAnimationFrame(Simulation.frame);
-    }`;
-
-  html = replaceRegexOnce(html, simulationRegex, replacement, 'Simulation.update/frame block');
+  html = replaceOnce(
+    html,
+    '      State.simTime += dt;\n      if (dt > 0) Simulation.update(dt);\n',
+    '      if (dt > 0) Simulation.advance(dt);\n',
+    'Simulation.frame fixed-step advance'
+  );
 }
 
 // ---------------------------------------------------------------------------
-// sim-lab.js — outer cadence is now a driver cadence, physics stays fixed.
-// AI refresh is injected at fixed-step boundaries so 20/30/60 Hz drivers
-// cannot shift the command timing.
+// sim-lab.js — dt becomes driver cadence, never physics cadence.
+// AI refresh happens on fixed-step boundaries, not on driver boundaries.
 // ---------------------------------------------------------------------------
 sim = sim.replace("    version: '0.1',", "    version: '0.2',");
 
@@ -173,33 +109,7 @@ if (!sim.includes('driverTime: Number(driverTime.toFixed(3))')) {
 if (!sim.includes('let driverTime = 0;')) {
   const runLoopRegex = /        const meta = this\.setupBattle\(o\);\n        let nextAI = 0;\n        let aiRefreshCount = 0;\n\n        this\.issueBothSides\(\);\n        aiRefreshCount\+\+;\n        nextAI = o\.aiRefresh;\n\n        while \(!State\.battle\.ended && State\.simTime \+ 1e-9 < o\.maxTime\) \{\n          const dt = Math\.min\(o\.dt, o\.maxTime - State\.simTime\);\n          State\.simTime \+= dt;\n\n          if \(State\.simTime \+ 1e-9 >= nextAI\) \{\n            this\.issueBothSides\(\);\n            aiRefreshCount\+\+;\n            while \(nextAI <= State\.simTime \+ 1e-9\) nextAI \+= o\.aiRefresh;\n          \}\n\n          Simulation\.update\(dt\);\n        \}\n\n        const result = this\.collectResult\(o, meta, aiRefreshCount, performance\.now\(\) - wallStart\);/;
 
-  const runLoopReplacement = `        const meta = this.setupBattle(o);
-        let nextAI = o.aiRefresh;
-        let aiRefreshCount = 0;
-        let driverTime = 0;
-
-        this.issueBothSides();
-        aiRefreshCount++;
-
-        const previousPreStepHook = Simulation.preStepHook || null;
-        Simulation.setPreStepHook?.(() => {
-          if (State.simTime + 1e-9 < nextAI) return;
-          this.issueBothSides();
-          aiRefreshCount++;
-          while (nextAI <= State.simTime + 1e-9) nextAI += o.aiRefresh;
-        });
-
-        try {
-          while (!State.battle.ended && driverTime + 1e-9 < o.maxTime) {
-            const dt = Math.min(o.dt, o.maxTime - driverTime);
-            driverTime += dt;
-            Simulation.advance(dt);
-          }
-        } finally {
-          Simulation.setPreStepHook?.(previousPreStepHook);
-        }
-
-        const result = this.collectResult(o, meta, aiRefreshCount, performance.now() - wallStart, driverTime);`;
+  const runLoopReplacement = `        const meta = this.setupBattle(o);\n        let nextAI = o.aiRefresh;\n        let aiRefreshCount = 0;\n        let driverTime = 0;\n\n        this.issueBothSides();\n        aiRefreshCount++;\n\n        const previousPreStepHook = Simulation.preStepHook || null;\n        Simulation.setPreStepHook?.(() => {\n          if (State.simTime + 1e-9 < nextAI) return;\n          this.issueBothSides();\n          aiRefreshCount++;\n          while (nextAI <= State.simTime + 1e-9) nextAI += o.aiRefresh;\n        });\n\n        try {\n          while (!State.battle.ended && driverTime + 1e-9 < o.maxTime) {\n            const dt = Math.min(o.dt, o.maxTime - driverTime);\n            driverTime += dt;\n            Simulation.advance(dt);\n          }\n        } finally {\n          Simulation.setPreStepHook?.(previousPreStepHook);\n        }\n\n        const result = this.collectResult(o, meta, aiRefreshCount, performance.now() - wallStart, driverTime);`;
 
   sim = replaceRegexOnce(sim, runLoopRegex, runLoopReplacement, 'SimLab driver loop');
 }
