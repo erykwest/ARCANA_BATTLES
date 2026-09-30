@@ -4,26 +4,60 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<meta name="description" content="How to play COFFEE BATTLES: deployment, selection, movement, formations, stances, charges, archers, morale and terrain.">
+<meta name="description" content="How to play Coffee Battles: setup, deployment, controls, orders, morale, terrain and how to win.">
 <meta name="robots" content="index,follow">
-<title>How to play — COFFEE BATTLES</title>
+<title>How to play — Coffee Battles</title>
 <link rel="stylesheet" href="/site.css">
 </head>
 <body>
-<header class="site-header"><nav class="nav" aria-label="Main navigation"><a class="brand" href="/">COFFEE BATTLES</a><div class="nav-links"><a href="/about">About</a><a href="/how-to-play">How to play</a><a href="/privacy">Privacy</a><a href="/contact">Contact</a><a class="play" href="/play">Play</a></div></nav></header>
-<main class="shell"><article class="prose"><div class="kicker">Field guide</div><h1>How to play</h1><p class="lead">COFFEE BATTLES is a real-time tactical sandbox. You deploy a force, give orders to regiments and try to collapse the opposing army by combining movement, facing, energy, morale and terrain.</p>
-<h2>1. Set up the battle</h2><p>Start from the battle setup screen, choose the available points and the battle configuration, then compose and deploy your force. Units begin inside their deployment area and can be positioned before the battle starts. The setup is intentionally quick so a new test can begin without a long campaign layer.</p>
-<h2>2. Select and inspect units</h2><p>Use the left mouse button to select a unit. Hold the right button and drag to draw a selection box, or Ctrl + click to add units one by one. The side panel shows the selected unit and its commands. Use the mouse wheel to zoom and drag with the middle button to pan across the field.</p>
-<h2>3. Move with purpose</h2><p>A regiment has a front and takes time to turn. Movement is therefore not only about reaching a coordinate: approach angle affects how quickly a unit can bring its front toward an enemy and whether it risks exposing a flank or rear. Multiple waypoints can be used to shape a route, while the pathfinder attempts to avoid impassable obstacles and other units.</p>
-<h2>4. Manage formations</h2><p>Infantry-sized units can change formation. The standard formation is a balanced block, while line and column arrangements trade frontage against depth and manoeuvrability. Formation changes take time, so changing shape during contact is very different from preparing before the engagement.</p>
-<h2>5. Choose a stance</h2><p>Stance changes how autonomous behaviour is handled:</p><ul><li><strong>Hold</strong> keeps a unit conservative and prevents it from seeking unnecessary contact.</li><li><strong>Aggressive</strong> encourages a unit to close and engage when a valid enemy is nearby.</li><li><strong>Elusive</strong> favours disengagement and distance rather than commitment to melee.</li></ul><p>Routed troops effectively prioritise escape rather than normal combat behaviour.</p>
-<h2>6. Charge and retreat</h2><p>A charge is a short burst of commitment rather than ordinary movement. Cavalry gains the most from a clean approach and has the speed to exploit exposed flanks and rears. A badly aligned charge, a blocked route or contact against the enemy front can waste that advantage. Retreat orders deliberately break contact and are useful when a unit needs to recover before morale collapses.</p>
-<h2>7. Use archers as ranged support</h2><p>Archers attack at range and can acquire targets without having to enter melee. If a selected target is outside shooting distance, they can move toward effective range before firing. Ranged fire does not consume the same combat energy as melee, but archers remain vulnerable if enemy units reach them. Aggressive behaviour is what allows them to commit more readily to close combat; firing itself is a separate action.</p>
-<h2>8. Watch energy and morale</h2><p>Movement and melee consume energy. A tired unit loses combat effectiveness, so constant movement can arrive at the decisive fight already exhausted. Morale is a separate pressure: casualties, prolonged combat and exhaustion can push a unit toward breaking. Once morale collapses, the unit flees and attempts to recover rather than continuing a normal fight.</p>
-<h2>9. Read the terrain</h2><p>The field can include water, walls, hills, forests and roads. Water blocks normal movement, walls can provide cover, hills influence line of sight and ranged reach, forests obstruct sight and slow movement, and roads reward movement along useful routes. Cavalry is especially sensitive to terrain that constrains open manoeuvre.</p>
-<h2>10. Win by breaking the opposing force</h2><p>The victory bar at the top of the battlefield tracks the relative collapse of the two armies as units are eliminated or forced out of effective combat. The aim is not simply to click the closest target, but to create favourable contacts while preserving enough energy and morale to continue fighting.</p>
-<div class="note"><strong>Prototype note:</strong> balance values and AI behaviour are still being tuned. If a unit behaves unexpectedly, a short description and reproducible steps are useful feedback.</div>
-<div class="cta-row"><a class="btn primary" href="/play">Start a battle</a><a class="btn" href="/contact">Report feedback</a></div></article></main>
-<footer class="footer"><div class="footer-inner"><span>© 2026 COFFEE BATTLES</span><div class="footer-links"><a href="/">Home</a><a href="/about">About</a><a href="/privacy">Privacy</a><a href="/contact">Contact</a></div></div></footer>
+<header class="site-header"><nav class="nav" aria-label="Main navigation"><a class="brand" href="/">Coffee Battles</a><div class="nav-links"><a href="/how-to-play">How to play</a><a href="/about">About</a><a class="play" href="/play">Play</a></div></nav></header>
+<main class="shell"><article class="prose">
+<h1>How to play</h1>
+<p class="lead">A battle has three steps: set up, deploy, fight. This page covers each one, then the rules that decide who wins.</p>
+
+<h2>1. Set up</h2>
+<p><strong>Army size</strong> is the budget in points each side can spend, from 500 to 2000 or a custom amount. <strong>Terrain</strong> picks the kind of field; Random chooses one for you.</p>
+<p><strong>Armies</strong> decides who builds what. In Auto the computer builds the enemy army and you build yours. In Mirror the enemy copies your army. In Custom you build both.</p>
+<p><strong>Your role</strong> sets the win condition. As the attacker you must win before time runs out; as the defender you win by holding out until it does. Random draws the role when the battle starts.</p>
+
+<h2>2. Deploy</h2>
+<p>Drag regiments from the cards onto the field and drop them inside your deployment zone. Each card shows what the regiment is good at and what it costs. Drag a placed regiment to move it, turn it in 15° steps, or remove it. In Auto mode the enemy is already deployed and stays hidden until the battle starts.</p>
+
+<h2>3. Controls</h2>
+<dl class="controls-list">
+<dt>Select</dt><dd>Left click a regiment. Ctrl + click adds or removes one; hold the right button and drag to draw a box.</dd>
+<dt>Move</dt><dd>Right click the ground. Shift + right click adds a waypoint to the route.</dd>
+<dt>Attack</dt><dd>Right click an enemy. Shift + right click an enemy makes it the attack at the end of the route.</dd>
+<dt>Camera</dt><dd>Mouse wheel to zoom, drag with the middle button to pan.</dd>
+<dt>Speed</dt><dd>The buttons at the top pause the battle or run it at 1×, 2× or 3×.</dd>
+<dt>Space</dt><dd>Pauses and shows the game’s full HTML source. Space again closes it.</dd>
+<dt>Touch</dt><dd>Tap to select, move or attack. Long press to add to the selection or add a waypoint. One finger dragged from the ground draws a box; two fingers pan and zoom.</dd>
+</dl>
+
+<h2>4. Orders</h2>
+<p>The panel in the bottom left gives orders to the selected regiments. Distances are in field units (U); each grid square is 1U.</p>
+<h3>Stance</h3>
+<p><strong>Hold</strong> waits for your orders. <strong>Aggressive</strong> attacks enemies within 10U and charges within 5U. <strong>Elusive</strong> keeps away, falling back from enemies within 9U. A stance never cancels an order you gave by hand.</p>
+<h3>Formation</h3>
+<p><strong>Base</strong> is 3U wide and 2U deep, <strong>Column</strong> 2U wide and 3U deep, <strong>Line</strong> 6U wide and 1U deep. A wider front brings more soldiers into contact. Changing formation takes 2 seconds and is allowed during combat.</p>
+<h3>Charge, retreat, fire</h3>
+<p><strong>Charge</strong> switches the regiment to charge speed until it hits; the impact adds shock to the target, and cavalry doubles it. <strong>Retreat</strong> breaks contact and pulls back at least 11U from the enemy. <strong>Fire at will</strong> lets archers, crossbowmen, light infantry and light cavalry shoot automatically at anything in range. A target you pick yourself is shot at even with fire at will off.</p>
+
+<h2>5. What decides a fight</h2>
+<p><strong>Facing.</strong> A regiment attacked in the flank fights worse, and attacks on the flank or rear add much more shock than a frontal clash.</p>
+<p><strong>Energy.</strong> Marching and fighting use energy; standing still recovers it. With no energy left a regiment cannot move and stops fighting effectively.</p>
+<p><strong>Morale.</strong> Losses and shock wear morale down from steady to shaken, wavering and finally rout, when the regiment flees on its own. A routed regiment that gets away from the enemy can rally. One that crosses the dashed edge of the field will not rally again.</p>
+
+<h2>6. Terrain and sight</h2>
+<p>Rivers can only be crossed at bridges and fords. Streams are rough ground. Mountains and buildings are solid obstacles, and cavalry cannot enter forests. Your regiments see about 20U around them; enemies out of sight disappear, and their last known position stays marked.</p>
+
+<h2>7. Winning</h2>
+<p>The bar at the top of the field shows each side’s progress. When a side reaches 100%, because half of the enemy army’s points have been destroyed or have fled, the whole enemy army breaks and runs. The battle ends when one army has no regiments left on the field.</p>
+<p>If ten minutes of game time pass first, the defender wins. At 2× or 3× speed that takes less in real time.</p>
+
+<p class="note">Something behaved oddly? <a href="/contact">Report it</a> with the steps to reproduce it.</p>
+<div class="cta-row"><a class="btn primary" href="/play">Play now</a></div>
+</article></main>
+<footer class="footer"><div class="footer-inner"><span>© 2026 Coffee Battles</span><div class="footer-links"><a href="/about">About</a><a href="/how-to-play">How to play</a><a href="/privacy">Privacy</a><a href="/contact">Contact</a><a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">GitHub</a></div></div></footer>
 </body>
 </html>
