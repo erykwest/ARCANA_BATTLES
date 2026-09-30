@@ -1,6 +1,7 @@
 name: P0 determinism 10-seed batch
 
 # 10 canonical seeds × 20/30/60 Hz × normal/reverse = 60 deterministic checks.
+# P0.4 rerun: Intel LOS cache.
 on:
   push:
     branches:
