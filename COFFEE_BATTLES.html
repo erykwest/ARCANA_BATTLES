@@ -286,24 +286,24 @@
      ============================================================ */
   #sourcePauseOverlay{
     position:fixed;inset:0;z-index:6000;display:none;flex-direction:column;
-    gap:10px;padding:12px;background:#080b0f;color:#dfe7ef;
+    gap:12px;padding:16px;background:var(--bg);color:var(--text);
   }
   #sourcePauseOverlay.open{display:flex}
   .source-pause-toolbar{
-    display:flex;align-items:center;gap:9px;flex:0 0 auto;
-    min-height:42px;padding:7px 9px;border:1px solid #334052;border-radius:10px;
-    background:var(--panel);box-shadow:0 8px 28px rgba(0,0,0,.42);
+    display:flex;align-items:center;gap:12px;flex:0 0 auto;
+    padding:10px 12px 10px 20px;border-radius:999px;background:var(--panel);
   }
-  .source-pause-title{font:800 12px/1.2 var(--font-body);letter-spacing:.10em}
-  .source-pause-hint{font-size:10px;color:var(--muted);margin-right:auto}
-  #sourcePauseOverlay button{width:auto;min-width:112px;height:34px;padding:0 12px;font-size:10px}
-  #sourcePauseCopyBtn{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-  #sourcePauseCloseBtn{background:var(--btn)}
+  .source-pause-title{font:900 22px/1 var(--font-display);letter-spacing:.02em;text-transform:uppercase}
+  .source-pause-hint{font-size:14px;color:var(--muted);margin-right:auto}
+  #sourcePauseOverlay button{width:auto;min-width:0;height:44px;padding:0 20px;border:0;border-radius:999px;font:700 15px var(--font-body)}
+  #sourcePauseCopyBtn{background:var(--accent);color:var(--accent-ink)}
+  #sourcePauseCopyBtn:hover{background:var(--accent-hover)}
+  #sourcePauseCloseBtn{background:var(--btn);color:var(--text)}
   #sourcePauseText{
     flex:1 1 auto;width:100%;min-height:0;resize:none;outline:none;
-    border:1px solid #334052;border-radius:10px;background:#05070a;color:#d7e0ea;
-    padding:14px;overflow:auto;white-space:pre;tab-size:2;
-    font:12px/1.48 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+    border:0;border-radius:20px;background:var(--sunken);color:var(--text-2);
+    padding:18px 20px;overflow:auto;white-space:pre;tab-size:2;
+    font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
   }
   @media (max-width:700px){
     #sourcePauseOverlay{padding:7px;gap:7px}
@@ -561,7 +561,7 @@
 
 <div id="sourcePauseOverlay" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Codice HTML della battaglia">
   <div class="source-pause-toolbar">
-    <div class="source-pause-title">COFFEE BATTLES · SOURCE PAUSE</div>
+    <div class="source-pause-title" data-i18n="source.title">Codice sorgente</div>
     <div class="source-pause-hint" data-i18n="source.hint">SPACE chiude il codice e ripristina la velocità precedente.</div>
     <button id="sourcePauseCopyBtn" type="button" data-i18n="source.copy">COPIA TUTTO</button>
     <button id="sourcePauseCloseBtn" type="button" data-i18n="source.close">CHIUDI · SPACE</button>
@@ -781,7 +781,7 @@
         <dt>Muovi</dt><dd>Clic destro sul terreno · Shift + clic destro aggiunge una tappa</dd>
         <dt>Attacca</dt><dd>Clic destro su un nemico</dd>
         <dt>Visuale</dt><dd>Rotella per lo zoom · trascina col tasto centrale per spostarti</dd>
-        <dt>Pausa</dt><dd>Spazio</dd>
+        <dt>Spazio</dt><dd>Pausa e codice HTML completo del gioco</dd>
         <dt>Touch</dt><dd>Tocca per selezionare, muovere o attaccare · pressione lunga per aggiungere · due dita per spostare e zoomare</dd>
       </dl>
     </div>
@@ -854,7 +854,7 @@
 <script>
 (() => {
   'use strict';
-  // ?debug shows developer tools: faction switch, pathfinding markers, log, SPACE source view.
+  // ?debug shows developer tools: faction switch, pathfinding markers, battle log.
   const DEBUG = new URLSearchParams(location.search).has('debug');
   document.documentElement.classList.toggle('debug', DEBUG);
 
@@ -864,7 +864,7 @@
 // ============================================================
 const RULES_I18N = Object.freeze({
   en:Object.freeze({
-    'rules.controls': `<dt>Select</dt><dd>Left click a unit · Ctrl + click to add · drag with the right button for a box</dd><dt>Move</dt><dd>Right click the ground · Shift + right click adds a waypoint</dd><dt>Attack</dt><dd>Right click an enemy</dd><dt>Camera</dt><dd>Wheel to zoom · drag with the middle button to pan</dd><dt>Pause</dt><dd>Space</dd><dt>Touch</dt><dd>Tap to select, move or attack · long press to add · two fingers to pan and zoom</dd>`,
+    'rules.controls': `<dt>Select</dt><dd>Left click a unit · Ctrl + click to add · drag with the right button for a box</dd><dt>Move</dt><dd>Right click the ground · Shift + right click adds a waypoint</dd><dt>Attack</dt><dd>Right click an enemy</dd><dt>Camera</dt><dd>Wheel to zoom · drag with the middle button to pan</dd><dt>Space</dt><dd>Pause and show the game’s full HTML source</dd><dt>Touch</dt><dd>Tap to select, move or attack · long press to add · two fingers to pan and zoom</dd>`,
     'rules.combat': `<b>Stance:</b> Hold = waits for orders · Aggressive = attacks within 10U and charges within 5U · Elusive = flees at M3 within 9U.<br>
       Aggressive chooses the <b>natural slot</b> from the attacker's geometric region relative to the defender's rectangle: ahead=FRONT, behind=REAR, lateral=FLANK. The slot is <b>locked</b> and changes only if it becomes genuinely unavailable. The approach is <b>continuous</b>: the formation curves while advancing toward the reserved side, with no NAV waypoints, stops or artificial realignments; on real contact the magnet engages.<br>
       The approach is <b>dynamic</b>: phases remain relative to the target even if it moves or rotates, while the reserved slot stays stable. If two units target each other, the first physical contact resolves the engagement atomically. If the moving target closes the distance, the pursuer still remains the attacker.<br>
@@ -907,7 +907,7 @@ const RULES_I18N = Object.freeze({
       The <b>Charge</b> button sets a manual override: lock-on and AI cannot switch it off until impact occurs or it is manually disabled.`
   }),
   es:Object.freeze({
-    'rules.controls': `<dt>Seleccionar</dt><dd>Clic izquierdo en una unidad · Ctrl + clic para añadir · arrastra con el botón derecho para un recuadro</dd><dt>Mover</dt><dd>Clic derecho en el terreno · Mayús + clic derecho añade un punto de paso</dd><dt>Atacar</dt><dd>Clic derecho en un enemigo</dd><dt>Cámara</dt><dd>Rueda para el zoom · arrastra con el botón central para desplazarte</dd><dt>Pausa</dt><dd>Espacio</dd><dt>Táctil</dt><dd>Toca para seleccionar, mover o atacar · pulsación larga para añadir · dos dedos para desplazar y hacer zoom</dd>`,
+    'rules.controls': `<dt>Seleccionar</dt><dd>Clic izquierdo en una unidad · Ctrl + clic para añadir · arrastra con el botón derecho para un recuadro</dd><dt>Mover</dt><dd>Clic derecho en el terreno · Mayús + clic derecho añade un punto de paso</dd><dt>Atacar</dt><dd>Clic derecho en un enemigo</dd><dt>Cámara</dt><dd>Rueda para el zoom · arrastra con el botón central para desplazarte</dd><dt>Espacio</dt><dd>Pausa y código HTML completo del juego</dd><dt>Táctil</dt><dd>Toca para seleccionar, mover o atacar · pulsación larga para añadir · dos dedos para desplazar y hacer zoom</dd>`,
     'rules.combat': `<b>Postura:</b> Hold = espera órdenes · Agresivo = ataca dentro de 10U y carga dentro de 5U · Evasivo = huye a M3 dentro de 9U.<br>
       Agresivo elige el <b>slot natural</b> según la región geométrica del atacante respecto al rectángulo del defensor: delante=FRENTE, detrás=RETRO, lateral=FLANCO. El slot queda <b>bloqueado</b> y solo cambia si deja de estar realmente disponible. La aproximación es <b>continua</b>: la formación curva durante el avance hacia el lado reservado, sin waypoints NAV, pausas ni realineamientos artificiales; al contacto real se activa el magnet.<br>
       La aproximación es <b>dinámica</b>: las fases siguen siendo relativas al objetivo aunque se mueva o gire, mientras el slot reservado permanece estable. Si dos unidades se apuntan mutuamente, el primer contacto físico resuelve el combate de forma atómica. Si el objetivo móvil cierra la distancia, el pursuer sigue siendo el atacante.<br>
@@ -950,7 +950,7 @@ const RULES_I18N = Object.freeze({
       El botón <b>Carga</b> establece un override manual: lock-on e IA no pueden desactivarlo hasta que se produzca el impacto o se desactive manualmente.`
   }),
   fr:Object.freeze({
-    'rules.controls': `<dt>Sélection</dt><dd>Clic gauche sur une unité · Ctrl + clic pour ajouter · glisser avec le bouton droit pour un cadre</dd><dt>Déplacement</dt><dd>Clic droit sur le terrain · Maj + clic droit ajoute une étape</dd><dt>Attaque</dt><dd>Clic droit sur un ennemi</dd><dt>Caméra</dt><dd>Molette pour zoomer · glisser avec le bouton du milieu pour se déplacer</dd><dt>Pause</dt><dd>Espace</dd><dt>Tactile</dt><dd>Touchez pour sélectionner, déplacer ou attaquer · appui long pour ajouter · deux doigts pour déplacer et zoomer</dd>`,
+    'rules.controls': `<dt>Sélection</dt><dd>Clic gauche sur une unité · Ctrl + clic pour ajouter · glisser avec le bouton droit pour un cadre</dd><dt>Déplacement</dt><dd>Clic droit sur le terrain · Maj + clic droit ajoute une étape</dd><dt>Attaque</dt><dd>Clic droit sur un ennemi</dd><dt>Caméra</dt><dd>Molette pour zoomer · glisser avec le bouton du milieu pour se déplacer</dd><dt>Espace</dt><dd>Pause et code HTML complet du jeu</dd><dt>Tactile</dt><dd>Touchez pour sélectionner, déplacer ou attaquer · appui long pour ajouter · deux doigts pour déplacer et zoomer</dd>`,
     'rules.combat': `<b>Posture :</b> Hold = attend les ordres · Agressif = attaque à moins de 10U et charge à moins de 5U · Évasif = fuit à M3 à moins de 9U.<br>
       Agressif choisit le <b>slot naturel</b> selon la région géométrique de l'attaquant par rapport au rectangle du défenseur : devant=FRONT, derrière=ARRIÈRE, latéralement=FLANC. Le slot est <b>verrouillé</b> et ne change que s'il devient réellement indisponible. L'approche est <b>continue</b> : la formation courbe pendant l'avance vers le côté réservé, sans waypoint NAV, arrêt ni réalignement artificiel ; au contact réel, le magnet s'active.<br>
       L'approche est <b>dynamique</b> : les phases restent relatives à la cible même si elle se déplace ou pivote, tandis que le slot réservé reste stable. Si deux unités se ciblent mutuellement, le premier contact physique résout atomiquement l'engagement. Si la cible mobile ferme la distance, le pursuer reste quand même l'attaquant.<br>
@@ -993,7 +993,7 @@ const RULES_I18N = Object.freeze({
       Le bouton <b>Charge</b> définit un override manuel : le lock-on et l'IA ne peuvent pas le désactiver avant l'impact ou une désactivation manuelle.`
   }),
   de:Object.freeze({
-    'rules.controls': `<dt>Auswählen</dt><dd>Linksklick auf eine Einheit · Strg + Klick zum Hinzufügen · mit der rechten Taste ziehen für einen Rahmen</dd><dt>Bewegen</dt><dd>Rechtsklick auf das Gelände · Umschalt + Rechtsklick fügt einen Wegpunkt hinzu</dd><dt>Angreifen</dt><dd>Rechtsklick auf einen Gegner</dd><dt>Kamera</dt><dd>Mausrad zum Zoomen · mit der mittleren Taste ziehen zum Verschieben</dd><dt>Pause</dt><dd>Leertaste</dd><dt>Touch</dt><dd>Tippen zum Auswählen, Bewegen oder Angreifen · lange drücken zum Hinzufügen · zwei Finger zum Verschieben und Zoomen</dd>`,
+    'rules.controls': `<dt>Auswählen</dt><dd>Linksklick auf eine Einheit · Strg + Klick zum Hinzufügen · mit der rechten Taste ziehen für einen Rahmen</dd><dt>Bewegen</dt><dd>Rechtsklick auf das Gelände · Umschalt + Rechtsklick fügt einen Wegpunkt hinzu</dd><dt>Angreifen</dt><dd>Rechtsklick auf einen Gegner</dd><dt>Kamera</dt><dd>Mausrad zum Zoomen · mit der mittleren Taste ziehen zum Verschieben</dd><dt>Leertaste</dt><dd>Pause und vollständiger HTML-Quelltext des Spiels</dd><dt>Touch</dt><dd>Tippen zum Auswählen, Bewegen oder Angreifen · lange drücken zum Hinzufügen · zwei Finger zum Verschieben und Zoomen</dd>`,
     'rules.combat': `<b>Haltung:</b> Hold = wartet auf Befehle · Aggressiv = greift innerhalb 10U an und stürmt innerhalb 5U · Ausweichend = flieht mit M3 innerhalb 9U.<br>
       Aggressiv wählt den <b>natürlichen Slot</b> aus der geometrischen Region des Angreifers relativ zum Rechteck des Verteidigers: vorne=FRONT, hinten=RÜCKEN, seitlich=FLANKE. Der Slot wird <b>gesperrt</b> und ändert sich nur, wenn er tatsächlich nicht mehr verfügbar ist. Der Anmarsch ist <b>kontinuierlich</b>: die Formation kurvt beim Vorrücken zur reservierten Seite, ohne NAV-Wegpunkte, Stopps oder künstliche Neuausrichtungen; beim echten Kontakt greift der Magnet.<br>
       Der Anmarsch ist <b>dynamisch</b>: die Phasen bleiben relativ zum Ziel, auch wenn es sich bewegt oder dreht, während der reservierte Slot stabil bleibt. Wenn zwei Einheiten einander gegenseitig anvisieren, löst der erste physische Kontakt das Gefecht atomar aus. Schließt das bewegte Ziel die Distanz, bleibt der pursuer trotzdem der Angreifer.<br>
@@ -1036,7 +1036,7 @@ const RULES_I18N = Object.freeze({
       Die Taste <b>Sturmangriff</b> setzt einen manuellen Override: Lock-on und KI können ihn bis zum Aufprall oder zur manuellen Deaktivierung nicht ausschalten.`
   }),
   ru:Object.freeze({
-    'rules.controls': `<dt>Выбор</dt><dd>ЛКМ по отряду · Ctrl + клик — добавить · тяните ПКМ для рамки</dd><dt>Движение</dt><dd>ПКМ по местности · Shift + ПКМ — добавить точку пути</dd><dt>Атака</dt><dd>ПКМ по врагу</dd><dt>Камера</dt><dd>Колесо — масштаб · тяните средней кнопкой — сдвиг</dd><dt>Пауза</dt><dd>Пробел</dd><dt>Касание</dt><dd>Касание — выбрать, двигаться или атаковать · долгое нажатие — добавить · двумя пальцами — сдвиг и масштаб</dd>`,
+    'rules.controls': `<dt>Выбор</dt><dd>ЛКМ по отряду · Ctrl + клик — добавить · тяните ПКМ для рамки</dd><dt>Движение</dt><dd>ПКМ по местности · Shift + ПКМ — добавить точку пути</dd><dt>Атака</dt><dd>ПКМ по врагу</dd><dt>Камера</dt><dd>Колесо — масштаб · тяните средней кнопкой — сдвиг</dd><dt>Пробел</dt><dd>Пауза и полный HTML-код игры</dd><dt>Касание</dt><dd>Касание — выбрать, двигаться или атаковать · долгое нажатие — добавить · двумя пальцами — сдвиг и масштаб</dd>`,
     'rules.combat': `<b>Стойка:</b> Hold = ждёт приказа · Агрессивный = атакует в пределах 10U и идёт в атаку с хода в пределах 5U · Уклоняющийся = отходит на M3 в пределах 9U.<br>
       Агрессивный выбирает <b>естественный slot</b> по геометрической области атакующего относительно прямоугольника защитника: спереди=FRONT, сзади=REAR, сбоку=FLANK. Slot <b>блокируется</b> и меняется только если действительно становится недоступным. Сближение <b>непрерывное</b>: строй поворачивает по дуге при движении к зарезервированной стороне без NAV waypoint, остановок и искусственных перестроений; при реальном контакте включается magnet.<br>
       Сближение <b>динамическое</b>: фазы остаются относительными к цели, даже если она движется или поворачивается, а зарезервированный slot остаётся стабильным. Если две части взаимно целятся друг в друга, первый физический контакт атомарно разрешает вступление в бой. Если движущаяся цель сама закрывает дистанцию, pursuer всё равно остаётся атакующим.<br>
@@ -1092,6 +1092,7 @@ const I18N = Object.freeze({
   }),
   strings: Object.freeze({
     it:Object.freeze({
+      'source.title':'Codice sorgente',
       'unitrole.horse_archer':'Veloce, tira a distanza',
       'unitrole.cavalry':'Carica d’urto pesante',
       'unitrole.crossbow':'Tiri perforanti',
@@ -1106,7 +1107,7 @@ const I18N = Object.freeze({
       'setup.howToPlay':'Come si gioca',
       'setup.customPlaceholder':'Altro',
       'language':'Lingua',
-      'source.hint':'SPACE chiude il codice e ripristina la velocità precedente.','source.copy':'COPIA TUTTO','source.close':'CHIUDI · SPACE',
+      'source.hint':'La battaglia è in pausa. Spazio chiude il codice e ripristina la velocità precedente.','source.copy':'Copia tutto','source.close':'Chiudi',
       'setup.newBattle':'Nuova partita','setup.motto':'Fai una pausa. Prendi un caffè. Combatti una battaglia.','setup.armyPoints':'Dimensione esercito','setup.customBudget':'Dimensione personalizzata','setup.biome':'Terreno','setup.armyMode':'Eserciti','setup.playerRole':'Il tuo ruolo','setup.goDeployment':'Continua',
       'biome.random':'Casuale','biome.plains':'Pianura','biome.hills':'Colline','biome.valley':'Vallata','biome.river':'Fiume','biome.forest':'Foresta','biome.mountains':'Montagne','biome.village':'Villaggio','biome.sea':'Mare',
       'mode.auto':'Auto','mode.autoSub':'Il computer costruisce l’esercito nemico, tu il tuo.','mode.autoNote':'Il computer costruisce l’esercito nemico, tu il tuo.','mode.mirrored':'Specchio','mode.mirroredSub':'L’esercito nemico copia il tuo.','mode.mirroredNote':'L’esercito nemico copia il tuo, specchiato sul campo.','mode.custom':'Libero','mode.customSub':'Costruisci entrambi gli eserciti.','mode.customNote':'Costruisci e schieri entrambi gli eserciti.',
@@ -1124,6 +1125,7 @@ const I18N = Object.freeze({
       'selected.unit':'Unità','selected.selection':'Selezione','selected.side':'Schieramento','selected.type':'Tipo','selected.order':'Ordine','selected.lock':'Lock-on','selected.finalAttack':'Attacco terminale','selected.aiTarget':'Target AI','selected.path':'Path obstacle','selected.approach':'Approccio','selected.pursuit':'Inseguimento','selected.health':'Vita [V]','selected.energy':'Energia [E]','selected.brain':'Brain [B]','selected.morale':'Morale','selected.shock':'Shock [S]','selected.combat':'Combattimento [C]','selected.armor':'Armor [AR]','selected.stance':'Stance','selected.formation':'Formazione','selected.front':'Fronte [F]','selected.contactFront':'Fronte contatto [Fc]','selected.depth':'Profondità','selected.movement':'Movimento [M]','selected.charge':'Carica','selected.chargeOverride':'Override carica','selected.retreatRout':'Ritirata/ROUT','selected.moveCost':'Consumo mov.','selected.chargeCost':'Consumo carica','selected.aim':'Mira','selected.range':'Gittata','selected.fireAtWill':'Fuoco a volontà','selected.shotTarget':'Target tiro','selected.shotTimer':'Timer tiro','selected.rate':'Cadenza','selected.shotCost':'Costo tiro','selected.maneuver':'Manovra','selected.status':'Stato','selected.engagements':'Ingaggi','selected.outboundSlot':'Slot outbound'
     }),
     en:Object.freeze({
+      'source.title':'Source code',
       'unitrole.horse_archer':'Fast, shoots from range',
       'unitrole.cavalry':'Heavy shock charge',
       'unitrole.crossbow':'Armour-piercing shots',
@@ -1138,7 +1140,7 @@ const I18N = Object.freeze({
       'setup.howToPlay':'How to play',
       'setup.customPlaceholder':'Other',
       'language':'Language',
-      'source.hint':'SPACE closes the source and restores the previous speed.','source.copy':'COPY ALL','source.close':'CLOSE · SPACE',
+      'source.hint':'The battle is paused. Space closes the source and restores the previous speed.','source.copy':'Copy all','source.close':'Close',
       'setup.newBattle':'New battle','setup.motto':'Take a break. Grab a coffee. Fight a battle.','setup.armyPoints':'Army size','setup.customBudget':'Custom army size','setup.biome':'Terrain','setup.armyMode':'Armies','setup.playerRole':'Your role','setup.goDeployment':'Continue',
       'biome.random':'Random','biome.plains':'Plains','biome.hills':'Hills','biome.valley':'Valley','biome.river':'River','biome.forest':'Forest','biome.mountains':'Mountains','biome.village':'Village','biome.sea':'Sea',
       'mode.auto':'Auto','mode.autoSub':'The computer builds the enemy army; you build yours.','mode.autoNote':'The computer builds the enemy army; you build yours.','mode.mirrored':'Mirror','mode.mirroredSub':'The enemy army copies yours.','mode.mirroredNote':'The enemy army copies yours, mirrored across the field.','mode.custom':'Custom','mode.customSub':'You build both armies.','mode.customNote':'You build and deploy both armies.',
@@ -1156,6 +1158,7 @@ const I18N = Object.freeze({
       'selected.unit':'Unit','selected.selection':'Selection','selected.side':'Army','selected.type':'Type','selected.order':'Order','selected.lock':'Lock-on','selected.finalAttack':'Terminal attack','selected.aiTarget':'AI target','selected.path':'Obstacle path','selected.approach':'Approach','selected.pursuit':'Pursuit','selected.health':'Health [V]','selected.energy':'Energy [E]','selected.brain':'Brain [B]','selected.morale':'Morale','selected.shock':'Shock [S]','selected.combat':'Combat [C]','selected.armor':'Armor [AR]','selected.stance':'Stance','selected.formation':'Formation','selected.front':'Frontage [F]','selected.contactFront':'Contact frontage [Fc]','selected.depth':'Depth','selected.movement':'Movement [M]','selected.charge':'Charge','selected.chargeOverride':'Charge override','selected.retreatRout':'Retreat/ROUT','selected.moveCost':'Move cost','selected.chargeCost':'Charge cost','selected.aim':'Aim','selected.range':'Range','selected.fireAtWill':'Fire at will','selected.shotTarget':'Ranged target','selected.shotTimer':'Shot timer','selected.rate':'Rate','selected.shotCost':'Shot cost','selected.maneuver':'Maneuver','selected.status':'Status','selected.engagements':'Engagements','selected.outboundSlot':'Outbound slot'
     }),
     es:Object.freeze({
+      'source.title':'Código fuente',
       'unitrole.horse_archer':'Rápida, dispara a distancia',
       'unitrole.cavalry':'Carga de choque pesada',
       'unitrole.crossbow':'Disparos perforantes',
@@ -1170,7 +1173,7 @@ const I18N = Object.freeze({
       'setup.howToPlay':'Cómo se juega',
       'setup.customPlaceholder':'Otro',
       'language':'Idioma',
-      'source.hint':'SPACE cierra el código y restaura la velocidad anterior.','source.copy':'COPIAR TODO','source.close':'CERRAR · SPACE',
+      'source.hint':'La batalla está en pausa. Espacio cierra el código y restaura la velocidad anterior.','source.copy':'Copiar todo','source.close':'Cerrar',
       'setup.newBattle':'Nueva partida','setup.motto':'Haz una pausa. Toma un café. Libra una batalla.','setup.armyPoints':'Tamaño del ejército','setup.customBudget':'Tamaño personalizado','setup.biome':'Terreno','setup.armyMode':'Ejércitos','setup.playerRole':'Tu papel','setup.goDeployment':'Continuar',
       'biome.random':'Aleatorio','biome.plains':'Llanura','biome.hills':'Colinas','biome.valley':'Valle','biome.river':'Río','biome.forest':'Bosque','biome.mountains':'Montañas','biome.village':'Aldea','biome.sea':'Mar',
       'mode.auto':'Auto','mode.autoSub':'El ordenador crea el ejército enemigo; tú creas el tuyo.','mode.autoNote':'El ordenador crea el ejército enemigo; tú creas el tuyo.','mode.mirrored':'Espejo','mode.mirroredSub':'El ejército enemigo copia el tuyo.','mode.mirroredNote':'El ejército enemigo copia el tuyo, reflejado en el campo.','mode.custom':'Libre','mode.customSub':'Creas ambos ejércitos.','mode.customNote':'Creas y despliegas ambos ejércitos.',
@@ -1187,6 +1190,7 @@ const I18N = Object.freeze({
       'state.exited':'HUYÓ DEL CAMPO','state.destroyed':'DESTRUIDA','state.permanentRout':'HUIDA PERMANENTE','state.rout':'HUIDA','state.active':'ACTIVA'
     }),
     fr:Object.freeze({
+      'source.title':'Code source',
       'unitrole.horse_archer':'Rapide, tire à distance',
       'unitrole.cavalry':'Charge de choc lourde',
       'unitrole.crossbow':'Tirs perforants',
@@ -1201,7 +1205,7 @@ const I18N = Object.freeze({
       'setup.howToPlay':'Comment jouer',
       'setup.customPlaceholder':'Autre',
       'language':'Langue',
-      'source.hint':'ESPACE ferme le code et restaure la vitesse précédente.','source.copy':'TOUT COPIER','source.close':'FERMER · ESPACE',
+      'source.hint':'La bataille est en pause. Espace ferme le code et rétablit la vitesse précédente.','source.copy':'Tout copier','source.close':'Fermer',
       'setup.newBattle':'Nouvelle partie','setup.motto':'Faites une pause. Prenez un café. Livrez bataille.','setup.armyPoints':'Taille de l’armée','setup.customBudget':'Taille personnalisée','setup.biome':'Terrain','setup.armyMode':'Armées','setup.playerRole':'Votre rôle','setup.goDeployment':'Continuer',
       'biome.random':'Aléatoire','biome.plains':'Plaine','biome.hills':'Collines','biome.valley':'Vallée','biome.river':'Rivière','biome.forest':'Forêt','biome.mountains':'Montagnes','biome.village':'Village','biome.sea':'Mer',
       'mode.auto':'Auto','mode.autoSub':'L’ordinateur compose l’armée ennemie ; vous composez la vôtre.','mode.autoNote':'L’ordinateur compose l’armée ennemie ; vous composez la vôtre.','mode.mirrored':'Miroir','mode.mirroredSub':'L’armée ennemie copie la vôtre.','mode.mirroredNote':'L’armée ennemie copie la vôtre, en miroir sur le terrain.','mode.custom':'Libre','mode.customSub':'Vous composez les deux armées.','mode.customNote':'Vous composez et déployez les deux armées.',
@@ -1218,6 +1222,7 @@ const I18N = Object.freeze({
       'state.exited':'FUITE HORS DU CHAMP','state.destroyed':'DÉTRUITE','state.permanentRout':'DÉROUTE PERMANENTE','state.rout':'DÉROUTE','state.active':'ACTIVE'
     }),
     de:Object.freeze({
+      'source.title':'Quelltext',
       'unitrole.horse_archer':'Schnell, schießt auf Distanz',
       'unitrole.cavalry':'Schwerer Schockangriff',
       'unitrole.crossbow':'Panzerbrechende Schüsse',
@@ -1232,7 +1237,7 @@ const I18N = Object.freeze({
       'setup.howToPlay':'Spielanleitung',
       'setup.customPlaceholder':'Andere',
       'language':'Sprache',
-      'source.hint':'LEERTASTE schließt den Code und stellt die vorherige Geschwindigkeit wieder her.','source.copy':'ALLES KOPIEREN','source.close':'SCHLIESSEN · LEERTASTE',
+      'source.hint':'Die Schlacht ist pausiert. Leertaste schließt den Quelltext und stellt das vorige Tempo wieder her.','source.copy':'Alles kopieren','source.close':'Schließen',
       'setup.newBattle':'Neue Partie','setup.motto':'Mach eine Pause. Hol dir einen Kaffee. Kämpfe eine Schlacht.','setup.armyPoints':'Armeegröße','setup.customBudget':'Eigene Armeegröße','setup.biome':'Gelände','setup.armyMode':'Armeen','setup.playerRole':'Deine Rolle','setup.goDeployment':'Weiter',
       'biome.random':'Zufall','biome.plains':'Ebene','biome.hills':'Hügel','biome.valley':'Tal','biome.river':'Fluss','biome.forest':'Wald','biome.mountains':'Berge','biome.village':'Dorf',
       'mode.auto':'Auto','mode.autoSub':'Der Computer stellt die feindliche Armee zusammen, du deine.','mode.autoNote':'Der Computer stellt die feindliche Armee zusammen, du deine.','mode.mirrored':'Spiegel','mode.mirroredSub':'Die feindliche Armee kopiert deine.','mode.mirroredNote':'Die feindliche Armee kopiert deine, gespiegelt auf dem Feld.','mode.custom':'Frei','mode.customSub':'Du stellst beide Armeen zusammen.','mode.customNote':'Du stellst beide Armeen zusammen und auf.',
@@ -1249,6 +1254,7 @@ const I18N = Object.freeze({
       'state.exited':'VOM FELD GEFLOHEN','state.destroyed':'VERNICHTET','state.permanentRout':'DAUERHAFTE FLUCHT','state.rout':'FLUCHT','state.active':'AKTIV'
     }),
     ru:Object.freeze({
+      'source.title':'Исходный код',
       'unitrole.horse_archer':'Быстрая, стреляет издалека',
       'unitrole.cavalry':'Мощный таранный удар',
       'unitrole.crossbow':'Бронебойные выстрелы',
@@ -1263,7 +1269,7 @@ const I18N = Object.freeze({
       'setup.howToPlay':'Как играть',
       'setup.customPlaceholder':'Другое',
       'language':'Язык',
-      'source.hint':'ПРОБЕЛ закрывает код и возвращает прежнюю скорость.','source.copy':'КОПИРОВАТЬ ВСЁ','source.close':'ЗАКРЫТЬ · ПРОБЕЛ',
+      'source.hint':'Бой на паузе. Пробел закрывает код и возвращает прежнюю скорость.','source.copy':'Копировать всё','source.close':'Закрыть',
       'setup.newBattle':'Новая партия','setup.motto':'Сделай перерыв. Возьми кофе. Вступи в бой.','setup.armyPoints':'Размер армии','setup.customBudget':'Свой размер армии','setup.biome':'Местность','setup.armyMode':'Армии','setup.playerRole':'Ваша роль','setup.goDeployment':'Далее',
       'biome.random':'Случайно','biome.plains':'Равнина','biome.hills':'Холмы','biome.valley':'Долина','biome.river':'Река','biome.forest':'Лес','biome.mountains':'Горы','biome.village':'Деревня','biome.sea':'Море',
       'mode.auto':'Авто','mode.autoSub':'Компьютер собирает армию противника, вы — свою.','mode.autoNote':'Компьютер собирает армию противника, вы — свою.','mode.mirrored':'Зеркало','mode.mirroredSub':'Армия противника копирует вашу.','mode.mirroredNote':'Армия противника копирует вашу, зеркально на поле.','mode.custom':'Свободно','mode.customSub':'Вы собираете обе армии.','mode.customNote':'Вы собираете и расставляете обе армии.',
@@ -9615,14 +9621,10 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       window.addEventListener('keydown', e => {
         const space = e.code === 'Space' || e.key === ' ';
         if (space) {
-          if (DEBUG && (SourcePause.open || !SourcePause.isTypingTarget(e.target))) {
+          if (SourcePause.open || !SourcePause.isTypingTarget(e.target)) {
             e.preventDefault();
             e.stopPropagation();
             SourcePause.toggle();
-          } else if (!DEBUG && State.battle.active && !State.deployment.active && !SourcePause.isTypingTarget(e.target)) {
-            e.preventDefault();
-            if (State.timeScale > 0) { this.resumeScale = State.timeScale; UI.setTimeScale(0); }
-            else UI.setTimeScale(this.resumeScale || 1);
           }
           return;
         }
