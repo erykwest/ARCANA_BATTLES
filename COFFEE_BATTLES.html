@@ -1360,8 +1360,30 @@ const I18n = {
   selectedLabelKeys:Object.freeze({
     'Unità':'selected.unit','Selezione':'selected.selection','Schieramento':'selected.side','Tipo':'selected.type','Ordine':'selected.order','Lock-on':'selected.lock','Attacco terminale':'selected.finalAttack','Target AI':'selected.aiTarget','Path obstacle':'selected.path','Approccio':'selected.approach','Inseguimento':'selected.pursuit','Vita [V]':'selected.health','Energia [E]':'selected.energy','Brain [B]':'selected.brain','Morale':'selected.morale','Shock [S]':'selected.shock','Combattimento [C]':'selected.combat','Armor [AR]':'selected.armor','Stance':'selected.stance','Formazione':'selected.formation','Fronte [F]':'selected.front','Fronte contatto [Fc]':'selected.contactFront','Profondità':'selected.depth','Movimento [M]':'selected.movement','Carica':'selected.charge','Override carica':'selected.chargeOverride','Ritirata/ROUT':'selected.retreatRout','Consumo mov.':'selected.moveCost','Consumo carica':'selected.chargeCost','Mira':'selected.aim','Gittata':'selected.range','Fuoco a volontà':'selected.fireAtWill','Target tiro':'selected.shotTarget','Timer tiro':'selected.shotTimer','Cadenza':'selected.rate','Costo tiro':'selected.shotCost','Manovra':'selected.maneuver','Stato':'selected.status','Ingaggi':'selected.engagements','Slot outbound':'selected.outboundSlot'
   }),
+  storageSafe:{
+    memory:new Map(),
+    get(key){
+      try{
+        const value=localStorage.getItem(key);
+        if(value!==null)this.memory.set(key,value);
+        return value;
+      }catch(_){
+        return this.memory.get(key)??null;
+      }
+    },
+    set(key,value){
+      const text=String(value);
+      this.memory.set(key,text);
+      try{
+        localStorage.setItem(key,text);
+        return true;
+      }catch(_){
+        return false;
+      }
+    }
+  },
   detect(){
-    const saved=localStorage.getItem(this.STORAGE_KEY);
+    const saved=this.storageSafe.get(this.STORAGE_KEY);
     if(saved&&I18N.languages[saved])return saved;
     return 'en';
   },
@@ -1414,7 +1436,7 @@ const I18n = {
   },
   set(lang,persist=true){
     this.current=I18N.languages[lang]?lang:'en';
-    if(persist)localStorage.setItem(this.STORAGE_KEY,this.current);
+    if(persist)this.storageSafe.set(this.STORAGE_KEY,this.current);
     this.apply();
     BattleSetup.sync();
     Deployment.updateUI();
