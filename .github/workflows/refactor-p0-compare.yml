@@ -1,5 +1,9 @@
 name: P0 baseline vs branch comparison
 
+concurrency:
+  group: refactor-p0-determinism-compare
+  cancel-in-progress: true
+
 on:
   push:
     branches:
