@@ -302,10 +302,20 @@
   }
   #battleSetupOverlay.open{opacity:1;visibility:visible;pointer-events:auto}
   .setup-panel{
+    position:relative;
     width:min(580px,100%);max-height:min(760px,calc(100vh - 30px));overflow:auto;
     background:#111820;border:1px solid #3a4656;border-radius:18px;
     box-shadow:0 24px 80px rgba(0,0,0,.58);padding:24px;
   }
+  #splashLanguageSelect{
+    position:absolute;top:18px;right:18px;width:auto;min-width:88px;height:34px;
+    padding:0 28px 0 10px;border:1px solid #394555;border-radius:9px;
+    background:#171e27;color:var(--text);font:700 11px/1 Inter,Segoe UI,Arial,sans-serif;
+    letter-spacing:.04em;cursor:pointer;z-index:2
+  }
+  #splashLanguageSelect:hover{background:#202936}
+  #splashLanguageSelect:focus{outline:2px solid #f0d36f;outline-offset:1px}
+  @media (max-width:700px){#splashLanguageSelect{top:14px;right:14px;min-width:76px;height:32px;font-size:10px}}
   .setup-kicker{font-size:11px;letter-spacing:.18em;color:#8ea1b5;font-weight:800;margin-bottom:8px}
   .setup-panel h1{font-size:30px;line-height:1.05;margin:0 0 8px;letter-spacing:.04em}
   .setup-motto{font-size:12px;font-weight:900;letter-spacing:.10em;color:#f0d36f;margin:2px 0 10px;text-transform:uppercase}
@@ -542,6 +552,14 @@
 
 <div id="battleSetupOverlay" role="dialog" aria-modal="true" aria-labelledby="battleSetupTitle">
   <div class="setup-panel">
+    <select id="splashLanguageSelect" aria-label="Language" title="Language" onchange="I18n.set(this.value,true)">
+      <option value="en">🇬🇧 EN</option>
+      <option value="it">🇮🇹 IT</option>
+      <option value="es">🇪🇸 ES</option>
+      <option value="fr">🇫🇷 FR</option>
+      <option value="de">🇩🇪 DE</option>
+      <option value="ru">🇷🇺 RU</option>
+    </select>
     <div class="setup-kicker">COFFEE BATTLES · CAMPAL BATTLE LAB</div>
     <h1 id="battleSetupTitle" data-i18n="setup.newBattle">NUOVA PARTITA</h1>
     <div class="setup-motto" data-i18n="setup.motto">TAKE A BREAK. GRAB A COFFEE. FIGHT A BATTLE.</div>
@@ -1379,9 +1397,11 @@ const I18n = {
     const flag=document.getElementById('languageFlag');
     const code=document.getElementById('languageCode');
     const button=document.getElementById('languageButton');
+    const splashSelect=document.getElementById('splashLanguageSelect');
     if(flag)flag.textContent=meta.flag;
     if(code)code.textContent=this.current.toUpperCase();
     if(button){button.title=this.t('language');button.setAttribute('aria-label',this.t('language'));}
+    if(splashSelect){splashSelect.value=this.current;splashSelect.title=this.t('language');splashSelect.setAttribute('aria-label',this.t('language'));}
     document.querySelectorAll('#languageMenu [data-lang]').forEach(b=>b.classList.toggle('active',b.dataset.lang===this.current));
   },
   translateSelectedPanel(root){
