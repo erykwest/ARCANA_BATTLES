@@ -1,0 +1,85 @@
+name: P0 baseline vs branch comparison
+
+on:
+  push:
+    branches:
+      - refactor/p0-determinism
+    paths:
+      - '.github/workflows/refactor-p0-compare.yml'
+      - 'tools/run-refactor-comparison.mjs'
+      - 'COFFEE_BATTLES.html'
+      - 'sim-lab.js'
+  workflow_dispatch:
+    inputs:
+      count:
+        description: Seeds per series
+        required: false
+        default: '300'
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      BASELINE_COMMIT: 079e944f162eaebaabfd3d833ea085d920b2d4e0
+      BRANCH_COMMIT: ${{ github.sha }}
+      BASELINE_COUNT: ${{ inputs.count || '300' }}
+      BASELINE_SEED: '1'
+      BASELINE_POINTS: '1000'
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare baseline worktree
+        run: |
+          git worktree add ../coffee-baseline "$BASELINE_COMMIT"
+
+      - name: Locate Chrome
+        run: |
+          CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_BIN"
+          echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
+          "$CHROME_BIN" --version
+
+      - name: Install browser driver
+        run: npm install --no-save --no-package-lock playwright-core@1.55.0
+
+      - name: Start static servers
+        run: |
+          python3 -m http.server 8000 --directory ../coffee-baseline > /tmp/coffee-baseline.log 2>&1 &
+          echo $! > /tmp/coffee-baseline.pid
+          python3 -m http.server 8001 --directory . > /tmp/coffee-branch.log 2>&1 &
+          echo $! > /tmp/coffee-branch.pid
+          sleep 2
+          curl --fail http://127.0.0.1:8000/COFFEE_BATTLES.html >/dev/null
+          curl --fail http://127.0.0.1:8001/COFFEE_BATTLES.html >/dev/null
+          curl --fail http://127.0.0.1:8000/sim-lab.js >/dev/null
+          curl --fail http://127.0.0.1:8001/sim-lab.js >/dev/null
+
+      - name: Run comparison matrix
+        run: node tools/run-refactor-comparison.mjs
+
+      - name: Publish summary
+        if: always()
+        run: |
+          if [ -f results/refactor-p0-summary.md ]; then
+            cat results/refactor-p0-summary.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo '## Server logs' >> "$GITHUB_STEP_SUMMARY"
+          tail -20 /tmp/coffee-baseline.log >> "$GITHUB_STEP_SUMMARY" || true
+          tail -20 /tmp/coffee-branch.log >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Upload comparison artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: refactor-p0-comparison-${{ github.sha }}
+          path: results/
+          if-no-files-found: warn
