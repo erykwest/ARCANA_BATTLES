@@ -1,0 +1,86 @@
+name: Patch landing motto
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-landing-motto.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Patch landing motto
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          hero_anchor = '<h1 data-i18n-html="hero.title">Command the line.<br>Break the enemy.</h1>'
+          motto_html = hero_anchor + '<div class="hero-motto" data-i18n="hero.motto">TAKE A BREAK. GRAB A COFFEE. FIGHT A BATTLE.</div>'
+          if 'data-i18n="hero.motto"' not in s:
+              if hero_anchor not in s:
+                  raise SystemExit('Hero title anchor not found')
+              s = s.replace(hero_anchor, motto_html, 1)
+
+          mottos = {
+              'en': 'TAKE A BREAK. GRAB A COFFEE. FIGHT A BATTLE.',
+              'it': 'FAI UNA PAUSA. PRENDI UN CAFFÈ. COMBATTI UNA BATTAGLIA.',
+              'es': 'HAZ UNA PAUSA. TOMA UN CAFÉ. LIBRA UNA BATALLA.',
+              'fr': 'FAITES UNE PAUSE. PRENEZ UN CAFÉ. LIVREZ BATAILLE.',
+              'de': 'MACH EINE PAUSE. HOL DIR EINEN KAFFEE. KÄMPFE EINE SCHLACHT.',
+              'ru': 'СДЕЛАЙ ПЕРЕРЫВ. ВОЗЬМИ КОФЕ. ВСТУПИ В БОЙ.'
+          }
+
+          for lang, motto in mottos.items():
+              block = f'  {lang}:{{\n'
+              start = s.find(block)
+              if start < 0:
+                  raise SystemExit(f'Locale block not found: {lang}')
+              next_block = s.find('\n  },', start)
+              segment = s[start:next_block if next_block >= 0 else len(s)]
+              if "'hero.motto'" in segment:
+                  continue
+              key = "'hero.kicker':"
+              pos = s.find(key, start)
+              if pos < 0:
+                  raise SystemExit(f'hero.kicker not found in {lang}')
+              comma = s.find(',', pos)
+              if comma < 0:
+                  raise SystemExit(f'Insertion point not found in {lang}')
+              s = s[:comma] + f",'hero.motto':'{motto}'" + s[comma:]
+
+          p.write_text(s, encoding='utf-8')
+
+          css = Path('site.css')
+          c = css.read_text(encoding='utf-8')
+          if '.hero-motto{' not in c:
+              anchor = '.lead{max-width:760px;font-size:19px;line-height:1.55;color:#c5d0dc}'
+              addition = '.hero-motto{margin:-6px 0 18px;font-size:14px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}'
+              if anchor not in c:
+                  raise SystemExit('CSS anchor not found')
+              c = c.replace(anchor, addition + anchor, 1)
+              css.write_text(c, encoding='utf-8')
+          PY
+
+          grep -q 'data-i18n="hero.motto"' index.html
+          grep -q "'hero.motto'" index.html
+          grep -q '.hero-motto{' site.css
+
+      - name: Commit patch and remove workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/patch-landing-motto.yml
+          git add index.html site.css
+          git commit -m "feat: add translated motto to landing hero"
+          git push
