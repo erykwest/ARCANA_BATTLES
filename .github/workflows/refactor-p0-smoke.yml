@@ -11,6 +11,8 @@ on:
     paths:
       - '.github/workflows/refactor-p0-smoke.yml'
       - 'tools/run-refactor-smoke.mjs'
+      - 'COFFEE_BATTLES.html'
+      - 'sim-lab.js'
   workflow_dispatch:
 
 permissions:
@@ -30,16 +32,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - run: git worktree add ../coffee-baseline "$BASELINE_COMMIT"
-
       - name: Prepare Chromium runner
         run: |
           CHROME_BIN="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
           test -n "$CHROME_BIN"
           echo "CHROME_BIN=$CHROME_BIN" >> "$GITHUB_ENV"
           npm install --no-save --no-package-lock playwright-core@1.55.0
-
       - name: Start static servers
         run: |
           nohup python3 -m http.server 8000 --bind 127.0.0.1 --directory ../coffee-baseline </dev/null >/tmp/base.log 2>&1 &
@@ -49,14 +48,11 @@ jobs:
             sleep 1
           done
           exit 1
-
       - name: Run exact smoke comparison
         run: node tools/run-refactor-smoke.mjs
-
       - name: Publish summary
         if: always()
         run: test -f results/refactor-p0-smoke.md && cat results/refactor-p0-smoke.md >> "$GITHUB_STEP_SUMMARY" || true
-
       - name: Upload smoke comparison
         if: always()
         uses: actions/upload-artifact@v4
