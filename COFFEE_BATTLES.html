@@ -1471,6 +1471,8 @@ I18n.current=I18n.detect();
     CONTACT_TOLERANCE_U: 0.35,
     MAGNET_SLIDE_U_S: 1.5,
     MAGNET_MIN_OVERLAP_U: 0.15,
+    CONTACT_LINE_GAP_U: 0.10,       // spazio tra reparti amici sulla stessa linea di contatto
+    CONTACT_LINE_MIN_SHARE_U: 1.0,  // contatto minimo di ciascun reparto su una linea condivisa
     AGGRESSIVE_RANGE_U: 10,
     AGGRESSIVE_CHARGE_RANGE_U: 5,
     ELUSIVE_RANGE_U: 9,
@@ -1681,7 +1683,7 @@ I18n.current=I18n.detect();
       behavior: { stance:'hold', active:false, targetId:null },
       order: { kind:'idle', target:null, queue:[], lockTargetId:null, finalAttackTargetId:null, approach:null, retreatThreatId:null, retreatAngle:null, pursuit:null, pursuitBlockedEnemyId:null },
       motion: { moveMult:spec.profile.marchMult, chargeMode:false, chargeOverride:null, moving:false, turn:null, detour:null, terrainClearanceBoostUntil:0, wallCrossing:null, wallPassId:null },
-      engagement: { outbound:null, inbound:{ front:null, rear:null, 'flank-left':null, 'flank-right':null } },
+      engagement: { outbound:null, inbound:{ front:[], rear:[], 'flank-left':[], 'flank-right':[] } },
       ranged: rangedSpec ? { fireAtWill:true, clock:0, active:false, targetId:null, approachTargetId:null } : null,
       status: { alive:true, exited:false, exitReason:null, routing:false, permanentRout:false, routAngle:null, chargeUntil:0, suppressedUntil:0, brainLossClock:0, brainRecoveryClock:0, rearExposureClock:0, moraleState:'steady', routShockEmitted:false, lastHostileSourceId:null, routedById:null, friendlyFleeImpactVictims:new Set() }
     };
@@ -2582,7 +2584,7 @@ I18n.current=I18n.detect();
   // ============================================================
   const Engagements = {
     inboundIds(u) {
-      return Object.values(u.engagement.inbound).filter(Boolean);
+      return Object.values(u.engagement.inbound).flat();
     },
 
     hasAny(u) {
@@ -2605,32 +2607,105 @@ I18n.current=I18n.detect();
       return Units.byId(first);
     },
 
-    isSlotOccupied(defender, slot) {
-      return !!defender.engagement.inbound[slot];
+    // CONTACT LINE
+    // Un lato del difensore non e' piu' un posto singolo: e' una LINEA DI
+    // CONTATTO lunga quanto il lato reale. Piu' reparti amici la condividono
+    // affiancati finche' ognuno resta a contatto per almeno
+    // CONTACT_LINE_MIN_SHARE_U. Allargare la formazione (linea -> fronte,
+    // colonna -> fianchi) aumenta quanti reparti combattono sullo stesso lato.
+    // Un attaccante da solo si comporta esattamente come prima (centro lato).
+    slotAttackers(defender, slot) {
+      return defender.engagement.inbound[slot] || [];
     },
 
-    isSlotReservedByOther(defender, slot, requester) {
-      return State.units.some(u =>
-        u.id !== requester.id &&
-        u.status.alive &&
-        u.side === requester.side &&
-        u.order.approach?.enemyId === defender.id &&
-        u.order.approach?.slot === slot
-      );
+    // Chiave d'ordinamento lungo la tangente del lato (px dal punto medio).
+    laneKey(u, defender, slot, frame) {
+      const out = u.engagement.outbound;
+      if (out?.defenderId === defender.id && out.slot === slot && Number.isFinite(out.slideOffsetPx)) {
+        return out.slideOffsetPx;
+      }
+      const ap = u.order.approach;
+      if (ap?.enemyId === defender.id && ap.slot === slot && Number.isFinite(ap.contactT)) {
+        return (ap.contactT - 0.5) * frame.length;
+      }
+      return (u.pose.x - frame.mid.x) * frame.tangent.x + (u.pose.y - frame.mid.y) * frame.tangent.y;
     },
 
-    slotPhysicalFree(attacker, defender, slot) {
+    // Reparti sulla linea: ingaggiati e, se richiesto, in avvicinamento
+    // (prenotazioni dello stesso schieramento del richiedente).
+    lineMembers(defender, slot, frame, excludeId = null, reservedSide = null) {
+      const members = [];
+      for (const id of this.slotAttackers(defender, slot)) {
+        const a = Units.byId(id);
+        if (!a?.status.alive || a.id === excludeId) continue;
+        members.push({ id: a.id, half: Geometry.dims(a).front / 2, key: this.laneKey(a, defender, slot, frame) });
+      }
+      if (reservedSide) {
+        for (const u of State.units) {
+          if (u.id === excludeId || !u.status.alive || u.side !== reservedSide || u.engagement.outbound) continue;
+          const ap = u.order.approach;
+          if (ap?.enemyId !== defender.id || ap.slot !== slot) continue;
+          members.push({ id: u.id, half: Geometry.dims(u).front / 2, key: this.laneKey(u, defender, slot, frame) });
+        }
+      }
+      return members;
+    },
+
+    // Affianca i reparti in ordine lungo il lato, come blocco centrato.
+    packLine(members) {
+      const gap = CFG.CONTACT_LINE_GAP_U * CFG.U;
+      const sorted = [...members].sort((a, b) => (a.key - b.key) || a.id.localeCompare(b.id));
+      const total = sorted.reduce((s, m) => s + m.half * 2, 0) + gap * Math.max(0, sorted.length - 1);
+      const offsets = new Map();
+      let cursor = -total / 2;
+      for (const m of sorted) {
+        offsets.set(m.id, cursor + m.half);
+        cursor += m.half * 2 + gap;
+      }
+      return { sorted, offsets };
+    },
+
+    lineFits(length, layout) {
+      const half = length / 2;
+      return layout.sorted.every(m => {
+        const c = layout.offsets.get(m.id);
+        const overlap = Math.min(half, c + m.half) - Math.max(-half, c - m.half);
+        return overlap >= Math.min(CFG.CONTACT_LINE_MIN_SHARE_U * CFG.U, m.half * 2) - 1e-6;
+      });
+    },
+
+    // Posto di ATTACKER sulla linea di contatto del lato, oppure null se pieno.
+    lineLane(attacker, defender, slot, key = null) {
+      const frame = Geometry.slotFrame(defender, slot);
+      if (!frame) return null;
+      const members = this.lineMembers(defender, slot, frame, attacker.id, attacker.side);
+      if (!members.length) return { offset: 0, shared: false, members, frame };
+      members.push({
+        id: attacker.id,
+        half: Geometry.dims(attacker).front / 2,
+        key: Number.isFinite(key) ? key : this.laneKey(attacker, defender, slot, frame)
+      });
+      const layout = this.packLine(members);
+      if (!this.lineFits(frame.length, layout)) return null;
+      return { offset: layout.offsets.get(attacker.id), shared: true, members, frame };
+    },
+
+    slotPhysicalFree(attacker, defender, slot, lane) {
+      const frame = lane.frame;
       const test = {
         ...attacker,
         pose: {
-          x: Geometry.slotPoint(defender, slot).x,
-          y: Geometry.slotPoint(defender, slot).y,
+          x: frame.mid.x + frame.tangent.x * lane.offset,
+          y: frame.mid.y + frame.tangent.y * lane.offset,
           angle: Geometry.normalizeAngle(Geometry.slotOutwardAngle(defender, slot) + Math.PI)
         }
       };
 
+      // I reparti gia' sulla linea si riallineano da soli: il loro posto e'
+      // gestito da packLine, non dal test fisico.
+      const sharing = new Set(lane.members.map(m => m.id));
       for (const other of State.units) {
-        if (!other.status.alive || other.id === attacker.id || other.id === defender.id) continue;
+        if (!other.status.alive || other.id === attacker.id || other.id === defender.id || sharing.has(other.id)) continue;
         if (Geometry.overlapOBB(test, other)) return false;
       }
       return true;
@@ -2638,9 +2713,9 @@ I18n.current=I18n.detect();
 
     slotAvailable(attacker, defender, slot, checkPhysical = true) {
       if (!Geometry.slotInfo(slot)) return false;
-      if (this.isSlotOccupied(defender, slot)) return false;
-      if (this.isSlotReservedByOther(defender, slot, attacker)) return false;
-      if (checkPhysical && !this.slotPhysicalFree(attacker, defender, slot)) return false;
+      const lane = this.lineLane(attacker, defender, slot);
+      if (!lane) return false;
+      if (checkPhysical && !this.slotPhysicalFree(attacker, defender, slot, lane)) return false;
       return true;
     },
 
@@ -2749,7 +2824,29 @@ I18n.current=I18n.detect();
         Math.min(attackerHalfFront * 2, frame.length) * 0.5
       );
       const maxOffset = Math.max(0, defenderHalfEdge + attackerHalfFront - minOverlap);
-      const slideOffsetPx = Math.max(-maxOffset, Math.min(maxOffset, rawOffset));
+      let slideOffsetPx = Math.max(-maxOffset, Math.min(maxOffset, rawOffset));
+
+      // Linea condivisa: l'aggancio non deve sovrapporsi ai reparti amici
+      // gia' ingaggiati sul lato. Se il varco reale non basta, si prende
+      // direttamente il posto assegnato da packLine.
+      const engagedOnLine = this.lineMembers(defender, slot, frame, attacker.id);
+      if (engagedOnLine.length) {
+        const gap = CFG.CONTACT_LINE_GAP_U * CFG.U;
+        let lo = -maxOffset, hi = maxOffset;
+        for (const m of engagedOnLine) {
+          if (m.key <= rawOffset) lo = Math.max(lo, m.key + m.half + attackerHalfFront + gap);
+          else hi = Math.min(hi, m.key - m.half - attackerHalfFront - gap);
+        }
+        if (lo <= hi) {
+          slideOffsetPx = Math.max(lo, Math.min(hi, rawOffset));
+        } else {
+          const layout = this.packLine([
+            ...engagedOnLine,
+            { id: attacker.id, half: attackerHalfFront, key: rawOffset }
+          ]);
+          slideOffsetPx = layout.offsets.get(attacker.id);
+        }
+      }
 
       attacker.pose.x = frame.mid.x + frame.tangent.x * slideOffsetPx;
       attacker.pose.y = frame.mid.y + frame.tangent.y * slideOffsetPx;
@@ -2761,7 +2858,7 @@ I18n.current=I18n.detect();
         slideOffsetPx,
         centering: Math.abs(slideOffsetPx) > 0.01 * CFG.U
       };
-      defender.engagement.inbound[slot] = attacker.id;
+      defender.engagement.inbound[slot].push(attacker.id);
 
       Orders.clearNavigation(attacker);
       attacker.order.kind = 'idle';
@@ -2783,7 +2880,8 @@ I18n.current=I18n.detect();
 
       Geometry.clampToWorld(attacker);
       Geometry.clampToWorld(defender);
-      Log.add(`MAGNET ALIGN: ${attacker.name} → ${defender.name} | ${slot.toUpperCase()} | offset ${(slideOffsetPx / CFG.U).toFixed(2)}U`);
+      const onLine = defender.engagement.inbound[slot].length;
+      Log.add(`MAGNET ALIGN: ${attacker.name} → ${defender.name} | ${slot.toUpperCase()} | offset ${(slideOffsetPx / CFG.U).toFixed(2)}U${onLine > 1 ? ` | linea ${onLine} reparti` : ''}`);
       return true;
     },
 
@@ -2792,26 +2890,37 @@ I18n.current=I18n.detect();
       if (!out || attacker.status.routing || !attacker.status.alive) return;
       const defender = Units.byId(out.defenderId);
       if (!defender?.status.alive || defender.status.routing) return;
-      if (defender.engagement.inbound[out.slot] !== attacker.id) return;
+      if (!defender.engagement.inbound[out.slot].includes(attacker.id)) return;
 
       const frame = Geometry.slotFrame(defender, out.slot);
       if (!frame) return;
 
       // STEP 2 — SLIDE: dopo l'aggancio il reparto resta aderente al lato
-      // e scorre soltanto lungo la sua tangente fino alla centratura.
+      // e scorre soltanto lungo la sua tangente fino al suo posto sulla
+      // linea di contatto (il centro del lato se e' da solo).
       let offset = Number.isFinite(out.slideOffsetPx) ? out.slideOffsetPx : 0;
-      if (dt > 0 && Math.abs(offset) > 0.001) {
+      const target = this.lineTarget(attacker, defender, out.slot, frame);
+      if (dt > 0 && Math.abs(offset - target) > 0.001) {
         const step = CFG.MAGNET_SLIDE_U_S * CFG.U * dt;
-        if (Math.abs(offset) <= step) offset = 0;
-        else offset -= Math.sign(offset) * step;
+        if (Math.abs(offset - target) <= step) offset = target;
+        else offset += Math.sign(target - offset) * step;
       }
       out.slideOffsetPx = offset;
-      out.centering = Math.abs(offset) > 0.01 * CFG.U;
+      out.centering = Math.abs(offset - target) > 0.01 * CFG.U;
 
       attacker.pose.x = frame.mid.x + frame.tangent.x * offset;
       attacker.pose.y = frame.mid.y + frame.tangent.y * offset;
       attacker.pose.angle = Geometry.normalizeAngle(Geometry.slotOutwardAngle(defender, out.slot) + Math.PI);
       Geometry.clampToWorld(attacker);
+    },
+
+    // Posto finale di un reparto ingaggiato: blocco dei reparti a contatto
+    // E di quelli amici in avvicinamento, cosi' chi e' gia' ingaggiato
+    // scivola di lato e libera il varco prima che arrivino i rinforzi.
+    lineTarget(attacker, defender, slot, frame) {
+      const members = this.lineMembers(defender, slot, frame, null, attacker.side);
+      if (members.length <= 1) return 0;
+      return this.packLine(members).offsets.get(attacker.id) ?? 0;
     },
 
     contactFrontageUnits(attacker, defender, slot) {
@@ -2839,9 +2948,9 @@ I18n.current=I18n.detect();
       const out = attacker.engagement.outbound;
       if (!out) return;
       const defender = Units.byId(out.defenderId);
-      if (defender && defender.engagement.inbound[out.slot] === attacker.id) {
-        defender.engagement.inbound[out.slot] = null;
-      }
+      const line = defender?.engagement.inbound[out.slot];
+      const idx = line ? line.indexOf(attacker.id) : -1;
+      if (idx >= 0) line.splice(idx, 1);
       attacker.engagement.outbound = null;
       attacker.status.chargeUntil = 0;
       if (attacker.motion.turn?.kind === 'combat-flip') attacker.motion.turn = null;
@@ -2849,14 +2958,15 @@ I18n.current=I18n.detect();
 
     breakAll(u) {
       this.breakOutbound(u);
-      for (const [slot, attackerId] of Object.entries(u.engagement.inbound)) {
-        if (!attackerId) continue;
-        const attacker = Units.byId(attackerId);
-        if (attacker?.engagement.outbound?.defenderId === u.id) {
-          attacker.engagement.outbound = null;
-          attacker.status.chargeUntil = 0;
+      for (const slot of Object.keys(u.engagement.inbound)) {
+        for (const attackerId of u.engagement.inbound[slot]) {
+          const attacker = Units.byId(attackerId);
+          if (attacker?.engagement.outbound?.defenderId === u.id) {
+            attacker.engagement.outbound = null;
+            attacker.status.chargeUntil = 0;
+          }
         }
-        u.engagement.inbound[slot] = null;
+        u.engagement.inbound[slot] = [];
       }
       if (u.motion.turn?.kind === 'combat-flip') u.motion.turn = null;
       u.status.rearExposureClock = 0;
@@ -2864,7 +2974,7 @@ I18n.current=I18n.detect();
 
     canDefensiveFlip(u) {
       if (!u.status.alive || u.status.routing || u.engagement.outbound) return false;
-      const occupied = Object.entries(u.engagement.inbound).filter(([, id]) => !!id);
+      const occupied = Object.entries(u.engagement.inbound).filter(([, ids]) => ids.length > 0);
       return occupied.length === 1 && occupied[0][0] === 'rear';
     },
 
@@ -2889,7 +2999,7 @@ I18n.current=I18n.detect();
         u.stats.brain = Math.max(0, u.stats.brain - 1);
         Log.add(`${u.name}: esposizione al RETRO -1B | B ${u.stats.brain.toFixed(0)}`);
         if (u.stats.brain <= 0) {
-          const threat = Units.byId(u.engagement.inbound.rear);
+          const threat = Units.byId(u.engagement.inbound.rear[0]);
           u.motion.turn = null;
           Orders.startRout(u, threat);
           return false;
@@ -2898,8 +3008,7 @@ I18n.current=I18n.detect();
 
       if (State.simTime < u.motion.turn.end) return true;
 
-      const attackerId = u.engagement.inbound.rear;
-      const attacker = Units.byId(attackerId);
+      const rearIds = u.engagement.inbound.rear;
       const d = Geometry.dims(u);
       const a = u.motion.turn.startAngle;
       u.pose.x -= Math.cos(a) * d.depth;
@@ -2908,15 +3017,25 @@ I18n.current=I18n.detect();
       u.motion.turn = null;
       u.status.rearExposureClock = 0;
 
-      u.engagement.inbound.rear = null;
-      if (attacker?.status.alive) {
-        u.engagement.inbound.front = attacker.id;
-        if (attacker.engagement.outbound?.defenderId === u.id) {
-          attacker.engagement.outbound.slot = 'front';
-          attacker.engagement.outbound.slideOffsetPx = 0;
-          attacker.engagement.outbound.centering = false;
-          this.maintain(attacker);
-        }
+      // Dopo il flip il vecchio lato RETRO (rearR -> rearL) e' il nuovo FRONTE
+      // (frontL -> frontR) con la stessa orientazione: l'ordine dei reparti
+      // sulla linea si conserva e ognuno va subito al suo posto sul fronte.
+      u.engagement.inbound.rear = [];
+      const moved = rearIds
+        .map(id => Units.byId(id))
+        .filter(a => a?.status.alive && a.engagement.outbound?.defenderId === u.id);
+      for (const a of moved) {
+        u.engagement.inbound.front.push(a.id);
+        a.engagement.outbound.slot = 'front';
+      }
+      const frontMembers = this.lineMembers(u, 'front', Geometry.slotFrame(u, 'front'));
+      const frontLayout = this.packLine(frontMembers);
+      for (const a of moved) {
+        a.engagement.outbound.slideOffsetPx = frontMembers.length > 1 ? frontLayout.offsets.get(a.id) : 0;
+      }
+      for (const a of moved) {
+        a.engagement.outbound.centering = false;
+        this.maintain(a);
       }
 
       Geometry.clampToWorld(u);
@@ -2945,7 +3064,7 @@ I18n.current=I18n.detect();
     engagedEnemies(u) {
       const ids = new Set();
       if (u?.engagement?.outbound?.defenderId) ids.add(u.engagement.outbound.defenderId);
-      for (const id of Object.values(u?.engagement?.inbound || {})) if (id) ids.add(id);
+      for (const id of Object.values(u?.engagement?.inbound || {}).flat()) ids.add(id);
       return [...ids].map(id => Units.byId(id)).filter(x => x?.status.alive && x.side !== u.side);
     },
 
@@ -3273,6 +3392,13 @@ I18n.current=I18n.detect();
         ap.slot = next;
         ap.contactT = this.slotContactT(u, enemy, next);
         ap.phase = this.initialApproachPhase(u, enemy, next, ap.contactT);
+      }
+
+      // Linea condivisa: punta al proprio posto accanto ai reparti amici,
+      // non al punto d'impatto naturale che potrebbe essere gia' occupato.
+      const lane = Engagements.lineLane(u, enemy, ap.slot);
+      if (lane?.shared) {
+        ap.contactT = Math.max(0, Math.min(1, 0.5 + lane.offset / lane.frame.length));
       }
 
       // HOT PATH: riusa gli stessi oggetti invece di allocarne 2-3 per unità/frame.
