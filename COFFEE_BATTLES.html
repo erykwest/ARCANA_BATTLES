@@ -1468,6 +1468,13 @@ I18n.current=I18n.detect();
     NAV_IN_PLACE_TURN_THRESHOLD: 60 * Math.PI / 180,
     NAV_FLIP_THRESHOLD: 135 * Math.PI / 180,
     FORMATION_TRANSITION_TIME: 2,
+    AUTO_FORMATION_EVAL_S: 0.5,     // frequenza di valutazione del cambio automatico
+    AUTO_FORMATION_HOLD_S: 4,       // stabilita' minima dopo un cambio (anche manuale)
+    AUTO_PASSAGE_HOLD_S: 3,         // durata minima di un passaggio stretto
+    AUTO_PASSAGE_COOLDOWN_S: 8,     // pausa prima di un nuovo passaggio pianificato da A*
+    AUTO_TERRAIN_HITS: 2,           // urti col terreno che fanno stringere il reparto...
+    AUTO_TERRAIN_HIT_WINDOW_S: 2,   // ...entro questa finestra
+    PASSAGE_CLEARANCE_MARGIN_U: 0.35,
     CONTACT_TOLERANCE_U: 0.35,
     MAGNET_SLIDE_U_S: 1.5,
     MAGNET_MIN_OVERLAP_U: 0.15,
@@ -4042,6 +4049,7 @@ I18n.current=I18n.detect();
         // Il prossimo tick ricalcola A* con clearance temporaneamente maggiore.
         u.motion.detour = null;
         u.motion.terrainClearanceBoostUntil = State.simTime + 1.25;
+        if (!u.status.routing) AutoFormation.onTerrainBlocked(u);
 
         return recovered ? 'terrain-recovered' : 'blocked';
       }
@@ -5785,6 +5793,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     REPLAN_INTERVAL: 0.80,
     DIRECT_CHECK_INTERVAL: 0.18,
     FAIL_BACKOFF: 1.0,
+    lastFailure: null, // 'goal-blocked' | 'exhausted' dell'ultima ricerca fallita
     MAX_EXPANSIONS: 3200,
 
     clear(u) {
@@ -5802,7 +5811,11 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       // Per ostacoli fissi il planner deve garantire che TUTTO il footprint
       // possa ruotare e passare. Usiamo il raggio del rettangolo dal front-pivot
       // solo contro terreno, senza reintrodurre il vecchio collider enorme fra unità.
-      const base = Math.hypot(d.depth, d.front / 2) + 0.12 * CFG.U;
+      // In PASSAGGIO (AutoFormation) il reparto attraversa la strettoia diritto:
+      // conta la larghezza reale del fronte, non il raggio di rotazione.
+      const base = AutoFormation.inPassage(u)
+        ? d.front / 2 + CFG.PASSAGE_CLEARANCE_MARGIN_U * CFG.U
+        : Math.hypot(d.depth, d.front / 2) + 0.12 * CFG.U;
 
       // Dopo una collisione reale col terreno allarga temporaneamente il corridoio:
       // evita che A* scelga di nuovo lo stesso waypoint tangente che ha causato lo stuck.
@@ -5979,7 +5992,11 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       // La cella obiettivo e' sempre accettata, ma ci si arriva solo da un
       // vicino libero: se sono tutti bloccati il percorso e' impossibile.
       // Usciamo subito invece di esplorare MAX_EXPANSIONS celle a vuoto.
-      if (!this.goalHasFreeNeighbor(u, goalCell, startCell, ctx)) return null;
+      if (!this.goalHasFreeNeighbor(u, goalCell, startCell, ctx)) {
+        this.lastFailure = 'goal-blocked';
+        return null;
+      }
+      this.lastFailure = 'exhausted';
 
       const gScore = new Float64Array(total);
       gScore.fill(Infinity);
@@ -6097,7 +6114,10 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       }
 
       const start = { x:u.pose.x, y:u.pose.y };
-      const path = this.astar(u, start, finalTarget);
+      let path = this.astar(u, start, finalTarget);
+      if (!path?.length && this.lastFailure === 'exhausted') {
+        path = AutoFormation.tryNarrowPath(u, start, finalTarget);
+      }
       if (!path?.length) {
         // Una ricerca fallita esplora fino a MAX_EXPANSIONS celle (>100 ms):
         // ripeterla ogni DIRECT_CHECK_INTERVAL bloccava il frame. Si procede
@@ -7416,7 +7436,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
   // 9. FORMATIONS
   // ============================================================
   const Formations = {
-    set(u, type) {
+    set(u, type, source = 'manual') {
       if (!CFG.FORMATIONS[type] || !u.status.alive || u.status.routing) return false;
       if (u.formation.transition || u.formation.type === type) return false;
       u.formation.transition = {
@@ -7425,6 +7445,11 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         start: State.simTime,
         end: State.simTime + CFG.FORMATION_TRANSITION_TIME
       };
+      const auto = AutoFormation.state(u);
+      auto.lastChangeAt = State.simTime;
+      auto.lastSource = source;
+      // Un ordine manuale annulla un eventuale passaggio automatico in corso.
+      if (source === 'manual') auto.passage = null;
       return true;
     },
 
@@ -7435,6 +7460,248 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       u.formation.transition = null;
       Geometry.clampToWorld(u);
       Log.add(`${u.name}: formazione ${CFG.FORMATIONS[u.formation.type].label} completata`);
+    }
+  };
+
+  // ============================================================
+  // AUTO FORMATION
+  // Ogni reparto (IA e giocatore) cambia formazione da solo quando serve:
+  //  - TIRO: un reparto a distanza che sta tirando passa in LINEA
+  //    (i colpi per volley dipendono dalla larghezza del fronte);
+  //  - MISCHIA: un attaccante ingaggiato si allarga fino alla larghezza
+  //    del lato nemico, se la linea di contatto condivisa lo consente;
+  //  - INSERIMENTO: se nessun lato del bersaglio e' disponibile con il
+  //    fronte attuale ma lo sarebbe piu' stretto, si stringe;
+  //  - PASSAGGIO: se A* fallisce o il reparto urta ripetutamente il terreno,
+  //    si stringe e pianifica con la larghezza reale; fuori dalla strettoia
+  //    torna alla formazione precedente.
+  // Un cambio (anche manuale) resta stabile per AUTO_FORMATION_HOLD_S.
+  // ============================================================
+  const AutoFormation = {
+    state(u) {
+      if (!u.formation.auto) {
+        u.formation.auto = { nextEvalAt: 0, lastChangeAt: -Infinity, passage: null, probe: false, terrainHits: [] };
+      }
+      return u.formation.auto;
+    },
+
+    front(u, type) {
+      return Geometry.formationSpec(u, type).front;
+    },
+
+    // Tipi ordinati dal fronte piu' stretto al piu' largo.
+    byWidth(u) {
+      return Object.keys(CFG.FORMATIONS).sort((a, b) => this.front(u, a) - this.front(u, b));
+    },
+
+    narrowerThan(u, type) {
+      const f = this.front(u, type);
+      return this.byWidth(u).filter(t => this.front(u, t) < f - 1e-6).reverse();
+    },
+
+    // Esegue fn come se il reparto fosse gia' nella formazione TYPE.
+    withFormation(u, type, fn, probe = false) {
+      const f = u.formation;
+      const saved = { type: f.type, transition: f.transition, probe: this.state(u).probe };
+      f.type = type;
+      f.transition = null;
+      f.auto.probe = probe;
+      try { return fn(); }
+      finally {
+        f.type = saved.type;
+        f.transition = saved.transition;
+        f.auto.probe = saved.probe;
+      }
+    },
+
+    // In passaggio il planner usa la larghezza reale del fronte invece del
+    // raggio di rotazione completo: e' cio' che rende utile stringersi.
+    inPassage(u) {
+      const a = u.formation.auto;
+      return !!(a && (a.probe || a.passage));
+    },
+
+    fitsHere(u, type, ignoreIds = null) {
+      return this.withFormation(u, type, () => {
+        if (Terrain.placementBlocked(u) || !Terrain.poseFitsBounds(u)) return false;
+        return !State.units.some(o =>
+          o.id !== u.id && o.status.alive &&
+          !(ignoreIds && ignoreIds.has(o.id)) &&
+          !Engagements.pair(u, o) &&
+          Geometry.overlapOBB(u, o)
+        );
+      });
+    },
+
+    apply(u, type, reason) {
+      if (!Formations.set(u, type, 'auto')) return false;
+      this.state(u).lastReason = reason;
+      Log.add(`${u.name}: AUTO formazione → ${CFG.FORMATIONS[type].label} (${reason})`);
+      return true;
+    },
+
+    beginPassage(u, type, reason, enemyId = null) {
+      const auto = this.state(u);
+      const prev = auto.passage?.prev || u.formation.type;
+      if (!this.apply(u, type, reason)) return false;
+      auto.passage = { prev, reason, enemyId, until: State.simTime + CFG.AUTO_PASSAGE_HOLD_S };
+      return true;
+    },
+
+    // Chiamato da Pathfinder.ensure quando A* fallisce con il fronte attuale.
+    tryNarrowPath(u, start, goal) {
+      // Rispetta la stabilita' minima: evita cicli stringi/allarga quando a
+      // bloccare sono soprattutto altri reparti in movimento.
+      if (!this.canAct(u)) return null;
+      if (State.simTime - (this.state(u).passageEndedAt ?? -Infinity) < CFG.AUTO_PASSAGE_COOLDOWN_S) return null;
+      // Solo strettoie di TERRENO: una calca di reparti si muove da sola e
+      // non vale una ricerca A* in piu' ne' un cambio di formazione.
+      if (!Terrain.segmentBlocked(u, start, goal, Pathfinder.terrainClearance(u))) return null;
+      const current = u.formation.transition?.to || u.formation.type;
+      for (const type of this.narrowerThan(u, current)) {
+        const path = this.withFormation(u, type, () => Pathfinder.astar(u, start, goal), true);
+        if (path?.length && this.beginPassage(u, type, 'passaggio stretto')) return path;
+      }
+      return null;
+    },
+
+    // Chiamato da Collision.resolveMover a ogni urto reale contro il terreno.
+    onTerrainBlocked(u) {
+      const auto = this.state(u);
+      const now = State.simTime;
+      auto.terrainHits = auto.terrainHits.filter(t => now - t < CFG.AUTO_TERRAIN_HIT_WINDOW_S);
+      auto.terrainHits.push(now);
+      if (auto.terrainHits.length < CFG.AUTO_TERRAIN_HITS) return;
+      if (!this.canAct(u, true)) return;
+      const next = this.narrowerThan(u, u.formation.type)[0];
+      if (next && this.beginPassage(u, next, 'urto col terreno')) auto.terrainHits = [];
+    },
+
+    canAct(u, ignoreHold = false) {
+      if (!u.status.alive || u.status.routing || u.order.kind === 'retreat') return false;
+      if (u.formation.transition || u.motion.wallCrossing || u.motion.turn) return false;
+      if (State.deployment?.active) return false;
+      if (!ignoreHold && State.simTime - this.state(u).lastChangeAt < CFG.AUTO_FORMATION_HOLD_S) return false;
+      return true;
+    },
+
+    // Contatto (px) di ciascun reparto sulla linea impacchettata, o null se
+    // la linea non regge (qualcuno scende sotto CONTACT_LINE_MIN_SHARE_U).
+    lineContacts(length, members) {
+      const layout = Engagements.packLine(members);
+      if (members.length > 1 && !Engagements.lineFits(length, layout)) return null;
+      const half = length / 2;
+      const out = new Map();
+      for (const m of layout.sorted) {
+        const c = members.length > 1 ? layout.offsets.get(m.id) : 0;
+        out.set(m.id, Math.max(0, Math.min(half, c + m.half) - Math.max(-half, c - m.half)));
+      }
+      return out;
+    },
+
+    // Il tragitto davanti (fino a 12U) e' libero per la formazione TYPE,
+    // da terreno E reparti, con il raggio di rotazione completo del planner?
+    aheadClearFor(u, type) {
+      const target = Movement.currentTarget(u) || u.order.target;
+      return this.withFormation(u, type, () => {
+        const from = { x: u.pose.x, y: u.pose.y };
+        if (Pathfinder.pointBlocked(u, from)) return false;
+        if (!target) return true;
+        const dx = target.x - from.x, dy = target.y - from.y;
+        const len = Math.hypot(dx, dy);
+        const k = len > 0 ? Math.min(1, 12 * CFG.U / len) : 0;
+        return !Pathfinder.segmentBlockedByAny(u, from, { x: from.x + dx * k, y: from.y + dy * k });
+      });
+    },
+
+    widestFitting(u, maxFrontU, minFrontU) {
+      let best = null;
+      for (const type of this.byWidth(u)) {
+        const f = this.front(u, type);
+        if (f <= maxFrontU + 1e-6 && f > minFrontU + 1e-6) best = type;
+      }
+      return best;
+    },
+
+    updatePassage(u, auto) {
+      const p = auto.passage;
+      if (!p) return false;
+      if (Engagements.hasAny(u)) {
+        // A contatto il passaggio e' concluso: da qui decide la regola MISCHIA.
+        auto.passage = null;
+        return false;
+      }
+      // Inserimento: resta stretto finche' insegue lo stesso bersaglio.
+      if (p.enemyId && u.order.lockTargetId === p.enemyId && Units.byId(p.enemyId)?.status.alive) {
+        p.until = State.simTime + CFG.AUTO_FORMATION_EVAL_S;
+        return true;
+      }
+      if (State.simTime < p.until) return true;
+
+      // Fuori dalla strettoia: qui e lungo il tragitto davanti c'e' spazio per
+      // la formazione precedente, con il raggio di rotazione completo del planner.
+      if (this.aheadClearFor(u, p.prev) && this.fitsHere(u, p.prev)) {
+        auto.passage = null;
+        auto.passageEndedAt = State.simTime;
+        this.apply(u, p.prev, 'fine passaggio');
+      } else {
+        p.until = State.simTime + CFG.AUTO_FORMATION_EVAL_S;
+      }
+      return true;
+    },
+
+    update(u) {
+      if (!u.status.alive) return;
+      const auto = this.state(u);
+      if (State.simTime < auto.nextEvalAt) return;
+      auto.nextEvalAt = State.simTime + CFG.AUTO_FORMATION_EVAL_S;
+      if (!this.canAct(u, true)) return;
+      if (this.updatePassage(u, auto)) return;
+      if (!this.canAct(u)) return;
+
+      const current = u.formation.type;
+      const out = u.engagement.outbound;
+
+      // MISCHIA: allargarsi fino al lato nemico, se la linea condivisa lo consente.
+      if (out) {
+        const defender = Units.byId(out.defenderId);
+        const frame = defender && Geometry.slotFrame(defender, out.slot);
+        if (!frame) return;
+        const type = this.widestFitting(u, frame.length / CFG.U, this.front(u, current));
+        if (!type) return;
+        const now = Engagements.lineMembers(defender, out.slot, frame, null, u.side);
+        const wider = now.map(m => m.id === u.id ? { ...m, half: this.front(u, type) * CFG.U / 2 } : m);
+        const before = this.lineContacts(frame.length, now);
+        const after = this.lineContacts(frame.length, wider);
+        if (!after) return;
+        // Solo se il reparto guadagna davvero contatto senza toglierne agli alleati.
+        const gain = (after.get(u.id) - before.get(u.id)) / CFG.U;
+        const alliesLoss = now.some(m => m.id !== u.id && after.get(m.id) < before.get(m.id) - 1e-6);
+        if (gain < 0.5 || alliesLoss) return;
+        const ignore = new Set(now.map(m => m.id));
+        if (this.fitsHere(u, type, ignore)) this.apply(u, type, 'fronte nemico più largo');
+        return;
+      }
+      if (Engagements.hasAny(u)) return;
+
+      // TIRO: il volley scala con il fronte.
+      if (u.ranged?.active) {
+        const widest = this.byWidth(u).at(-1);
+        if (widest !== current && this.fitsHere(u, widest)) this.apply(u, widest, 'tiro');
+        return;
+      }
+
+      // INSERIMENTO: nessun lato libero ora, ma ci sarebbe con un fronte piu' stretto.
+      const enemy = Units.byId(u.order.lockTargetId);
+      if (enemy?.status.alive && enemy.side !== u.side && !u.order.approach && !u.order.pursuit &&
+          !Engagements.chooseSlot(u, enemy)) {
+        for (const type of this.narrowerThan(u, current)) {
+          if (this.withFormation(u, type, () => Engagements.chooseSlot(u, enemy))) {
+            this.beginPassage(u, type, 'inserimento nello scontro', enemy.id);
+            return;
+          }
+        }
+      }
     }
   };
 
@@ -9271,6 +9538,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const form = u.formation.transition
         ? `${CFG.FORMATIONS[u.formation.transition.from].label} → ${CFG.FORMATIONS[u.formation.transition.to].label} (${Math.max(0, u.formation.transition.end - State.simTime).toFixed(1)}s)`
         : CFG.FORMATIONS[u.formation.type].label;
+      const autoTag = u.formation.auto?.lastSource === 'auto' ? ` · AUTO (${u.formation.auto.lastReason})` : '';
       const turn = u.motion.turn?.kind === 'combat-flip' ? 'FLIP DIFENSIVO' : (u.motion.turn?.kind === 'flip' ? 'FLIP' : '—');
       const engagements = Engagements.inboundIds(u).length + (u.engagement.outbound ? 1 : 0);
       const outSlot = u.engagement.outbound?.slot || '—';
@@ -9300,7 +9568,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         <div class="row"><span>Combattimento [C]</span><b>${u.stats.combat} → ${Combat.effectiveCombat(u)}</b></div>
         <div class="row"><span>Armor [AR]</span><b>${u.stats.armor}</b></div>
         <div class="row"><span>Stance</span><b>${u.behavior.stance.toUpperCase()}</b></div>
-        <div class="row"><span>Formazione</span><b>${form}</b></div>
+        <div class="row"><span>Formazione</span><b>${form}${autoTag}</b></div>
         <div class="row"><span>Fronte [F]</span><b>${Geometry.frontUnits(u).toFixed(2)}U</b></div>
         <div class="row"><span>Fronte contatto [Fc]</span><b>${this.effectiveFrontageDisplay(u)}U</b></div>
         <div class="row"><span>Profondità</span><b>${(Geometry.fullDepthUnits(u) * u.stats.hp / u.stats.maxHp).toFixed(2)}U</b></div>
@@ -9869,6 +10137,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       Intel.update();
       ArmyAI.update();
       State.units.forEach(Formations.update);
+      State.units.forEach(u => AutoFormation.update(u));
       State.units.forEach(AI.update.bind(AI));
       State.units.forEach(u => Movement.update(u, dt));
       State.units.forEach(u => Engagements.updateDefensiveState(u, dt));
@@ -9924,7 +10193,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
   Simulation.reset();
   View.resize();
   BattleSetup.open(true);
-  window.__COFFEE_BATTLES_DEBUG__ = { State, Units, Intel, Geometry, Terrain, AI, ArmyAI, Movement, Orders, Engagements, Collision, Simulation, Selection, CFG, Pathfinder, Combat, Morale, Resources, Battle, BattleSetup, Deployment, DoctrineEngine };
+  window.__COFFEE_BATTLES_DEBUG__ = { State, Units, Intel, Geometry, Terrain, AI, ArmyAI, Movement, Orders, Engagements, Collision, Simulation, Selection, CFG, Pathfinder, Formations, AutoFormation, Combat, Morale, Resources, Battle, BattleSetup, Deployment, DoctrineEngine };
   requestAnimationFrame(Simulation.frame);
 })();
 
