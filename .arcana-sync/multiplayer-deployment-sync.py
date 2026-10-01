@@ -1,0 +1,406 @@
+from pathlib import Path
+
+p = Path('COFFEE_BATTLES.html')
+s = p.read_text(encoding='utf-8')
+
+def one(old, new, label):
+    global s
+    n = s.count(old)
+    if n != 1:
+        raise SystemExit(f'{label}: expected 1 anchor, found {n}')
+    s = s.replace(old, new, 1)
+
+def between(start, end, new, label):
+    global s
+    a = s.find(start)
+    if a < 0:
+        raise SystemExit(f'{label}: start not found')
+    b = s.find(end, a)
+    if b < 0:
+        raise SystemExit(f'{label}: end not found')
+    s = s[:a] + new + s[b:]
+
+one(
+"    unitCost(u) { return Number(u?.deployCost || this.spec(u?.type).cost || 0); },\n\n    enemyHiddenDuringSetup() {\n      return State.deployment.active && State.battleSetup.mode === 'auto';\n    },\n\n    visibleInDeployment(u) {\n      return !(this.enemyHiddenDuringSetup() && u?.side === 'red');\n    },",
+"    unitCost(u) { return Number(u?.deployCost || this.spec(u?.type).cost || 0); },\n\n    multiplayerActive() {\n      return !!(State.deployment.active && window.__CB_MULTIPLAYER_ACTIVE__ && ['blue','red'].includes(window.__CB_MULTIPLAYER_SIDE__));\n    },\n\n    multiplayerSide() {\n      return window.__CB_MULTIPLAYER_SIDE__ === 'red' ? 'red' : 'blue';\n    },\n\n    multiplayerLocked() {\n      return this.multiplayerActive() && !!window.__CB_MULTIPLAYER_DEPLOYMENT_LOCKED__;\n    },\n\n    enemyHiddenDuringSetup() {\n      return State.deployment.active && (State.battleSetup.mode === 'auto' || this.multiplayerActive());\n    },\n\n    visibleInDeployment(u) {\n      if (this.multiplayerActive()) return u?.side === this.multiplayerSide();\n      return !(this.enemyHiddenDuringSetup() && u?.side === 'red');\n    },",
+'deployment multiplayer helpers')
+
+between(
+"    updateUI() {",
+"    setSide(side) {",
+'''    updateUI() {
+      this.recount();
+      const multiplayerDeploy = this.multiplayerActive();
+      const playerSide = this.multiplayerSide();
+      const locked = this.multiplayerLocked();
+      const autoPlayerDeploy = State.deployment.active && State.battleSetup.mode === 'auto' && !multiplayerDeploy;
+      if (multiplayerDeploy) State.selectedSide = playerSide;
+      else if (autoPlayerDeploy) State.selectedSide = 'blue';
+      const side = State.selectedSide;
+      const spent = State.deployment.spent[side] || 0;
+      DOM.deploySpent.textContent = spent;
+      DOM.deployBudget.textContent = State.battleSetup.points;
+      DOM.deployBlueBtn.classList.toggle('active', side === 'blue');
+      DOM.deployRedBtn.classList.toggle('active', side === 'red');
+      DOM.deployRedBtn.style.display = (autoPlayerDeploy || multiplayerDeploy) ? 'none' : '';
+      DOM.deployBlueBtn.style.display = (autoPlayerDeploy || multiplayerDeploy) ? 'none' : '';
+      document.body.classList.toggle('deploy-top', side === 'blue');
+      if (DOM.sideRedBtn) DOM.sideRedBtn.disabled = autoPlayerDeploy || multiplayerDeploy;
+      if (DOM.sideBlueBtn) DOM.sideBlueBtn.disabled = multiplayerDeploy;
+      DOM.sideBlueBtn?.classList.toggle('active', side === 'blue');
+      DOM.sideRedBtn?.classList.toggle('active', side === 'red');
+      if (DOM.removeDeployUnitBtn) DOM.removeDeployUnitBtn.disabled = locked;
+      if (DOM.rotateDeployLeftBtn) DOM.rotateDeployLeftBtn.disabled = locked;
+      if (DOM.rotateDeployRightBtn) DOM.rotateDeployRightBtn.disabled = locked;
+      if (DOM.startBattleFromDeployBtn) {
+        DOM.startBattleFromDeployBtn.disabled = locked;
+        if (multiplayerDeploy) DOM.startBattleFromDeployBtn.textContent = locked ? 'READY ✓ · WAITING…' : 'READY';
+        else DOM.startBattleFromDeployBtn.textContent = I18n.t('deploy.startBattle');
+      }
+      DOM.deploymentCards.querySelectorAll('.unit-card').forEach(card => {
+        const type = card.dataset.unitType;
+        const cost = this.spec(type).cost;
+        const blockedByMirror = State.battleSetup.mirrorArmy && side === 'red';
+        const unaffordable = spent + cost > State.battleSetup.points;
+        const blocked = locked || blockedByMirror || unaffordable;
+        card.classList.toggle('disabled', blocked);
+        card.disabled = blocked;
+        card.title = locked
+          ? 'Deployment locked: waiting for opponent.'
+          : (blockedByMirror
+            ? I18n.t('deploy.mirrorLocked')
+            : (unaffordable ? I18n.t('deploy.budgetInsufficient') : I18n.tf('deploy.dragUnit',{unit:I18n.unit(type)})));
+      });
+    },
+
+''',
+'deployment updateUI')
+
+between(
+"    setSide(side) {",
+"    makeDeployUnit(side, type, x, y, angle = null) {",
+'''    setSide(side) {
+      if (!State.deployment.active) return false;
+      if (this.multiplayerActive() && side !== this.multiplayerSide()) return false;
+      if (State.battleSetup.mode === 'auto' && side !== 'blue' && !this.multiplayerActive()) return false;
+      State.selectedSide = side;
+      Selection.clear();
+      this.updateUI();
+      return true;
+    },
+
+''',
+'deployment setSide')
+
+one(
+"    placeFromCatalog(side, type, x, y) {\n      if (State.deployment.active && State.battleSetup.mode === 'auto' && side !== 'blue') return false;",
+"    placeFromCatalog(side, type, x, y) {\n      if (this.multiplayerLocked()) return false;\n      if (this.multiplayerActive() && side !== this.multiplayerSide()) return false;\n      if (State.deployment.active && State.battleSetup.mode === 'auto' && side !== 'blue' && !this.multiplayerActive()) return false;",
+'placeFromCatalog guard')
+
+one(
+"    removeSelected() {\n      if (!State.deployment.active) return;\n      const selected = Selection.primary();\n      if (!selected) return;\n      if (State.battleSetup.mode === 'auto' && selected.side !== 'blue') return;",
+"    removeSelected() {\n      if (!State.deployment.active || this.multiplayerLocked()) return;\n      const selected = Selection.primary();\n      if (!selected) return;\n      if (this.multiplayerActive() && selected.side !== this.multiplayerSide()) return;\n      if (State.battleSetup.mode === 'auto' && selected.side !== 'blue' && !this.multiplayerActive()) return;",
+'removeSelected guard')
+
+one(
+"    rotateSelected(sign) {\n      if (!State.deployment.active) return;\n      const u = Selection.primary();\n      if (!u) return;",
+"    rotateSelected(sign) {\n      if (!State.deployment.active || this.multiplayerLocked()) return;\n      const u = Selection.primary();\n      if (!u) return;\n      if (this.multiplayerActive() && u.side !== this.multiplayerSide()) return;",
+'rotateSelected guard')
+
+one(
+"      MapEngine.generate(State.battleSetup.biome);",
+'''      if (this.multiplayerActive() && Number.isFinite(Number(window.__CB_MULTIPLAYER_SETUP__?.map_seed))) {
+        const originalRandom = Math.random;
+        let t = (Number(window.__CB_MULTIPLAYER_SETUP__.map_seed) >>> 0) || 1;
+        Math.random = () => {
+          t += 0x6D2B79F5;
+          let r = Math.imul(t ^ t >>> 15, 1 | t);
+          r ^= r + Math.imul(r ^ r >>> 7, 61 | r);
+          return ((r ^ r >>> 14) >>> 0) / 4294967296;
+        };
+        try { MapEngine.generate(State.battleSetup.biome); }
+        finally { Math.random = originalRandom; }
+      } else {
+        MapEngine.generate(State.battleSetup.biome);
+      }''',
+'seeded multiplayer map')
+
+between(
+"    finish() {",
+"    pointerWorld(e) {",
+'''    finish() {
+      if (this.multiplayerActive()) {
+        if (this.multiplayerLocked()) return;
+        const side = this.multiplayerSide();
+        const own = this.snapshot().filter(u => u.side === side);
+        if (!own.length) {
+          Log.add(`DEPLOYMENT ONLINE: schiera almeno 1 unità ${side.toUpperCase()}.`);
+          return;
+        }
+        const submit = window.__CB_MULTIPLAYER_SUBMIT_DEPLOYMENT__;
+        if (typeof submit !== 'function') {
+          Log.add('DEPLOYMENT ONLINE: backend non pronto.');
+          return;
+        }
+        submit(own);
+        return;
+      }
+
+      const blue = State.units.filter(u => u.side === 'blue').length;
+      const red = State.units.filter(u => u.side === 'red').length;
+      if (!blue || !red) {
+        Log.add('DEPLOYMENT: servono almeno 1 unità BLU e 1 ROSSA.');
+        return;
+      }
+      State.deployment.snapshot = this.snapshot();
+      State.deployment.active = false;
+      State.deployment.drag = null;
+      document.body.classList.remove('deployment-active');
+      State.selectedSide = 'blue';
+      Selection.clear();
+      Battle.reset(true);
+      UI.setTimeScale(1);
+      Log.add(`⚔ BATTAGLIA INIZIATA · BLU ${blue} unità / ROSSO ${red} unità`);
+      this.updateUI();
+    },
+
+    finishMultiplayer(snapshot) {
+      if (!Array.isArray(snapshot) || !snapshot.length) return false;
+      const blue = snapshot.filter(d => d.side === 'blue').length;
+      const red = snapshot.filter(d => d.side === 'red').length;
+      if (!blue || !red) return false;
+
+      State.deployment.snapshot = snapshot.map(d => ({ ...d }));
+      State.units = snapshot.map(d => {
+        const u = makeUnit(d.id, d.name, d.side, d.x, d.y, d.angle, d.color, d.type);
+        u.formation.type = d.formation || 'base';
+        u.deployCost = d.deployCost || this.spec(d.type).cost;
+        u.deployPairId = d.deployPairId || null;
+        return u;
+      });
+      State.deployment.active = false;
+      State.deployment.drag = null;
+      document.body.classList.remove('deployment-active');
+      Battle.reset(false);
+      State.armyAI.enabled = false;
+      const side = this.multiplayerSide();
+      State.battle.playerSide = side;
+      State.selectedSide = side;
+      const first = State.units.find(u => u.side === side) || null;
+      State.selectedIds = new Set(first ? [first.id] : []);
+      State.primaryId = first?.id || null;
+      UI.setTimeScale(0);
+      Log.add(`🌐 DEPLOYMENT SYNCED · BLU ${blue} unità / ROSSO ${red} unità · battaglia in pausa`);
+      this.updateUI();
+      UI.updateSelectedInfo();
+      return true;
+    },
+
+''',
+'deployment finish multiplayer')
+
+one(
+"    beginCatalogDrag(type, e) {\n      if (!State.deployment.active) return;",
+"    beginCatalogDrag(type, e) {\n      if (!State.deployment.active || this.multiplayerLocked()) return;",
+'catalog drag lock')
+
+one(
+"    beginUnitDrag(u, e) {\n      if (!State.deployment.active || !u) return;",
+"    beginUnitDrag(u, e) {\n      if (!State.deployment.active || !u || this.multiplayerLocked()) return;\n      if (this.multiplayerActive() && u.side !== this.multiplayerSide()) return;",
+'unit drag lock')
+
+between(
+"    resolveRoles() {",
+"    setMode(mode) {",
+'''    resolveRoles() {
+      const mp = window.__CB_MULTIPLAYER_ACTIVE__ ? window.__CB_MULTIPLAYER_SETUP__ : null;
+      let blueRole;
+      let redRole;
+      if (mp && ['attack','defend'].includes(mp.blue_role) && ['attack','defend'].includes(mp.red_role)) {
+        blueRole = mp.blue_role;
+        redRole = mp.red_role;
+      } else {
+        blueRole = State.battleSetup.role;
+        if (blueRole === 'random') blueRole = Math.random() < 0.5 ? 'attack' : 'defend';
+        redRole = blueRole === 'attack' ? 'defend' : 'attack';
+      }
+      State.doctrine.roles = { blue:blueRole, red:redRole };
+      State.battle.playerSide = window.__CB_MULTIPLAYER_SIDE__ || 'blue';
+      return { blue:blueRole, red:redRole };
+    },
+
+''',
+'shared multiplayer roles')
+
+one(
+"  let elapsedTimer = null, pollTimer = null, fallbackTimer = null;",
+"  let elapsedTimer = null, pollTimer = null, fallbackTimer = null;\n  let activeMatch = null, deploymentPollTimer = null, deploymentFinalizing = false;",
+'multiplayer deployment state')
+
+between(
+"  function continueMatch(){",
+"\n\n  async function bootstrap(){",
+'''  function stopDeploymentPolling(){
+    clearInterval(deploymentPollTimer);
+    deploymentPollTimer = null;
+  }
+
+  function deploymentDebug(){
+    return window.__COFFEE_BATTLES_DEBUG__ || null;
+  }
+
+  function deploymentHint(text){
+    const el = document.getElementById('deployHint');
+    if (el) el.textContent = text;
+  }
+
+  async function submitDeployment(units){
+    if (!activeMatch || !client || window.__CB_MULTIPLAYER_DEPLOYMENT_LOCKED__) return;
+    const dbg = deploymentDebug();
+    window.__CB_MULTIPLAYER_DEPLOYMENT_LOCKED__ = true;
+    dbg?.Deployment?.updateUI?.();
+    deploymentHint('ONLINE 1V1 · Invio schieramento…');
+
+    const { data, error } = await client.rpc('submit_match_deployment', {
+      p_match_id: activeMatch.id,
+      p_units: units
+    });
+    if (error){
+      console.error('[DEPLOYMENT] submit_match_deployment', error);
+      window.__CB_MULTIPLAYER_DEPLOYMENT_LOCKED__ = false;
+      dbg?.Deployment?.updateUI?.();
+      deploymentHint('Errore invio schieramento · premi READY per riprovare.');
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    deploymentHint(row?.opponent_ready
+      ? 'ONLINE 1V1 · Avversario pronto · sincronizzazione…'
+      : 'ONLINE 1V1 · READY ✓ · in attesa dell’avversario…');
+    await pollDeploymentStatus();
+  }
+
+  async function finalizeDeployment(){
+    if (!activeMatch || !client || deploymentFinalizing) return;
+    deploymentFinalizing = true;
+    const { data, error } = await client.rpc('get_ready_match_deployments', { p_match_id: activeMatch.id });
+    if (error){
+      console.error('[DEPLOYMENT] get_ready_match_deployments', error);
+      deploymentFinalizing = false;
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    const blue = Array.isArray(row?.blue_units) ? row.blue_units : [];
+    const red = Array.isArray(row?.red_units) ? row.red_units : [];
+    const dbg = deploymentDebug();
+    const ok = dbg?.Deployment?.finishMultiplayer?.([...blue, ...red]);
+    if (!ok){
+      console.error('[DEPLOYMENT] invalid combined snapshot', row);
+      deploymentFinalizing = false;
+      return;
+    }
+
+    stopDeploymentPolling();
+    window.__CB_MULTIPLAYER_DEPLOYMENT_LOCKED__ = false;
+    UI.matchTitle.textContent = 'DEPLOYMENT SYNCED';
+    UI.matchStatus.textContent = 'Both clients now have the same battlefield and both armies.';
+    UI.searchLine.style.display = 'none';
+    UI.side.className = activeMatch.side;
+    UI.side.textContent = `YOU ARE ${activeMatch.side.toUpperCase()}`;
+    UI.matchId.textContent = `MATCH ${activeMatch.id}`;
+    UI.proceed.hidden = true;
+    UI.cancel.textContent = 'CLOSE';
+    UI.note.textContent = 'M0 deployment sync complete. Battle remains paused: command/state synchronization is the next layer.';
+    UI.matchOverlay.classList.add('open');
+    deploymentFinalizing = false;
+  }
+
+  async function pollDeploymentStatus(){
+    if (!activeMatch || !client || deploymentFinalizing) return;
+    const { data, error } = await client.rpc('get_match_deployment_status', { p_match_id: activeMatch.id });
+    if (error){
+      console.warn('[DEPLOYMENT] status', error);
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row) return;
+    if (row.own_ready) {
+      window.__CB_MULTIPLAYER_DEPLOYMENT_LOCKED__ = true;
+      deploymentDebug()?.Deployment?.updateUI?.();
+    }
+    if (row.both_ready) {
+      deploymentHint('ONLINE 1V1 · Entrambi READY · sincronizzazione…');
+      await finalizeDeployment();
+    } else if (row.own_ready) {
+      deploymentHint('ONLINE 1V1 · READY ✓ · in attesa dell’avversario…');
+    } else if (row.opponent_ready) {
+      deploymentHint('ONLINE 1V1 · L’avversario è READY · completa il tuo schieramento.');
+    }
+  }
+
+  function configureMultiplayerDeployment(setup, side){
+    const dbg = deploymentDebug();
+    if (!dbg?.BattleSetup || !dbg?.Deployment || !dbg?.State) throw new Error('Battle lab bridge unavailable');
+
+    window.__CB_MULTIPLAYER_ACTIVE__ = true;
+    window.__CB_MULTIPLAYER_SIDE__ = side;
+    window.__CB_MULTIPLAYER_SETUP__ = setup;
+    window.__CB_MULTIPLAYER_DEPLOYMENT_LOCKED__ = false;
+    window.__CB_MULTIPLAYER_SUBMIT_DEPLOYMENT__ = submitDeployment;
+
+    const custom = document.getElementById('customPointsInput');
+    const biome = document.getElementById('mapBiomeSelect');
+    if (custom) custom.value = '';
+    if (biome) biome.value = setup.biome || 'random';
+    dbg.State.battleSetup.points = Number(setup.points) || 1000;
+    dbg.State.battleSetup.biome = setup.biome || 'random';
+    dbg.State.battleSetup.role = setup.blue_role || 'random';
+    dbg.BattleSetup.setMode('custom');
+    dbg.BattleSetup.closeAndCreate();
+    dbg.State.battle.playerSide = side;
+    dbg.State.selectedSide = side;
+    dbg.Deployment.updateUI();
+    deploymentHint(`ONLINE 1V1 · ${side.toUpperCase()} · ${dbg.State.battleSetup.points} PT · schiera il tuo esercito e premi READY.`);
+
+    stopDeploymentPolling();
+    deploymentPollTimer = setInterval(pollDeploymentStatus, 1500);
+    pollDeploymentStatus();
+  }
+
+  async function continueMatch(){
+    if (!matched || !matchedRow || !client) return;
+    const side = matchedRow.player_side === 'red' ? 'red' : 'blue';
+    const matchId = matchedRow.match_id;
+    UI.proceed.disabled = true;
+    UI.matchStatus.textContent = 'Preparing shared battlefield…';
+
+    const { data:setup, error } = await client.rpc('ensure_match_setup', { p_match_id: matchId });
+    if (error){
+      console.error('[DEPLOYMENT] ensure_match_setup', error);
+      UI.matchStatus.textContent = 'Could not prepare shared battlefield · retry.';
+      UI.proceed.disabled = false;
+      return;
+    }
+
+    activeMatch = { id:matchId, side, setup };
+    searching = false;
+    matched = false;
+    matchedRow = null;
+    UI.proceed.disabled = false;
+    UI.matchOverlay.classList.remove('open');
+    try {
+      configureMultiplayerDeployment(setup, side);
+    } catch (err) {
+      console.error('[DEPLOYMENT] configure', err);
+      activeMatch = null;
+      window.__CB_MULTIPLAYER_ACTIVE__ = false;
+      UI.matchOverlay.classList.add('open');
+      UI.matchTitle.textContent = 'DEPLOYMENT ERROR';
+      UI.matchStatus.textContent = 'Local battle bridge could not start.';
+      UI.cancel.textContent = 'CLOSE';
+    }
+  }
+''',
+'multiplayer deployment client flow')
+
+p.write_text(s, encoding='utf-8')
+print('patched', len(s), 'chars')
