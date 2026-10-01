@@ -4,20 +4,120 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<meta name="description" content="About COFFEE BATTLES, an original browser-based tactical battle sandbox and systems prototype.">
+<meta name="description" content="Coffee Battles is a real-time tactical battle game for the browser, developed in the open on GitHub.">
 <meta name="robots" content="index,follow">
-<title>About — COFFEE BATTLES</title>
+<title>About — Coffee Battles</title>
 <link rel="stylesheet" href="/site.css">
 </head>
 <body>
-<header class="site-header"><nav class="nav" aria-label="Main navigation"><a class="brand" href="/">COFFEE BATTLES</a><div class="nav-links"><a href="/about">About</a><a href="/how-to-play">How to play</a><a href="/privacy">Privacy</a><a href="/contact">Contact</a><a class="play" href="/play">Play</a></div></nav></header>
-<main class="shell"><article class="prose"><div class="kicker">About the project</div><h1>A tactical sandbox built around battlefield behaviour</h1><p class="lead">COFFEE BATTLES is an independent browser game prototype focused on the behaviour of battlefield units rather than on collection systems, progression trees or long pre-game setup.</p>
-<h2>What the project explores</h2><p>The core question is simple: how much tactical depth can emerge from a compact set of readable rules? Regiments move as formations, have a meaningful front, flank and rear, consume energy while moving and fighting, and can lose morale under pressure. A charge is not just a movement speed bonus; its direction, timing and point of contact matter. Ranged troops need distance and line of sight, while terrain can change both movement and engagement choices.</p><p>The game is therefore designed as both a playable battle and a systems laboratory. A short battle can expose whether pursuit is too sticky, whether a pathfinder chooses poor routes around an obstacle, whether cavalry has enough room to exploit mobility, or whether morale breaks too early. Iteration is deliberately fast: the project can be changed, deployed and tested without a large build pipeline.</p>
-<h2>Current scope</h2><p>The public build concentrates on field battles. The current system includes deployment, infantry, cavalry, archers, formations, stances, charges, retreats, ranged fire, energy, morale, terrain, pathfinding and a victory state. The battlefield is intentionally bounded and legible so that the effect of each rule can be observed.</p><p>COFFEE BATTLES is still in active development. That means balance, interface details and unit behaviour may change between versions. The public site documents the current intent of the project rather than promising a fixed final feature set.</p>
-<h2>Design principles</h2><ul><li><strong>Readable cause and effect.</strong> Players should be able to understand why a unit slowed, broke, charged or failed to reach a target.</li><li><strong>Low friction.</strong> A battle should begin quickly and restarting a test should be easy.</li><li><strong>No mandatory account layer.</strong> The current game can be opened and played without registration.</li><li><strong>Systems before decoration.</strong> Movement, combat and AI behaviour are prioritised before large content libraries or presentation-heavy features.</li><li><strong>Non-interruptive monetisation.</strong> The design goal is to keep the battle itself free from disruptive advertising placements.</li></ul>
-<h2>Why “COFFEE BATTLES”?</h2><p>The name reflects the intended scale of the experience: something you can open, understand and play in a short session, while still giving the underlying simulation enough depth to reward repeated experimentation.</p>
-<div class="note"><strong>Development status:</strong> public prototype. The current build is playable, but systems and balance remain subject to change.</div>
-<div class="cta-row"><a class="btn primary" href="/play">Play the current build</a><a class="btn" href="/how-to-play">How to play</a></div></article></main>
-<footer class="footer"><div class="footer-inner"><span>© 2026 COFFEE BATTLES</span><div class="footer-links"><a href="/">Home</a><a href="/how-to-play">How to play</a><a href="/privacy">Privacy</a><a href="/contact">Contact</a></div></div></footer>
+<header class="site-header"><nav class="nav" aria-label="Main navigation"><a class="brand" href="/">Coffee Battles</a><div class="nav-links"><a href="/how-to-play" data-i18n="nav.how">How to play</a><a href="/about" data-i18n="nav.about">About</a><select id="siteLanguageSelect" class="lang-select" aria-label="Language" title="Language"><option value="en">English</option><option value="it">Italiano</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="ru">Русский</option></select><a class="play" href="/play" data-i18n="nav.play">Play</a></div></nav></header>
+<main class="shell"><article class="prose">
+<h1 data-i18n-html="a.h1">About Coffee Battles</h1>
+<p class="lead" data-i18n-html="a.lead">A real-time tactical battle game that runs in the browser. Two armies, one field, ten minutes at most. No account and nothing to install.</p>
+<h2 data-i18n-html="a.h2.do">What you do</h2>
+<p data-i18n-html="a.p.do">You choose the size of the armies and the terrain, deploy your regiments, and then command them while the battle runs. The computer commands the enemy army; in Custom mode you can also build and deploy it yourself.</p>
+<h2 data-i18n-html="a.h2.decides">What decides a battle</h2>
+<p data-i18n-html="a.p.decides">Regiments are blocks of soldiers with a front, two flanks and a rear. Hitting a flank or the rear hurts far more than meeting the enemy head-on, and turning a regiment takes time. Every regiment tires as it marches and fights, and its morale drops under losses and shock until it breaks and runs. Rivers, forests, hills and villages shape where you can go, and you only see the enemy your troops can see.</p>
+<p data-i18n-html="a.p.units">There are eight kinds of regiment: infantry, light infantry, heavy infantry, spearmen, archers, crossbowmen, cavalry and light cavalry.</p>
+<h2 data-i18n-html="a.h2.status">Where it stands</h2>
+<p data-i18n-html="a.p.status">Coffee Battles is a public prototype. Units, balance and the interface change from one version to the next, and every change is visible in the <a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">GitHub repository</a>.</p>
+<h2 data-i18n-html="a.h2.name">The name</h2>
+<p data-i18n-html="a.p.name">A battle should fit in a coffee break.</p>
+<div class="cta-row"><a class="btn primary" href="/play" data-i18n="cta.play">Play now</a><a class="text-link" href="/how-to-play" data-i18n="cta.how">How to play</a></div>
+</article></main>
+<footer class="footer"><div class="footer-inner"><span>© 2026 Coffee Battles</span><div class="footer-links"><a href="/about" data-i18n="nav.about">About</a><a href="/how-to-play" data-i18n="nav.how">How to play</a><a href="/privacy" data-i18n="nav.privacy">Privacy</a><a href="/contact" data-i18n="nav.contact">Contact</a><a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">GitHub</a></div></div></footer>
+<script>window.PAGE_STRINGS={
+ "en": {
+  "meta.title": "About — Coffee Battles",
+  "meta.description": "Coffee Battles is a real-time tactical battle game for the browser, developed in the open on GitHub.",
+  "a.h1": "About Coffee Battles",
+  "a.lead": "A real-time tactical battle game that runs in the browser. Two armies, one field, ten minutes at most. No account and nothing to install.",
+  "a.h2.do": "What you do",
+  "a.p.do": "You choose the size of the armies and the terrain, deploy your regiments, and then command them while the battle runs. The computer commands the enemy army; in Custom mode you can also build and deploy it yourself.",
+  "a.h2.decides": "What decides a battle",
+  "a.p.decides": "Regiments are blocks of soldiers with a front, two flanks and a rear. Hitting a flank or the rear hurts far more than meeting the enemy head-on, and turning a regiment takes time. Every regiment tires as it marches and fights, and its morale drops under losses and shock until it breaks and runs. Rivers, forests, hills and villages shape where you can go, and you only see the enemy your troops can see.",
+  "a.p.units": "There are eight kinds of regiment: infantry, light infantry, heavy infantry, spearmen, archers, crossbowmen, cavalry and light cavalry.",
+  "a.h2.status": "Where it stands",
+  "a.p.status": "Coffee Battles is a public prototype. Units, balance and the interface change from one version to the next, and every change is visible in the <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">GitHub repository<\/a>.",
+  "a.h2.name": "The name",
+  "a.p.name": "A battle should fit in a coffee break."
+ },
+ "it": {
+  "meta.title": "Informazioni — Coffee Battles",
+  "meta.description": "Coffee Battles è un gioco di battaglie tattiche in tempo reale per il browser, sviluppato apertamente su GitHub.",
+  "a.h1": "Cos’è Coffee Battles",
+  "a.lead": "Un gioco di battaglie tattiche in tempo reale che gira nel browser. Due eserciti, un campo, dieci minuti al massimo. Nessun account e niente da installare.",
+  "a.h2.do": "Cosa fai",
+  "a.p.do": "Scegli la dimensione degli eserciti e il terreno, schieri i tuoi reggimenti e poi li comandi mentre la battaglia si svolge. L’esercito nemico è comandato dal computer; in modalità Libero puoi anche costruirlo e schierarlo tu.",
+  "a.h2.decides": "Cosa decide una battaglia",
+  "a.p.decides": "I reggimenti sono blocchi di soldati con un fronte, due fianchi e un retro. Colpire un fianco o il retro fa molto più male che affrontare il nemico di fronte, e girare un reggimento richiede tempo. Ogni reggimento si stanca marciando e combattendo, e il suo morale cala con le perdite e lo shock finché non cede e fugge. Fiumi, foreste, colline e villaggi decidono dove puoi passare, e vedi solo i nemici che le tue truppe riescono a vedere.",
+  "a.p.units": "Ci sono otto tipi di reggimento: fanteria, fanteria leggera, fanteria pesante, lanceri, arcieri, balestrieri, cavalleria e cavalleria leggera.",
+  "a.h2.status": "A che punto è",
+  "a.p.status": "Coffee Battles è un prototipo pubblico. Unità, bilanciamento e interfaccia cambiano da una versione all’altra, e ogni modifica è visibile nel <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">repository su GitHub<\/a>.",
+  "a.h2.name": "Il nome",
+  "a.p.name": "Una battaglia dovrebbe durare quanto una pausa caffè."
+ },
+ "es": {
+  "meta.title": "Acerca de — Coffee Battles",
+  "meta.description": "Coffee Battles es un juego de batallas tácticas en tiempo real para el navegador, desarrollado en abierto en GitHub.",
+  "a.h1": "Acerca de Coffee Battles",
+  "a.lead": "Un juego de batallas tácticas en tiempo real que funciona en el navegador. Dos ejércitos, un campo, diez minutos como máximo. Sin cuenta y sin nada que instalar.",
+  "a.h2.do": "Qué haces",
+  "a.p.do": "Eliges el tamaño de los ejércitos y el terreno, despliegas tus regimientos y luego los diriges mientras transcurre la batalla. El ordenador dirige el ejército enemigo; en el modo Libre también puedes crearlo y desplegarlo tú.",
+  "a.h2.decides": "Qué decide una batalla",
+  "a.p.decides": "Los regimientos son bloques de soldados con un frente, dos flancos y una retaguardia. Golpear un flanco o la retaguardia hace mucho más daño que enfrentarse al enemigo de frente, y girar un regimiento lleva tiempo. Cada regimiento se cansa al marchar y combatir, y su moral baja con las bajas y la conmoción hasta que se rompe y huye. Ríos, bosques, colinas y pueblos marcan por dónde puedes pasar, y solo ves a los enemigos que ven tus tropas.",
+  "a.p.units": "Hay ocho tipos de regimiento: infantería, infantería ligera, infantería pesada, lanceros, arqueros, ballesteros, caballería y caballería ligera.",
+  "a.h2.status": "En qué punto está",
+  "a.p.status": "Coffee Battles es un prototipo público. Las unidades, el equilibrio y la interfaz cambian de una versión a otra, y cada cambio se puede ver en el <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">repositorio de GitHub<\/a>.",
+  "a.h2.name": "El nombre",
+  "a.p.name": "Una batalla debería caber en una pausa para el café."
+ },
+ "fr": {
+  "meta.title": "À propos — Coffee Battles",
+  "meta.description": "Coffee Battles est un jeu de batailles tactiques en temps réel pour le navigateur, développé publiquement sur GitHub.",
+  "a.h1": "À propos de Coffee Battles",
+  "a.lead": "Un jeu de batailles tactiques en temps réel qui tourne dans le navigateur. Deux armées, un terrain, dix minutes au plus. Pas de compte, rien à installer.",
+  "a.h2.do": "Ce que vous faites",
+  "a.p.do": "Vous choisissez la taille des armées et le terrain, déployez vos régiments, puis les commandez pendant la bataille. L’ordinateur commande l’armée ennemie ; en mode Libre, vous pouvez aussi la composer et la déployer vous-même.",
+  "a.h2.decides": "Ce qui décide d’une bataille",
+  "a.p.decides": "Les régiments sont des blocs de soldats avec un front, deux flancs et un arrière. Frapper un flanc ou l’arrière fait bien plus de dégâts qu’un choc de face, et faire pivoter un régiment prend du temps. Chaque régiment se fatigue en marchant et en combattant, et son moral baisse sous les pertes et le choc jusqu’à ce qu’il cède et s’enfuie. Rivières, forêts, collines et villages décident des passages possibles, et vous ne voyez que les ennemis que vos troupes voient.",
+  "a.p.units": "Il existe huit types de régiment : infanterie, infanterie légère, infanterie lourde, lanciers, archers, arbalétriers, cavalerie et cavalerie légère.",
+  "a.h2.status": "Où en est le projet",
+  "a.p.status": "Coffee Battles est un prototype public. Unités, équilibrage et interface changent d’une version à l’autre, et chaque modification est visible dans le <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">dépôt GitHub<\/a>.",
+  "a.h2.name": "Le nom",
+  "a.p.name": "Une bataille devrait tenir dans une pause café."
+ },
+ "de": {
+  "meta.title": "Über das Spiel — Coffee Battles",
+  "meta.description": "Coffee Battles ist ein taktisches Echtzeit-Schlachtspiel für den Browser, öffentlich entwickelt auf GitHub.",
+  "a.h1": "Über Coffee Battles",
+  "a.lead": "Ein taktisches Echtzeit-Schlachtspiel, das im Browser läuft. Zwei Armeen, ein Feld, höchstens zehn Minuten. Kein Konto, nichts zu installieren.",
+  "a.h2.do": "Was du tust",
+  "a.p.do": "Du wählst die Größe der Armeen und das Gelände, stellst deine Regimenter auf und führst sie, während die Schlacht läuft. Der Computer führt die feindliche Armee; im Modus Frei kannst du sie auch selbst zusammenstellen und aufstellen.",
+  "a.h2.decides": "Was eine Schlacht entscheidet",
+  "a.p.decides": "Regimenter sind Blöcke aus Soldaten mit einer Front, zwei Flanken und einem Rücken. Ein Treffer in Flanke oder Rücken wiegt weit schwerer als ein Zusammenstoß von vorn, und ein Regiment zu drehen braucht Zeit. Jedes Regiment ermüdet beim Marschieren und Kämpfen, und seine Moral sinkt unter Verlusten und Schock, bis es bricht und flieht. Flüsse, Wälder, Hügel und Dörfer bestimmen, wo du durchkommst, und du siehst nur die Gegner, die deine Truppen sehen.",
+  "a.p.units": "Es gibt acht Arten von Regimentern: Infanterie, leichte Infanterie, schwere Infanterie, Speerträger, Bogenschützen, Armbrustschützen, Kavallerie und leichte Kavallerie.",
+  "a.h2.status": "Wo das Projekt steht",
+  "a.p.status": "Coffee Battles ist ein öffentlicher Prototyp. Einheiten, Balance und Oberfläche ändern sich von Version zu Version, und jede Änderung ist im <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">GitHub-Repository<\/a> nachvollziehbar.",
+  "a.h2.name": "Der Name",
+  "a.p.name": "Eine Schlacht soll in eine Kaffeepause passen."
+ },
+ "ru": {
+  "meta.title": "О проекте — Coffee Battles",
+  "meta.description": "Coffee Battles — тактическая игра о сражениях в реальном времени для браузера, которая разрабатывается открыто на GitHub.",
+  "a.h1": "О Coffee Battles",
+  "a.lead": "Тактическая игра о сражениях в реальном времени, которая работает в браузере. Две армии, одно поле, не больше десяти минут. Без регистрации и установки.",
+  "a.h2.do": "Что вы делаете",
+  "a.p.do": "Вы выбираете размер армий и местность, расставляете свои полки и командуете ими прямо по ходу боя. Армией противника командует компьютер; в режиме «Свободно» её можно собрать и расставить самому.",
+  "a.h2.decides": "Что решает исход боя",
+  "a.p.decides": "Полки — это блоки солдат с фронтом, двумя флангами и тылом. Удар во фланг или в тыл намного опаснее лобового столкновения, а чтобы развернуть полк, нужно время. Каждый полк устаёт на марше и в бою, а его боевой дух падает от потерь и потрясений, пока он не дрогнет и не побежит. Реки, леса, холмы и деревни определяют, где можно пройти, а видите вы только тех врагов, которых видят ваши войска.",
+  "a.p.units": "Всего восемь видов полков: пехота, лёгкая пехота, тяжёлая пехота, копейщики, лучники, арбалетчики, кавалерия и лёгкая кавалерия.",
+  "a.h2.status": "Состояние проекта",
+  "a.p.status": "Coffee Battles — публичный прототип. Отряды, баланс и интерфейс меняются от версии к версии, и каждое изменение видно в <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">репозитории на GitHub<\/a>.",
+  "a.h2.name": "Название",
+  "a.p.name": "Бой должен укладываться в перерыв на кофе."
+ }
+};</script>
+<script src="/site-i18n.js"></script>
 </body>
 </html>

@@ -4,78 +4,120 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<meta name="description" content="COFFEE BATTLES is a browser-based tactical battle sandbox about formations, morale, energy, terrain and command decisions.">
+<meta name="description" content="Real-time tactical battles that fit in a coffee break: ten minutes at most, in your browser, no account.">
 <meta name="robots" content="index,follow">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4641310798002017" crossorigin="anonymous"></script>
-<title>COFFEE BATTLES — Tactical battle sandbox</title>
+<title>Coffee Battles — tactical battles for a coffee break</title>
 <link rel="stylesheet" href="/site.css">
 </head>
 <body>
-<header class="site-header"><nav class="nav" aria-label="Main navigation"><a class="brand" href="/">COFFEE BATTLES</a><div class="nav-links"><a href="/about" data-i18n="nav.about">About</a><a href="/how-to-play" data-i18n="nav.how">How to play</a><a href="/privacy" data-i18n="nav.privacy">Privacy</a><a href="/contact" data-i18n="nav.contact">Contact</a><select id="siteLanguageSelect" class="lang-select" aria-label="Language" title="Language"><option value="en">🇬🇧 EN</option><option value="it">🇮🇹 IT</option><option value="es">🇪🇸 ES</option><option value="fr">🇫🇷 FR</option><option value="de">🇩🇪 DE</option><option value="ru">🇷🇺 RU</option></select><a class="play" href="/play" data-i18n="nav.play">Play</a></div></nav></header>
+<header class="site-header"><nav class="nav" aria-label="Main navigation"><a class="brand" href="/">Coffee Battles</a><div class="nav-links"><a href="/how-to-play" data-i18n="nav.how">How to play</a><a href="/about" data-i18n="nav.about">About</a><select id="siteLanguageSelect" class="lang-select" aria-label="Language" title="Language"><option value="en">English</option><option value="it">Italiano</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="ru">Русский</option></select><a class="play" href="/play" data-i18n="nav.play">Play</a></div></nav></header>
 <main>
-<section class="hero"><div class="shell"><div class="kicker" data-i18n="hero.kicker">Browser tactical battle lab</div><h1 data-i18n-html="hero.title">Command the line.<br>Break the enemy.</h1><div class="hero-motto" data-i18n="hero.motto">TAKE A BREAK. GRAB A COFFEE. FIGHT A BATTLE.</div><p class="lead" data-i18n="hero.lead">COFFEE BATTLES is an original, lightweight tactical battle sandbox built to test how formations, facing, fatigue, morale, ranged fire and terrain interact in real time. It runs directly in the browser and is designed around readable battlefield decisions rather than long setup or account systems.</p><div class="cta-row"><a class="btn primary" href="/play" data-i18n="hero.start">Start a battle</a><a class="btn" href="/how-to-play" data-i18n="hero.guide">Read the field guide</a></div><div class="statline"><span class="pill" data-i18n="hero.noAccount">No account required</span><span class="pill" data-i18n="hero.browser">Runs in-browser</span><span class="pill" data-i18n="hero.single">Single-player battle sandbox</span><span class="pill" data-i18n="hero.public">Public development build</span></div></div></section>
-<section class="section"><div class="shell"><div class="kicker" data-i18n="diff.kicker">What makes it different</div><h2 data-i18n="diff.title">A small battlefield with systems that matter</h2><div class="grid"><article class="card"><h3 data-i18n="diff.form.title">Formation and facing</h3><p data-i18n="diff.form.body">Units are not abstract points. Their front, flank and rear matter, and formation changes alter how a regiment occupies space and brings its fighting strength to bear.</p></article><article class="card"><h3 data-i18n="diff.energy.title">Energy and morale</h3><p data-i18n="diff.energy.body">Movement and combat consume energy. Exhausted troops lose effectiveness, while morale pressure can turn a damaged regiment into a retreating one even before every soldier is gone.</p></article><article class="card"><h3 data-i18n="diff.terrain.title">Terrain and movement</h3><p data-i18n="diff.terrain.body">Roads, forests, walls, water and elevation shape routes and lines of sight. Positioning is intended to create tactical choices rather than simply decorate the field.</p></article></div></div></section>
-<section class="section"><div class="shell"><div class="kicker" data-i18n="build.kicker">Current build</div><h2 data-i18n="build.title">An evolving public battle prototype</h2><p class="lead" data-i18n="build.lead">The current build focuses on the core combat loop: deployment, orders, charges, retreats, ranged attacks, pursuit, terrain interaction and battlefield victory. New unit types and AI behaviour are being developed incrementally, while the game remains deliberately compact enough to load and test quickly.</p><div class="grid" style="margin-top:24px"><article class="card"><h3 data-i18n="build.inf.title">Infantry</h3><p data-i18n="build.inf.body">The baseline for line fighting: steady movement, formation control and direct melee engagement.</p></article><article class="card"><h3 data-i18n="build.cav.title">Cavalry</h3><p data-i18n="build.cav.body">Fast movement and high-impact charges reward timing, open routes and attacks against exposed flanks or rears.</p></article><article class="card"><h3 data-i18n="build.arc.title">Archers</h3><p data-i18n="build.arc.body">Ranged units can engage from distance, move into range and support the battle without being forced into melee unless ordered aggressively.</p></article></div></div></section>
-<section class="section"><div class="shell"><div class="kicker" data-i18n="goal.kicker">Design goal</div><h2 data-i18n="goal.title">Fast to start, deep enough to study</h2><p class="lead" data-i18n="goal.lead">COFFEE BATTLES is both a playable experiment and a systems laboratory. Battles are intentionally quick to restart so changes to movement, pathfinding, morale, targeting and unit behaviour can be observed repeatedly. The project is published openly while those systems are refined.</p><div class="cta-row"><a class="btn primary" href="/play" data-i18n="goal.play">Play the current build</a><a class="btn" href="/about" data-i18n="goal.about">About the project</a></div></div></section>
+<section class="hero"><div class="shell">
+  <div class="hero-copy">
+    <h1 data-i18n-html="hero.title">Take a break.<br>Grab a coffee.<br>Fight a battle.</h1>
+    <p class="lead" data-i18n="hero.lead">Real-time tactical battles that fit in a coffee break: ten minutes at most, in your browser, no account.</p>
+    <div class="cta-row"><a class="btn primary" href="/play" data-i18n="cta.play">Play now</a><a class="text-link" href="/how-to-play" data-i18n="cta.how">How to play</a></div>
+  </div>
+  <div class="hero-shot"><img src="/assets/battle-hills.jpg" width="1080" height="840" alt="A battle in progress: blue and red regiments meet across a road between hills." data-i18n-alt="hero.alt"></div>
+</div></section>
+<section class="section"><div class="shell">
+  <h2 data-i18n="steps.title">How a battle goes</h2>
+  <ol class="steps">
+    <li><h3 data-i18n="step1.title">Set up</h3><p data-i18n="step1.body">Choose army size and terrain, and whether you attack or defend.</p></li>
+    <li><h3 data-i18n="step2.title">Deploy</h3><p data-i18n="step2.body">Drag infantry, spearmen, archers and cavalry into your zone. The enemy deploys out of sight.</p></li>
+    <li><h3 data-i18n="step3.title">Fight</h3><p data-i18n="step3.body">Give orders in real time. Facing, charges, fatigue and morale decide who breaks first.</p></li>
+  </ol>
+  <div class="cta-row"><a class="btn primary" href="/play" data-i18n="cta.play">Play now</a></div>
+</div></section>
 </main>
-<footer class="footer"><div class="footer-inner"><span>© 2026 COFFEE BATTLES</span><div class="footer-links"><a href="/about" data-i18n="nav.about">About</a><a href="/how-to-play" data-i18n="nav.how">How to play</a><a href="/privacy" data-i18n="nav.privacy">Privacy</a><a href="/contact" data-i18n="nav.contact">Contact</a><a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">GitHub</a></div></div></footer>
-<script>
-const STORAGE_KEY='coffee-battles-language';
-const STRINGS={
-  en:{
-    'nav.about':'About','nav.how':'How to play','nav.privacy':'Privacy','nav.contact':'Contact','nav.play':'Play',
-    'hero.kicker':'Browser tactical battle lab','hero.motto':'TAKE A BREAK. GRAB A COFFEE. FIGHT A BATTLE.','hero.title':'Command the line.<br>Break the enemy.','hero.lead':'COFFEE BATTLES is an original, lightweight tactical battle sandbox built to test how formations, facing, fatigue, morale, ranged fire and terrain interact in real time. It runs directly in the browser and is designed around readable battlefield decisions rather than long setup or account systems.','hero.start':'Start a battle','hero.guide':'Read the field guide','hero.noAccount':'No account required','hero.browser':'Runs in-browser','hero.single':'Single-player battle sandbox','hero.public':'Public development build',
-    'diff.kicker':'What makes it different','diff.title':'A small battlefield with systems that matter','diff.form.title':'Formation and facing','diff.form.body':'Units are not abstract points. Their front, flank and rear matter, and formation changes alter how a regiment occupies space and brings its fighting strength to bear.','diff.energy.title':'Energy and morale','diff.energy.body':'Movement and combat consume energy. Exhausted troops lose effectiveness, while morale pressure can turn a damaged regiment into a retreating one even before every soldier is gone.','diff.terrain.title':'Terrain and movement','diff.terrain.body':'Roads, forests, walls, water and elevation shape routes and lines of sight. Positioning is intended to create tactical choices rather than simply decorate the field.',
-    'build.kicker':'Current build','build.title':'An evolving public battle prototype','build.lead':'The current build focuses on the core combat loop: deployment, orders, charges, retreats, ranged attacks, pursuit, terrain interaction and battlefield victory. New unit types and AI behaviour are being developed incrementally, while the game remains deliberately compact enough to load and test quickly.','build.inf.title':'Infantry','build.inf.body':'The baseline for line fighting: steady movement, formation control and direct melee engagement.','build.cav.title':'Cavalry','build.cav.body':'Fast movement and high-impact charges reward timing, open routes and attacks against exposed flanks or rears.','build.arc.title':'Archers','build.arc.body':'Ranged units can engage from distance, move into range and support the battle without being forced into melee unless ordered aggressively.',
-    'goal.kicker':'Design goal','goal.title':'Fast to start, deep enough to study','goal.lead':'COFFEE BATTLES is both a playable experiment and a systems laboratory. Battles are intentionally quick to restart so changes to movement, pathfinding, morale, targeting and unit behaviour can be observed repeatedly. The project is published openly while those systems are refined.','goal.play':'Play the current build','goal.about':'About the project'
-  },
-  it:{
-    'nav.about':'Info','nav.how':'Come si gioca','nav.privacy':'Privacy','nav.contact':'Contatti','nav.play':'Gioca',
-    'hero.kicker':'Laboratorio tattico nel browser','hero.motto':'FAI UNA PAUSA. PRENDI UN CAFFÈ. COMBATTI UNA BATTAGLIA.','hero.title':'Comanda la linea.<br>Spezza il nemico.','hero.lead':'COFFEE BATTLES è un sandbox tattico originale e leggero, creato per sperimentare in tempo reale l’interazione tra formazioni, orientamento, fatica, morale, tiro e terreno. Funziona direttamente nel browser ed è pensato attorno a decisioni di battaglia leggibili, senza lunghi setup o sistemi di account.','hero.start':'Inizia una battaglia','hero.guide':'Leggi la guida','hero.noAccount':'Nessun account richiesto','hero.browser':'Funziona nel browser','hero.single':'Sandbox per giocatore singolo','hero.public':'Build pubblica in sviluppo',
-    'diff.kicker':'Cosa lo rende diverso','diff.title':'Un piccolo campo di battaglia con sistemi che contano','diff.form.title':'Formazione e orientamento','diff.form.body':'Le unità non sono punti astratti. Fronte, fianco e retro contano, e cambiare formazione modifica lo spazio occupato dal reggimento e quanta forza riesce a portare a contatto.','diff.energy.title':'Energia e morale','diff.energy.body':'Movimento e combattimento consumano energia. Le truppe esauste perdono efficacia, mentre la pressione sul morale può trasformare un reparto danneggiato in uno in ritirata prima ancora che venga distrutto.','diff.terrain.title':'Terreno e movimento','diff.terrain.body':'Strade, foreste, muri, acqua e alture modificano percorsi e linee di vista. Il posizionamento deve creare vere scelte tattiche, non solo decorare il campo.',
-    'build.kicker':'Build attuale','build.title':'Un prototipo di battaglia pubblico in evoluzione','build.lead':'La build attuale si concentra sul ciclo di combattimento principale: schieramento, ordini, cariche, ritirate, attacchi a distanza, inseguimento, interazione col terreno e vittoria. Nuove unità e comportamenti IA vengono aggiunti progressivamente, mantenendo il gioco abbastanza compatto da poter essere caricato e testato rapidamente.','build.inf.title':'Fanteria','build.inf.body':'La base del combattimento di linea: movimento regolare, controllo della formazione e scontro diretto.','build.cav.title':'Cavalleria','build.cav.body':'Movimento rapido e cariche ad alto impatto premiano tempismo, vie aperte e attacchi contro fianchi o retro esposti.','build.arc.title':'Arcieri','build.arc.body':'Le unità da tiro possono colpire a distanza, portarsi in gittata e supportare la battaglia senza essere costrette alla mischia salvo ordine aggressivo.',
-    'goal.kicker':'Obiettivo di design','goal.title':'Veloce da iniziare, abbastanza profondo da studiare','goal.lead':'COFFEE BATTLES è insieme un esperimento giocabile e un laboratorio di sistemi. Le battaglie sono volutamente rapide da riavviare, così da osservare più volte modifiche a movimento, pathfinding, morale, targeting e comportamento delle unità. Il progetto viene pubblicato apertamente mentre questi sistemi vengono raffinati.','goal.play':'Gioca la build attuale','goal.about':'Info sul progetto'
-  },
-  es:{
-    'nav.about':'Acerca de','nav.how':'Cómo jugar','nav.privacy':'Privacidad','nav.contact':'Contacto','nav.play':'Jugar',
-    'hero.kicker':'Laboratorio táctico en el navegador','hero.motto':'HAZ UNA PAUSA. TOMA UN CAFÉ. LIBRA UNA BATALLA.','hero.title':'Manda la línea.<br>Rompe al enemigo.','hero.lead':'COFFEE BATTLES es un sandbox táctico original y ligero creado para probar en tiempo real cómo interactúan las formaciones, la orientación, la fatiga, la moral, el fuego a distancia y el terreno. Funciona directamente en el navegador y se centra en decisiones de batalla claras, sin largos preparativos ni sistemas de cuenta.','hero.start':'Iniciar una batalla','hero.guide':'Leer la guía','hero.noAccount':'Sin cuenta obligatoria','hero.browser':'Funciona en el navegador','hero.single':'Sandbox para un jugador','hero.public':'Build pública en desarrollo',
-    'diff.kicker':'Qué lo hace diferente','diff.title':'Un pequeño campo de batalla con sistemas que importan','diff.form.title':'Formación y orientación','diff.form.body':'Las unidades no son puntos abstractos. Frente, flanco y retaguardia importan, y los cambios de formación alteran el espacio que ocupa un regimiento y la fuerza que puede llevar al combate.','diff.energy.title':'Energía y moral','diff.energy.body':'Moverse y combatir consume energía. Las tropas agotadas pierden eficacia, mientras la presión sobre la moral puede hacer retroceder a un regimiento antes de que sea destruido.','diff.terrain.title':'Terreno y movimiento','diff.terrain.body':'Carreteras, bosques, muros, agua y elevación moldean rutas y líneas de visión. La posición debe crear decisiones tácticas reales, no solo decorar el campo.',
-    'build.kicker':'Build actual','build.title':'Un prototipo público de batalla en evolución','build.lead':'La build actual se centra en el núcleo del combate: despliegue, órdenes, cargas, retiradas, ataques a distancia, persecución, interacción con el terreno y victoria. Nuevos tipos de unidad y comportamientos de IA se añaden de forma incremental, manteniendo el juego compacto y rápido de probar.','build.inf.title':'Infantería','build.inf.body':'La base del combate de línea: movimiento estable, control de formación y enfrentamiento cuerpo a cuerpo.','build.cav.title':'Caballería','build.cav.body':'El movimiento rápido y las cargas de gran impacto premian el tiempo, las rutas abiertas y los ataques a flancos o retaguardias expuestos.','build.arc.title':'Arqueros','build.arc.body':'Las unidades a distancia pueden atacar desde lejos, entrar en alcance y apoyar la batalla sin verse forzadas al cuerpo a cuerpo salvo una orden agresiva.',
-    'goal.kicker':'Objetivo de diseño','goal.title':'Rápido de empezar, lo bastante profundo para estudiar','goal.lead':'COFFEE BATTLES es a la vez un experimento jugable y un laboratorio de sistemas. Las batallas se reinician rápido a propósito para observar repetidamente cambios en movimiento, pathfinding, moral, selección de objetivos y comportamiento de las unidades.','goal.play':'Jugar la build actual','goal.about':'Acerca del proyecto'
-  },
-  fr:{
-    'nav.about':'À propos','nav.how':'Comment jouer','nav.privacy':'Confidentialité','nav.contact':'Contact','nav.play':'Jouer',
-    'hero.kicker':'Laboratoire tactique dans le navigateur','hero.motto':'FAITES UNE PAUSE. PRENEZ UN CAFÉ. LIVREZ BATAILLE.','hero.title':'Commandez la ligne.<br>Brisez l’ennemi.','hero.lead':'COFFEE BATTLES est un bac à sable tactique original et léger conçu pour tester en temps réel les interactions entre formations, orientation, fatigue, moral, tir à distance et terrain. Il fonctionne directement dans le navigateur et privilégie des décisions de bataille lisibles plutôt que de longs préparatifs ou des comptes utilisateur.','hero.start':'Lancer une bataille','hero.guide':'Lire le guide','hero.noAccount':'Aucun compte requis','hero.browser':'Fonctionne dans le navigateur','hero.single':'Bac à sable solo','hero.public':'Build publique en développement',
-    'diff.kicker':'Ce qui le distingue','diff.title':'Un petit champ de bataille où les systèmes comptent','diff.form.title':'Formation et orientation','diff.form.body':'Les unités ne sont pas des points abstraits. Front, flanc et arrière comptent, et les changements de formation modifient l’espace occupé et la puissance engagée.','diff.energy.title':'Énergie et moral','diff.energy.body':'Le mouvement et le combat consomment de l’énergie. Les troupes épuisées perdent en efficacité, tandis que la pression morale peut mettre un régiment en retraite avant sa destruction.','diff.terrain.title':'Terrain et mouvement','diff.terrain.body':'Routes, forêts, murs, eau et relief façonnent les itinéraires et les lignes de vue. Le positionnement doit créer de vrais choix tactiques, pas seulement décorer le terrain.',
-    'build.kicker':'Build actuelle','build.title':'Un prototype public de bataille en évolution','build.lead':'La build actuelle se concentre sur la boucle de combat principale : déploiement, ordres, charges, retraites, tirs à distance, poursuite, terrain et victoire. De nouveaux types d’unités et comportements d’IA sont ajoutés progressivement tout en gardant le jeu compact et rapide à tester.','build.inf.title':'Infanterie','build.inf.body':'La base du combat de ligne : mouvement régulier, contrôle de formation et engagement direct.','build.cav.title':'Cavalerie','build.cav.body':'La vitesse et les charges puissantes récompensent le bon timing, les voies ouvertes et les attaques sur les flancs ou l’arrière.','build.arc.title':'Archers','build.arc.body':'Les unités à distance peuvent tirer de loin, se mettre à portée et soutenir la bataille sans être forcées au corps à corps sauf ordre agressif.',
-    'goal.kicker':'Objectif de conception','goal.title':'Rapide à lancer, assez profond pour être étudié','goal.lead':'COFFEE BATTLES est à la fois une expérience jouable et un laboratoire de systèmes. Les batailles sont volontairement rapides à relancer afin d’observer à répétition les changements de mouvement, pathfinding, moral, ciblage et comportement des unités.','goal.play':'Jouer à la build actuelle','goal.about':'À propos du projet'
-  },
-  de:{
-    'nav.about':'Über','nav.how':'Spielanleitung','nav.privacy':'Datenschutz','nav.contact':'Kontakt','nav.play':'Spielen',
-    'hero.kicker':'Taktisches Browser-Schlachtlabor','hero.motto':'MACH EINE PAUSE. HOL DIR EINEN KAFFEE. KÄMPFE EINE SCHLACHT.','hero.title':'Führe die Linie.<br>Brich den Feind.','hero.lead':'COFFEE BATTLES ist eine eigenständige, leichtgewichtige taktische Sandbox, in der Formationen, Ausrichtung, Erschöpfung, Moral, Fernkampf und Gelände in Echtzeit zusammenspielen. Sie läuft direkt im Browser und konzentriert sich auf klare Schlachtfeldentscheidungen statt auf lange Vorbereitung oder Kontosysteme.','hero.start':'Schlacht starten','hero.guide':'Feldhandbuch lesen','hero.noAccount':'Kein Konto erforderlich','hero.browser':'Läuft im Browser','hero.single':'Einzelspieler-Sandbox','hero.public':'Öffentliche Entwicklungs-Build',
-    'diff.kicker':'Was es anders macht','diff.title':'Ein kleines Schlachtfeld mit wichtigen Systemen','diff.form.title':'Formation und Ausrichtung','diff.form.body':'Einheiten sind keine abstrakten Punkte. Front, Flanke und Rücken zählen, und Formationswechsel verändern Raumbelegung und verfügbare Kampfkraft.','diff.energy.title':'Energie und Moral','diff.energy.body':'Bewegung und Kampf verbrauchen Energie. Erschöpfte Truppen verlieren Wirkung, während Moraldruck einen beschädigten Verband schon vor seiner Vernichtung zum Rückzug bringen kann.','diff.terrain.title':'Gelände und Bewegung','diff.terrain.body':'Straßen, Wälder, Mauern, Wasser und Höhen formen Wege und Sichtlinien. Positionierung soll echte taktische Entscheidungen erzeugen und nicht nur das Feld schmücken.',
-    'build.kicker':'Aktueller Build','build.title':'Ein sich entwickelnder öffentlicher Schlachtprototyp','build.lead':'Der aktuelle Build konzentriert sich auf den Kernkampf: Aufstellung, Befehle, Angriffe, Rückzüge, Fernkampf, Verfolgung, Geländeinteraktion und Sieg. Neue Einheitentypen und KI-Verhalten werden schrittweise ergänzt, während das Spiel bewusst kompakt und schnell testbar bleibt.','build.inf.title':'Infanterie','build.inf.body':'Die Grundlage des Linienkampfs: stetige Bewegung, Formationskontrolle und direkter Nahkampf.','build.cav.title':'Kavallerie','build.cav.body':'Hohe Geschwindigkeit und starke Angriffe belohnen Timing, freie Wege und Angriffe auf offene Flanken oder den Rücken.','build.arc.title':'Bogenschützen','build.arc.body':'Fernkampfeinheiten können aus der Distanz angreifen, in Reichweite gehen und unterstützen, ohne in den Nahkampf gezwungen zu werden, außer bei aggressivem Befehl.',
-    'goal.kicker':'Designziel','goal.title':'Schnell gestartet, tief genug zum Analysieren','goal.lead':'COFFEE BATTLES ist zugleich spielbares Experiment und Systemlabor. Schlachten lassen sich bewusst schnell neu starten, damit Änderungen an Bewegung, Pathfinding, Moral, Zielwahl und Einheitenverhalten wiederholt beobachtet werden können.','goal.play':'Aktuellen Build spielen','goal.about':'Über das Projekt'
-  },
-  ru:{
-    'nav.about':'О проекте','nav.how':'Как играть','nav.privacy':'Конфиденциальность','nav.contact':'Контакты','nav.play':'Играть',
-    'hero.kicker':'Тактическая лаборатория в браузере','hero.motto':'СДЕЛАЙ ПЕРЕРЫВ. ВОЗЬМИ КОФЕ. ВСТУПИ В БОЙ.','hero.title':'Командуй строем.<br>Сломи врага.','hero.lead':'COFFEE BATTLES — оригинальная лёгкая тактическая песочница для проверки того, как в реальном времени взаимодействуют построения, направление фронта, усталость, мораль, дальний бой и местность. Игра запускается прямо в браузере и строится вокруг понятных боевых решений без долгой подготовки и аккаунтов.','hero.start':'Начать битву','hero.guide':'Читать руководство','hero.noAccount':'Аккаунт не нужен','hero.browser':'Работает в браузере','hero.single':'Одиночная боевая песочница','hero.public':'Публичная версия в разработке',
-    'diff.kicker':'Что делает игру особенной','diff.title':'Небольшое поле боя, где системы действительно важны','diff.form.title':'Построение и направление','diff.form.body':'Отряды — не абстрактные точки. Фронт, фланги и тыл имеют значение, а смена построения меняет занимаемое пространство и боевую силу на линии соприкосновения.','diff.energy.title':'Энергия и мораль','diff.energy.body':'Движение и бой расходуют энергию. Уставшие войска теряют эффективность, а давление на мораль может заставить повреждённый отряд отступить ещё до полного уничтожения.','diff.terrain.title':'Местность и движение','diff.terrain.body':'Дороги, леса, стены, вода и высоты влияют на маршруты и линии видимости. Позиционирование должно создавать тактические решения, а не просто украшать поле.',
-    'build.kicker':'Текущая версия','build.title':'Развивающийся публичный прототип сражений','build.lead':'Текущая версия сосредоточена на основном боевом цикле: расстановка, приказы, атаки, отступления, дальний бой, преследование, взаимодействие с местностью и победа. Новые типы войск и поведение ИИ добавляются постепенно, сохраняя игру компактной и быстрой для тестирования.','build.inf.title':'Пехота','build.inf.body':'Основа линейного боя: стабильное движение, контроль построения и прямой ближний бой.','build.cav.title':'Кавалерия','build.cav.body':'Высокая скорость и мощные атаки поощряют точный выбор момента, свободные маршруты и удары по открытым флангам или тылу.','build.arc.title':'Лучники','build.arc.body':'Дальнобойные отряды могут атаковать с дистанции, выходить на нужную дальность и поддерживать бой, не вступая в рукопашную без агрессивного приказа.',
-    'goal.kicker':'Цель дизайна','goal.title':'Быстро начать, достаточно глубоко изучать','goal.lead':'COFFEE BATTLES — одновременно игровая экспериментальная площадка и лаборатория систем. Битвы специально легко перезапускать, чтобы многократно наблюдать изменения движения, поиска пути, морали, выбора целей и поведения отрядов.','goal.play':'Играть в текущую версию','goal.about':'О проекте'
-  }
-};
-function applyLanguage(lang){
-  if(!STRINGS[lang])lang='en';
-  localStorage.setItem(STORAGE_KEY,lang);
-  document.documentElement.lang=lang;
-  document.querySelectorAll('[data-i18n]').forEach(el=>{const v=STRINGS[lang][el.dataset.i18n];if(v!==undefined)el.textContent=v;});
-  document.querySelectorAll('[data-i18n-html]').forEach(el=>{const v=STRINGS[lang][el.dataset.i18nHtml];if(v!==undefined)el.innerHTML=v;});
-  const select=document.getElementById('siteLanguageSelect');if(select)select.value=lang;
-}
-const select=document.getElementById('siteLanguageSelect');
-if(select)select.addEventListener('change',e=>applyLanguage(e.target.value));
-applyLanguage(localStorage.getItem(STORAGE_KEY)||'en');
-</script>
+<footer class="footer"><div class="footer-inner"><span>© 2026 Coffee Battles</span><div class="footer-links"><a href="/about" data-i18n="nav.about">About</a><a href="/how-to-play" data-i18n="nav.how">How to play</a><a href="/privacy" data-i18n="nav.privacy">Privacy</a><a href="/contact" data-i18n="nav.contact">Contact</a><a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">GitHub</a></div></div></footer>
+<script>window.PAGE_STRINGS={
+ "en": {
+  "hero.title": "Take a break.<br>Grab a coffee.<br>Fight a battle.",
+  "hero.lead": "Real-time tactical battles that fit in a coffee break: ten minutes at most, in your browser, no account.",
+  "hero.alt": "A battle in progress: blue and red regiments meet across a road between hills.",
+  "steps.title": "How a battle goes",
+  "step1.title": "Set up",
+  "step1.body": "Choose army size and terrain, and whether you attack or defend.",
+  "step2.title": "Deploy",
+  "step2.body": "Drag infantry, spearmen, archers and cavalry into your zone. The enemy deploys out of sight.",
+  "step3.title": "Fight",
+  "step3.body": "Give orders in real time. Facing, charges, fatigue and morale decide who breaks first.",
+  "meta.title": "Coffee Battles — tactical battles for a coffee break",
+  "meta.description": "Real-time tactical battles that fit in a coffee break: ten minutes at most, in your browser, no account."
+ },
+ "it": {
+  "hero.title": "Fai una pausa.<br>Prendi un caffè.<br>Combatti una battaglia.",
+  "hero.lead": "Battaglie tattiche in tempo reale che stanno in una pausa caffè: dieci minuti al massimo, nel browser, senza account.",
+  "hero.alt": "Una battaglia in corso: reggimenti blu e rossi si affrontano lungo una strada tra le colline.",
+  "steps.title": "Com’è fatta una battaglia",
+  "step1.title": "Prepara",
+  "step1.body": "Scegli dimensione dell’esercito e terreno, e se attacchi o difendi.",
+  "step2.title": "Schiera",
+  "step2.body": "Trascina fanteria, lanceri, arcieri e cavalleria nella tua zona. Il nemico si schiera senza farsi vedere.",
+  "step3.title": "Combatti",
+  "step3.body": "Dai ordini in tempo reale. Orientamento, cariche, fatica e morale decidono chi cede per primo.",
+  "meta.title": "Coffee Battles — battaglie tattiche per una pausa caffè",
+  "meta.description": "Battaglie tattiche in tempo reale che stanno in una pausa caffè: dieci minuti al massimo, nel browser, senza account."
+ },
+ "es": {
+  "hero.title": "Haz una pausa.<br>Toma un café.<br>Libra una batalla.",
+  "hero.lead": "Batallas tácticas en tiempo real que caben en una pausa para el café: diez minutos como máximo, en tu navegador, sin cuenta.",
+  "hero.alt": "Una batalla en curso: regimientos azules y rojos se enfrentan junto a un camino entre colinas.",
+  "steps.title": "Cómo es una batalla",
+  "step1.title": "Prepara",
+  "step1.body": "Elige el tamaño del ejército y el terreno, y si atacas o defiendes.",
+  "step2.title": "Despliega",
+  "step2.body": "Arrastra infantería, lanceros, arqueros y caballería a tu zona. El enemigo se despliega sin ser visto.",
+  "step3.title": "Combate",
+  "step3.body": "Da órdenes en tiempo real. La orientación, las cargas, el cansancio y la moral deciden quién cede primero.",
+  "meta.title": "Coffee Battles — batallas tácticas para una pausa de café",
+  "meta.description": "Batallas tácticas en tiempo real que caben en una pausa para el café: diez minutos como máximo, en tu navegador, sin cuenta."
+ },
+ "fr": {
+  "hero.title": "Faites une pause.<br>Prenez un café.<br>Livrez bataille.",
+  "hero.lead": "Des batailles tactiques en temps réel qui tiennent dans une pause café : dix minutes au plus, dans votre navigateur, sans compte.",
+  "hero.alt": "Une bataille en cours : des régiments bleus et rouges s’affrontent le long d’une route entre des collines.",
+  "steps.title": "Le déroulé d’une bataille",
+  "step1.title": "Préparez",
+  "step1.body": "Choisissez la taille de l’armée et le terrain, et si vous attaquez ou défendez.",
+  "step2.title": "Déployez",
+  "step2.body": "Placez infanterie, lanciers, archers et cavalerie dans votre zone. L’ennemi se déploie hors de vue.",
+  "step3.title": "Combattez",
+  "step3.body": "Donnez vos ordres en temps réel. Orientation, charges, fatigue et moral décident qui cède le premier.",
+  "meta.title": "Coffee Battles — des batailles tactiques pour la pause café",
+  "meta.description": "Des batailles tactiques en temps réel qui tiennent dans une pause café : dix minutes au plus, dans votre navigateur, sans compte."
+ },
+ "de": {
+  "hero.title": "Mach eine Pause.<br>Hol dir einen Kaffee.<br>Kämpfe eine Schlacht.",
+  "hero.lead": "Taktische Echtzeitschlachten für die Kaffeepause: höchstens zehn Minuten, im Browser, ohne Konto.",
+  "hero.alt": "Eine laufende Schlacht: blaue und rote Regimenter treffen an einer Straße zwischen Hügeln aufeinander.",
+  "steps.title": "So läuft eine Schlacht",
+  "step1.title": "Vorbereiten",
+  "step1.body": "Wähle Armeegröße und Gelände und ob du angreifst oder verteidigst.",
+  "step2.title": "Aufstellen",
+  "step2.body": "Ziehe Infanterie, Speerträger, Bogenschützen und Kavallerie in deine Zone. Der Gegner stellt sich unbemerkt auf.",
+  "step3.title": "Kämpfen",
+  "step3.body": "Gib Befehle in Echtzeit. Ausrichtung, Angriffe, Erschöpfung und Moral entscheiden, wer zuerst bricht.",
+  "meta.title": "Coffee Battles — taktische Schlachten für die Kaffeepause",
+  "meta.description": "Taktische Echtzeitschlachten für die Kaffeepause: höchstens zehn Minuten, im Browser, ohne Konto."
+ },
+ "ru": {
+  "hero.title": "Сделай перерыв.<br>Возьми кофе.<br>Вступи в бой.",
+  "hero.lead": "Тактические бои в реальном времени на один кофе-брейк: не дольше десяти минут, прямо в браузере, без регистрации.",
+  "hero.alt": "Идёт бой: синие и красные полки сходятся у дороги между холмами.",
+  "steps.title": "Как проходит бой",
+  "step1.title": "Подготовка",
+  "step1.body": "Выберите размер армии, местность и роль: атака или оборона.",
+  "step2.title": "Расстановка",
+  "step2.body": "Перетащите пехоту, копейщиков, лучников и кавалерию в свою зону. Противник расставляется скрытно.",
+  "step3.title": "Бой",
+  "step3.body": "Отдавайте приказы в реальном времени. Построение, атаки, усталость и боевой дух решают, кто дрогнет первым.",
+  "meta.title": "Coffee Battles — тактические бои на кофе-брейк",
+  "meta.description": "Тактические бои в реальном времени на один кофе-брейк: не дольше десяти минут, прямо в браузере, без регистрации."
+ }
+};</script>
+<script src="/site-i18n.js"></script>
 </body>
 </html>

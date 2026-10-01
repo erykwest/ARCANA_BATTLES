@@ -4,19 +4,137 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<meta name="description" content="Contact and feedback channels for COFFEE BATTLES.">
+<meta name="description" content="Report bugs and send feedback about Coffee Battles on GitHub.">
 <meta name="robots" content="index,follow">
-<title>Contact — COFFEE BATTLES</title>
+<title>Contact — Coffee Battles</title>
 <link rel="stylesheet" href="/site.css">
 </head>
 <body>
-<header class="site-header"><nav class="nav" aria-label="Main navigation"><a class="brand" href="/">COFFEE BATTLES</a><div class="nav-links"><a href="/about">About</a><a href="/how-to-play">How to play</a><a href="/privacy">Privacy</a><a href="/contact">Contact</a><a class="play" href="/play">Play</a></div></nav></header>
-<main class="shell"><article class="prose"><div class="kicker">Contact</div><h1>Feedback, bugs and project contact</h1><p class="lead">COFFEE BATTLES is developed in the open. The most useful contact channel is the public GitHub repository, where bugs and reproducible gameplay issues can be tracked alongside the code.</p>
-<h2>Report a bug</h2><p>If something breaks during a battle, open a GitHub issue and include the shortest sequence of steps that reproduces the problem. Useful details include the browser, whether the issue happened during deployment or live combat, the unit type involved, the terrain nearby and what you expected to happen instead.</p><p><a class="btn primary" href="https://github.com/erykwest/COFFEE_BATTLES/issues/new" rel="noopener">Open a GitHub issue</a></p>
-<h2>Gameplay feedback</h2><p>Feedback is especially useful when it identifies a concrete battlefield behaviour: a charge that feels too weak, a retreat that gets stuck, an archer that chooses the wrong action, an obstacle that produces a bad route, or a formation change that creates an unexpected result. Short observations tied to a specific situation are easier to test than broad balance requests.</p>
-<h2>Project repository</h2><p>The current source and development history are available at <a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">github.com/erykwest/COFFEE_BATTLES</a>.</p>
-<h2>Privacy note</h2><p>GitHub issues are public. Do not post personal, financial or other sensitive information there. For information about advertising, cookies and third-party services used by this site, read the <a href="/privacy">Privacy policy</a>.</p>
-<div class="cta-row"><a class="btn primary" href="/play">Play</a><a class="btn" href="/">Home</a></div></article></main>
-<footer class="footer"><div class="footer-inner"><span>© 2026 COFFEE BATTLES</span><div class="footer-links"><a href="/">Home</a><a href="/about">About</a><a href="/how-to-play">How to play</a><a href="/privacy">Privacy</a></div></div></footer>
+<header class="site-header"><nav class="nav" aria-label="Main navigation"><a class="brand" href="/">Coffee Battles</a><div class="nav-links"><a href="/how-to-play" data-i18n="nav.how">How to play</a><a href="/about" data-i18n="nav.about">About</a><select id="siteLanguageSelect" class="lang-select" aria-label="Language" title="Language"><option value="en">English</option><option value="it">Italiano</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="ru">Русский</option></select><a class="play" href="/play" data-i18n="nav.play">Play</a></div></nav></header>
+<main class="shell"><article class="prose">
+<h1 data-i18n-html="c.h1">Contact</h1>
+<p class="lead" data-i18n-html="c.lead">Bugs and feedback go to the project’s public GitHub repository, next to the code.</p>
+<h2 data-i18n-html="c.h2.bug">Report a bug</h2>
+<p data-i18n-html="c.p.bug">Open an issue with the shortest set of steps that makes the problem happen again. It helps to say:</p>
+<ul><li data-i18n-html="c.li1">which browser and device you used;</li><li data-i18n-html="c.li2">whether it happened during deployment or the battle;</li><li data-i18n-html="c.li3">which regiments and terrain were involved;</li><li data-i18n-html="c.li4">what you expected, and what happened instead.</li></ul>
+<div class="cta-row"><a class="btn primary" href="https://github.com/erykwest/COFFEE_BATTLES/issues/new" rel="noopener" data-i18n="c.btn">Open an issue</a></div>
+<h2 data-i18n-html="c.h2.feedback">Gameplay feedback</h2>
+<p data-i18n-html="c.p.feedback">The most useful feedback describes one moment on the field: a charge that did too little, a retreat that got stuck, archers that picked the wrong target, a route that went the long way round. A specific situation can be tested; a general impression is much harder to act on.</p>
+<h2 data-i18n-html="c.h2.code">Source code</h2>
+<p data-i18n-html="c.p.code">The code and its full history are at <a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">github.com/erykwest/COFFEE_BATTLES</a>.</p>
+<p class="note" data-i18n-html="c.note">Issues are public. Keep personal and financial details out of them. For how the site handles data, see the <a href="/privacy">Privacy</a> page.</p>
+</article></main>
+<footer class="footer"><div class="footer-inner"><span>© 2026 Coffee Battles</span><div class="footer-links"><a href="/about" data-i18n="nav.about">About</a><a href="/how-to-play" data-i18n="nav.how">How to play</a><a href="/privacy" data-i18n="nav.privacy">Privacy</a><a href="/contact" data-i18n="nav.contact">Contact</a><a href="https://github.com/erykwest/COFFEE_BATTLES" rel="noopener">GitHub</a></div></div></footer>
+<script>window.PAGE_STRINGS={
+ "en": {
+  "meta.title": "Contact — Coffee Battles",
+  "meta.description": "Report bugs and send feedback about Coffee Battles on GitHub.",
+  "c.h1": "Contact",
+  "c.lead": "Bugs and feedback go to the project’s public GitHub repository, next to the code.",
+  "c.h2.bug": "Report a bug",
+  "c.p.bug": "Open an issue with the shortest set of steps that makes the problem happen again. It helps to say:",
+  "c.li1": "which browser and device you used;",
+  "c.li2": "whether it happened during deployment or the battle;",
+  "c.li3": "which regiments and terrain were involved;",
+  "c.li4": "what you expected, and what happened instead.",
+  "c.btn": "Open an issue",
+  "c.h2.feedback": "Gameplay feedback",
+  "c.p.feedback": "The most useful feedback describes one moment on the field: a charge that did too little, a retreat that got stuck, archers that picked the wrong target, a route that went the long way round. A specific situation can be tested; a general impression is much harder to act on.",
+  "c.h2.code": "Source code",
+  "c.p.code": "The code and its full history are at <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">github.com/erykwest/COFFEE_BATTLES<\/a>.",
+  "c.note": "Issues are public. Keep personal and financial details out of them. For how the site handles data, see the <a href=\"/privacy\">Privacy<\/a> page."
+ },
+ "it": {
+  "meta.title": "Contatti — Coffee Battles",
+  "meta.description": "Segnala bug e invia suggerimenti su Coffee Battles tramite GitHub.",
+  "c.h1": "Contatti",
+  "c.lead": "Bug e suggerimenti vanno nel repository pubblico del progetto su GitHub, accanto al codice.",
+  "c.h2.bug": "Segnala un bug",
+  "c.p.bug": "Apri una issue con la sequenza di passaggi più breve che fa ripetere il problema. È utile indicare:",
+  "c.li1": "browser e dispositivo usati;",
+  "c.li2": "se è successo durante lo schieramento o la battaglia;",
+  "c.li3": "quali reggimenti e quale terreno erano coinvolti;",
+  "c.li4": "cosa ti aspettavi e cosa è successo invece.",
+  "c.btn": "Apri una issue",
+  "c.h2.feedback": "Suggerimenti sul gioco",
+  "c.p.feedback": "I suggerimenti più utili descrivono un momento preciso sul campo: una carica che ha fatto troppo poco, una ritirata rimasta bloccata, arcieri che hanno scelto il bersaglio sbagliato, un percorso che ha fatto il giro lungo. Una situazione specifica si può testare; un’impressione generale è molto più difficile da tradurre in una modifica.",
+  "c.h2.code": "Codice sorgente",
+  "c.p.code": "Il codice e tutta la sua storia sono su <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">github.com/erykwest/COFFEE_BATTLES<\/a>.",
+  "c.note": "Le issue sono pubbliche: non inserirvi dati personali o finanziari. Per sapere come il sito tratta i dati, leggi la pagina <a href=\"/privacy\">Privacy<\/a>."
+ },
+ "es": {
+  "meta.title": "Contacto — Coffee Battles",
+  "meta.description": "Informa de errores y envía sugerencias sobre Coffee Battles en GitHub.",
+  "c.h1": "Contacto",
+  "c.lead": "Los errores y las sugerencias van al repositorio público del proyecto en GitHub, junto al código.",
+  "c.h2.bug": "Informar de un error",
+  "c.p.bug": "Abre una issue con la serie de pasos más corta que haga que el problema vuelva a ocurrir. Ayuda indicar:",
+  "c.li1": "qué navegador y dispositivo usaste;",
+  "c.li2": "si ocurrió durante el despliegue o la batalla;",
+  "c.li3": "qué regimientos y qué terreno estaban implicados;",
+  "c.li4": "qué esperabas y qué pasó en su lugar.",
+  "c.btn": "Abrir una issue",
+  "c.h2.feedback": "Sugerencias de juego",
+  "c.p.feedback": "Las sugerencias más útiles describen un momento concreto en el campo: una carga que hizo demasiado poco, una retirada que se quedó atascada, arqueros que eligieron mal el objetivo, una ruta que dio un rodeo. Una situación concreta se puede probar; una impresión general es mucho más difícil de convertir en un cambio.",
+  "c.h2.code": "Código fuente",
+  "c.p.code": "El código y todo su historial están en <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">github.com/erykwest/COFFEE_BATTLES<\/a>.",
+  "c.note": "Las issues son públicas: no incluyas datos personales ni financieros. Para saber cómo trata los datos el sitio, consulta la página de <a href=\"/privacy\">Privacidad<\/a>."
+ },
+ "fr": {
+  "meta.title": "Contact — Coffee Battles",
+  "meta.description": "Signalez des bugs et envoyez vos retours sur Coffee Battles via GitHub.",
+  "c.h1": "Contact",
+  "c.lead": "Les bugs et les retours se déposent dans le dépôt GitHub public du projet, à côté du code.",
+  "c.h2.bug": "Signaler un bug",
+  "c.p.bug": "Ouvrez une issue avec la suite d’étapes la plus courte qui reproduit le problème. Il est utile de préciser :",
+  "c.li1": "le navigateur et l’appareil utilisés ;",
+  "c.li2": "s’il est survenu pendant le déploiement ou la bataille ;",
+  "c.li3": "les régiments et le terrain concernés ;",
+  "c.li4": "ce que vous attendiez, et ce qui s’est passé à la place.",
+  "c.btn": "Ouvrir une issue",
+  "c.h2.feedback": "Retours sur le jeu",
+  "c.p.feedback": "Les retours les plus utiles décrivent un moment précis sur le terrain : une charge trop faible, une retraite bloquée, des archers qui choisissent la mauvaise cible, un itinéraire qui fait un détour. Une situation précise se teste ; une impression générale est bien plus difficile à exploiter.",
+  "c.h2.code": "Code source",
+  "c.p.code": "Le code et tout son historique sont sur <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">github.com/erykwest/COFFEE_BATTLES<\/a>.",
+  "c.note": "Les issues sont publiques : n’y mettez aucune donnée personnelle ou financière. Pour savoir comment le site traite les données, consultez la page <a href=\"/privacy\">Confidentialité<\/a>."
+ },
+ "de": {
+  "meta.title": "Kontakt — Coffee Battles",
+  "meta.description": "Melde Fehler und gib Feedback zu Coffee Battles auf GitHub.",
+  "c.h1": "Kontakt",
+  "c.lead": "Fehler und Feedback gehören ins öffentliche GitHub-Repository des Projekts, direkt neben den Code.",
+  "c.h2.bug": "Fehler melden",
+  "c.p.bug": "Eröffne ein Issue mit der kürzesten Schrittfolge, die das Problem erneut auslöst. Hilfreich sind:",
+  "c.li1": "welchen Browser und welches Gerät du benutzt hast;",
+  "c.li2": "ob es während der Aufstellung oder der Schlacht passiert ist;",
+  "c.li3": "welche Regimenter und welches Gelände beteiligt waren;",
+  "c.li4": "was du erwartet hast und was stattdessen passiert ist.",
+  "c.btn": "Issue eröffnen",
+  "c.h2.feedback": "Feedback zum Spiel",
+  "c.p.feedback": "Am hilfreichsten ist Feedback zu einem konkreten Moment auf dem Feld: ein Angriff, der zu wenig bewirkt hat, ein Rückzug, der hängen blieb, Bogenschützen mit dem falschen Ziel, eine Route mit Umweg. Eine konkrete Situation lässt sich testen; ein allgemeiner Eindruck ist viel schwerer umzusetzen.",
+  "c.h2.code": "Quelltext",
+  "c.p.code": "Code und vollständige Historie findest du unter <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">github.com/erykwest/COFFEE_BATTLES<\/a>.",
+  "c.note": "Issues sind öffentlich: Lass persönliche und finanzielle Angaben weg. Wie die Website mit Daten umgeht, steht unter <a href=\"/privacy\">Datenschutz<\/a>."
+ },
+ "ru": {
+  "meta.title": "Контакты — Coffee Battles",
+  "meta.description": "Сообщайте об ошибках и оставляйте отзывы о Coffee Battles на GitHub.",
+  "c.h1": "Контакты",
+  "c.lead": "Ошибки и отзывы — в публичный репозиторий проекта на GitHub, рядом с кодом.",
+  "c.h2.bug": "Сообщить об ошибке",
+  "c.p.bug": "Создайте issue с самой короткой последовательностью шагов, которая воспроизводит проблему. Полезно указать:",
+  "c.li1": "браузер и устройство;",
+  "c.li2": "на каком этапе это случилось: расстановка или бой;",
+  "c.li3": "какие полки и какая местность были задействованы;",
+  "c.li4": "чего вы ожидали и что произошло на самом деле.",
+  "c.btn": "Создать issue",
+  "c.h2.feedback": "Отзывы об игре",
+  "c.p.feedback": "Полезнее всего отзывы об одном конкретном моменте на поле: атака, которая почти ничего не дала, застрявшее отступление, лучники, выбравшие не ту цель, маршрут в обход. Конкретную ситуацию можно проверить; общее впечатление превратить в изменение гораздо сложнее.",
+  "c.h2.code": "Исходный код",
+  "c.p.code": "Код и вся история изменений — на <a href=\"https://github.com/erykwest/COFFEE_BATTLES\" rel=\"noopener\">github.com/erykwest/COFFEE_BATTLES<\/a>.",
+  "c.note": "Issues публичны: не указывайте в них личные и финансовые данные. Как сайт обращается с данными, описано на странице <a href=\"/privacy\">Конфиденциальность<\/a>."
+ }
+};</script>
+<script src="/site-i18n.js"></script>
 </body>
 </html>

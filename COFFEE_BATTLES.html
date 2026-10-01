@@ -6,27 +6,40 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4641310798002017"
      crossorigin="anonymous"></script>
-<title>COFFEE BATTLES — Campal Battle Lab v0.90.2</title>
+<title>Coffee Battles</title>
+<link rel="stylesheet" href="fonts/fonts.css">
 <style>
   :root{
-    --bg:#11151b;
-    --panel:#1a2029;
-    --line:#2d3745;
-    --text:#e8edf3;
-    --muted:#9aa6b2;
+    --bg:#1b130f;
+    --panel:#261b15;
+    --card:#211712;
+    --sunken:#170f0c;
+    --field:#120d0a;
+    --btn:#33251d;
+    --btn-hover:#3e2d23;
+    --line:#3d2d24;
+    --line-strong:#4f3b2e;
+    --text:#f2e6d3;
+    --text-2:#e2d3bd;
+    --muted:#b9a690;
+    --accent:#e08a3c;
+    --accent-hover:#ec9a50;
+    --accent-ink:#1b130f;
+    --font-body:"Barlow","Segoe UI",system-ui,sans-serif;
+    --font-display:"Big Shoulders Display","Oswald","Impact","Arial Narrow",sans-serif;
     --sidebar-w:min(310px,86vw);
   }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--font-body)}
   body{display:flex;flex-direction:column}
   header{
     height:58px;display:flex;align-items:center;gap:18px;padding:0 18px;
-    background:#0d1117;border-bottom:1px solid var(--line);flex:0 0 auto;
+    background:var(--sunken);border-bottom:1px solid var(--line);flex:0 0 auto;
   }
-  header strong{letter-spacing:.08em}
+  header .brand{font:900 26px/1 var(--font-display);letter-spacing:.02em;text-transform:uppercase}
   header span{font-size:13px;color:var(--muted)}
   #wrap{position:relative;display:block;min-height:0;flex:1;overflow:hidden}
-  #stage{position:absolute;inset:0;min-width:0;min-height:0;overflow:auto;background:#0c120e;scrollbar-width:none;-ms-overflow-style:none}
+  #stage{position:absolute;inset:0;min-width:0;min-height:0;overflow:auto;background:var(--field);scrollbar-width:none;-ms-overflow-style:none}
   #stage::-webkit-scrollbar{width:0;height:0;display:none}
   #uiOverlay{
     position:fixed;
@@ -49,11 +62,10 @@
     width:48px;height:42px;padding:0;
     border-radius:10px;
     font-size:20px;
-    background:#202936;
+    background:var(--btn);
   }
   #timeControls button.active{
-    outline:2px solid #f0d36f;
-    background:#344152;
+    background:var(--accent);color:var(--accent-ink);border-color:var(--accent);
   }
 
   #victoryBar{
@@ -67,7 +79,7 @@
     border:1px solid rgba(255,255,255,.55);
     border-radius:6px;
     overflow:hidden;
-    background:#111820;
+    background:var(--panel);
     box-shadow:0 3px 10px rgba(0,0,0,.42);
     pointer-events:none;
     z-index:1003;
@@ -81,12 +93,12 @@
   }
   #victoryBar .victory-half.blue{
     left:0;
-    background:rgba(63,121,216,.16);
+    background:rgba(91,143,209,.16);
     border-right:1px solid rgba(255,255,255,.22);
   }
   #victoryBar .victory-half.red{
     right:0;
-    background:rgba(207,77,77,.16);
+    background:rgba(217,86,58,.16);
   }
   #blueVictoryFill{
     position:absolute;
@@ -94,7 +106,7 @@
     bottom:0;
     right:0;
     width:0%;
-    background:#3f79d8;
+    background:#5b8fd1;
     transition:width .18s linear;
   }
   #redVictoryFill{
@@ -103,7 +115,7 @@
     bottom:0;
     left:0;
     width:0%;
-    background:#cf4d4d;
+    background:#d9563a;
     transition:width .18s linear;
   }
   #victoryCenter{
@@ -134,8 +146,7 @@
   #victoryRedLabel{right:5px}
   #victoryBar.blue-collapse{outline:2px solid #6aa4ff}
   #victoryBar.red-collapse{outline:2px solid #ff6e6e}
-  body.deployment-active #victoryBar{opacity:.28}
-  canvas{width:100%;height:100%;display:block;background:#0c120e;cursor:crosshair;touch-action:none}
+  canvas{width:100%;height:100%;display:block;background:var(--field);cursor:crosshair;touch-action:none}
   aside{
     position:absolute;top:0;right:0;bottom:0;width:var(--sidebar-w);
     background:var(--panel);border-left:1px solid var(--line);
@@ -150,7 +161,7 @@
   #sidebarRail{
     position:absolute;right:0;top:50%;transform:translateY(-50%);
     width:34px;height:74px;padding:0;border-radius:12px 0 0 12px;
-    border-right:0;background:rgba(26,32,41,.96);font-size:24px;
+    border-right:0;background:rgba(38,27,21,.96);font-size:24px;
     pointer-events:auto;z-index:1301;transition:right .2s ease;touch-action:manipulation;
     box-shadow:-4px 3px 14px rgba(0,0,0,.35);
   }
@@ -160,26 +171,38 @@
     pointer-events:auto;z-index:1002;
   }
   #sideControls button{width:52px;height:38px;padding:0;font-size:11px;touch-action:manipulation}
-  #sideControls button.active{outline:2px solid #f0d36f;background:#344152}
+  #sideControls button.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 
+  html:not(.debug) .dbg-only{display:none!important}
+  .ico{width:22px;height:22px;display:block;margin:0 auto;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  #timeControls .ico path,#timeControls .ico rect{fill:currentColor;stroke:none}
+  #formationControls .ico rect{fill:currentColor;fill-opacity:.25}
+  #chargeBtn .ico,#retreatBtn .ico,#fireBtn .ico{width:24px;height:24px;margin-bottom:1px}
+  #removeDeployUnitBtn{display:flex;align-items:center;gap:6px}
+  #removeDeployUnitBtn .ico{width:16px;height:16px;margin:0}
+  .controls-list{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;margin:0;font-size:14px;line-height:1.4}
+  .controls-list dt{font-weight:700;color:var(--text)}
+  .controls-list dd{margin:0;color:var(--muted)}
+  .rules-card summary{cursor:pointer;font-weight:700;font-size:14px}
+  .rules-card[open] summary{margin-bottom:10px}
   .card{
-    background:#12171e;border:1px solid var(--line);border-radius:10px;
+    background:var(--card);border:1px solid var(--line);border-radius:10px;
     padding:12px;margin-bottom:12px
   }
   h3{margin:0 0 10px;font-size:14px}
   .row{display:flex;justify-content:space-between;gap:12px;font-size:13px;margin:6px 0}
   .muted{color:var(--muted)}
   button{
-    width:100%;border:1px solid #394555;background:#202936;color:var(--text);
+    width:100%;border:1px solid var(--line-strong);background:var(--btn);color:var(--text);
     padding:9px 10px;border-radius:8px;cursor:pointer;font-weight:600
   }
-  button:hover{background:#293443}
+  button:hover{background:var(--btn-hover)}
   #log{
     font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;
-    max-height:260px;overflow:auto;white-space:pre-wrap;color:#cbd5df
+    max-height:260px;overflow:auto;white-space:pre-wrap;color:var(--text-2)
   }
   .legend{font-size:12px;color:var(--muted);line-height:1.5}
-  .pill{display:inline-block;padding:2px 6px;border:1px solid #3a4656;border-radius:999px;margin-right:4px}
+  .pill{display:inline-block;padding:2px 6px;border:1px solid var(--line-strong);border-radius:999px;margin-right:4px}
 
   #commandPanel{
     position:absolute;
@@ -187,8 +210,8 @@
     bottom:10px;
     width:154px;
     height:174px;
-    background:rgba(13,17,23,.94);
-    border:1px solid #394555;
+    background:rgba(27,19,15,.94);
+    border:1px solid var(--line-strong);
     border-radius:14px;
     box-shadow:0 7px 24px rgba(0,0,0,.48);
     pointer-events:auto;
@@ -198,13 +221,13 @@
 
   #chargeBtn{
     position:absolute;left:8px;bottom:8px;width:64px;height:64px;border-radius:50%;
-    border:2px solid rgba(255,255,255,.7);background:#26313f;color:#fff;
+    border:2px solid rgba(255,255,255,.7);background:var(--line);color:#fff;
     font-size:26px;font-weight:800;z-index:1001;box-shadow:0 4px 14px rgba(0,0,0,.35);
     pointer-events:auto;
   }
   #retreatBtn{
     position:absolute;left:80px;bottom:8px;width:64px;height:64px;border-radius:50%;
-    border:2px solid rgba(255,255,255,.7);background:#26313f;color:#fff;
+    border:2px solid rgba(255,255,255,.7);background:var(--line);color:#fff;
     font-size:24px;font-weight:800;z-index:1001;box-shadow:0 4px 14px rgba(0,0,0,.35);
     pointer-events:auto;
   }
@@ -217,7 +240,7 @@
   #fireBtn{
     display:none;
     position:absolute;left:152px;bottom:8px;width:64px;height:64px;border-radius:50%;
-    border:2px solid rgba(255,255,255,.7);background:#26313f;color:#fff;
+    border:2px solid rgba(255,255,255,.7);background:var(--line);color:#fff;
     font-size:23px;font-weight:800;z-index:1001;box-shadow:0 4px 14px rgba(0,0,0,.35);
     pointer-events:auto;
   }
@@ -251,12 +274,11 @@
     border-radius:7px;
     font-size:20px;
     line-height:1;
-    background:#202936;
+    background:var(--btn);
   }
   #formationControls button.active,
   #stanceControls button.active{
-    outline:2px solid #f0d36f;
-    background:#344152;
+    background:var(--accent);color:var(--accent-ink);border-color:var(--accent);
   }
 
   /* ============================================================
@@ -264,24 +286,24 @@
      ============================================================ */
   #sourcePauseOverlay{
     position:fixed;inset:0;z-index:6000;display:none;flex-direction:column;
-    gap:10px;padding:12px;background:#080b0f;color:#dfe7ef;
+    gap:12px;padding:16px;background:var(--bg);color:var(--text);
   }
   #sourcePauseOverlay.open{display:flex}
   .source-pause-toolbar{
-    display:flex;align-items:center;gap:9px;flex:0 0 auto;
-    min-height:42px;padding:7px 9px;border:1px solid #334052;border-radius:10px;
-    background:#111820;box-shadow:0 8px 28px rgba(0,0,0,.42);
+    display:flex;align-items:center;gap:12px;flex:0 0 auto;
+    padding:10px 12px 10px 20px;border-radius:999px;background:var(--panel);
   }
-  .source-pause-title{font:800 12px/1.2 Inter,Segoe UI,Arial,sans-serif;letter-spacing:.10em}
-  .source-pause-hint{font-size:10px;color:#8ea1b5;margin-right:auto}
-  #sourcePauseOverlay button{width:auto;min-width:112px;height:34px;padding:0 12px;font-size:10px}
-  #sourcePauseCopyBtn{background:#354b69;border-color:#587294}
-  #sourcePauseCloseBtn{background:#2a313c}
+  .source-pause-title{font:900 22px/1 var(--font-display);letter-spacing:.02em;text-transform:uppercase}
+  .source-pause-hint{font-size:14px;color:var(--muted);margin-right:auto}
+  #sourcePauseOverlay button{width:auto;min-width:0;height:44px;padding:0 20px;border:0;border-radius:999px;font:700 15px var(--font-body)}
+  #sourcePauseCopyBtn{background:var(--accent);color:var(--accent-ink)}
+  #sourcePauseCopyBtn:hover{background:var(--accent-hover)}
+  #sourcePauseCloseBtn{background:var(--btn);color:var(--text)}
   #sourcePauseText{
     flex:1 1 auto;width:100%;min-height:0;resize:none;outline:none;
-    border:1px solid #334052;border-radius:10px;background:#05070a;color:#d7e0ea;
-    padding:14px;overflow:auto;white-space:pre;tab-size:2;
-    font:12px/1.48 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+    border:0;border-radius:20px;background:var(--sunken);color:var(--text-2);
+    padding:18px 20px;overflow:auto;white-space:pre;tab-size:2;
+    font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
   }
   @media (max-width:700px){
     #sourcePauseOverlay{padding:7px;gap:7px}
@@ -292,83 +314,86 @@
   }
 
   /* ============================================================
-     NEW BATTLE — SPLASH / STEP 1
+     NEW BATTLE — STEP 1
      ============================================================ */
   #battleSetupOverlay{
     position:fixed;inset:0;z-index:4000;
-    display:flex;align-items:center;justify-content:center;
-    padding:22px;background:rgba(5,8,12,.86);backdrop-filter:blur(7px);
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(440px,600px);
+    background:var(--bg);
     opacity:0;visibility:hidden;pointer-events:none;
     transition:opacity .16s ease,visibility .16s ease;
   }
   #battleSetupOverlay.open{opacity:1;visibility:visible;pointer-events:auto}
+  body:has(#battleSetupOverlay.open) #languageSwitcher{visibility:hidden}
+  .setup-brand{position:relative;overflow:hidden;min-width:0}
+  .setup-cup{position:absolute;left:50%;top:40%;width:min(100%,86vh,860px);height:auto;transform:translateX(-46%)}
+  .setup-brand-copy{position:absolute;left:clamp(24px,5vw,72px);top:clamp(24px,6vh,64px);display:flex;flex-direction:column;gap:18px}
+  .setup-wordmark{margin:0;font:900 clamp(96px,11vw,172px)/.84 var(--font-display);text-transform:uppercase;color:var(--text)}
+  .setup-motto{margin:0;font:800 clamp(18px,1.7vw,26px)/1.2 var(--font-display);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
   .setup-panel{
-    position:relative;
-    width:min(580px,100%);max-height:min(760px,calc(100vh - 30px));overflow:auto;
-    background:#111820;border:1px solid #3a4656;border-radius:18px;
-    box-shadow:0 24px 80px rgba(0,0,0,.58);padding:24px;
+    min-height:0;overflow:auto;margin:clamp(12px,4vh,40px) clamp(12px,3vw,48px) clamp(12px,4vh,40px) 0;
+    padding:clamp(24px,4vh,40px) 40px;background:var(--panel);border-radius:28px;
+    display:flex;flex-direction:column;gap:clamp(18px,3vh,28px);
   }
-  #splashLanguageSelect{
-    position:absolute;top:18px;right:18px;width:auto;min-width:88px;height:34px;
-    padding:0 28px 0 10px;border:1px solid #394555;border-radius:9px;
-    background:#171e27;color:var(--text);font:700 11px/1 Inter,Segoe UI,Arial,sans-serif;
-    letter-spacing:.04em;cursor:pointer;z-index:2
+  .setup-top{display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .setup-steps{display:flex;gap:18px;margin:0;padding:0;list-style:none;counter-reset:step;
+    font:800 17px/1 var(--font-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .setup-steps li{counter-increment:step}
+  .setup-steps li::before{content:counter(step) "\00a0"}
+  .setup-steps li[aria-current]{color:var(--accent)}
+  #splashLanguageSelect{width:auto;height:44px;padding:0 14px;border:0;border-radius:999px;
+    background:var(--btn);color:var(--text);font:600 15px var(--font-body);cursor:pointer}
+  #battleSetupTitle{margin:0;font:900 clamp(48px,6vh,64px)/.9 var(--font-display);text-transform:uppercase}
+  .setup-field{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .setup-label{font:600 16px/1.2 var(--font-body);color:var(--muted)}
+  .point-presets{display:flex;gap:10px}
+  .point-presets button,.setup-modes button{
+    flex:1 1 0;width:auto;min-width:0;height:50px;padding:0 10px;border:0;border-radius:999px;
+    background:var(--btn);color:var(--text);font:700 17px/1 var(--font-body);white-space:nowrap
   }
-  #splashLanguageSelect:hover{background:#202936}
-  #splashLanguageSelect:focus{outline:2px solid #f0d36f;outline-offset:1px}
-  @media (max-width:700px){#splashLanguageSelect{top:14px;right:14px;min-width:76px;height:32px;font-size:10px}}
-  .setup-kicker{font-size:11px;letter-spacing:.18em;color:#8ea1b5;font-weight:800;margin-bottom:8px}
-  .setup-panel h1{font-size:30px;line-height:1.05;margin:0 0 8px;letter-spacing:.04em}
-  .setup-motto{font-size:12px;font-weight:900;letter-spacing:.10em;color:#f0d36f;margin:2px 0 10px;text-transform:uppercase}
-  .setup-lead{color:var(--muted);font-size:13px;line-height:1.5;margin-bottom:22px}
-  .setup-section{border-top:1px solid #293443;padding-top:18px;margin-top:18px}
-  .setup-label{display:block;font-size:12px;font-weight:800;letter-spacing:.08em;margin-bottom:10px;color:#cbd5df}
-  .point-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .point-presets button{height:46px;padding:0;font-size:14px}
-  .point-presets button.active{outline:2px solid #f0d36f;background:#344152;color:#fff}
-  .setup-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  .setup-modes button{height:58px;padding:6px 8px;font-size:12px;letter-spacing:.06em}
-  .setup-modes button small{display:block;margin-top:4px;font-size:9px;font-weight:500;letter-spacing:0;color:var(--muted);line-height:1.15}
-  .setup-modes button.active{outline:2px solid #f0d36f;background:#344152;color:#fff}
-  .setup-mode-note{margin-top:9px;font-size:10px;line-height:1.4;color:var(--muted)}
-  .setup-select{display:grid;grid-template-columns:1fr 190px;gap:10px;align-items:center}
-  .setup-select label{font-size:12px;color:var(--muted)}
-  .setup-select select{width:100%;height:42px;border-radius:8px;border:1px solid #394555;background:#0d1117;color:var(--text);font:700 12px Inter,Segoe UI,Arial,sans-serif;padding:0 10px;outline:none}
-  .setup-select select:focus{border-color:#6f8198;box-shadow:0 0 0 2px rgba(111,129,152,.18)}
-  .setup-map-note{margin-top:9px;font-size:10px;line-height:1.4;color:var(--muted)}
-  .custom-points{display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:center;margin-top:10px}
-  .custom-points label{font-size:12px;color:var(--muted)}
-  .custom-points input{
-    width:100%;height:40px;border-radius:8px;border:1px solid #394555;
-    background:#0d1117;color:var(--text);font:700 14px Inter,Segoe UI,Arial,sans-serif;
-    padding:0 10px;outline:none;
+  .setup-modes button{font-size:16px}
+  .point-presets button:hover,.setup-modes button:hover{background:var(--btn-hover)}
+  .point-presets button.active,.setup-modes button.active{background:var(--accent);color:var(--accent-ink)}
+  .point-presets button.active:hover,.setup-modes button.active:hover{background:var(--accent-hover)}
+  #customPointsInput{width:104px;flex:0 0 auto;height:50px;padding:0 16px;border:2px dashed var(--line-strong);
+    border-radius:999px;background:transparent;color:var(--text);font:600 16px var(--font-body);outline:none}
+  #customPointsInput::placeholder{color:var(--muted)}
+  #customPointsInput:focus{border-style:solid;border-color:var(--accent)}
+  #mapBiomeSelect{height:50px;padding:0 18px;border:0;border-radius:999px;background:var(--btn);
+    color:var(--text);font:600 17px var(--font-body);cursor:pointer}
+  .setup-pair{display:grid;grid-template-columns:1fr;gap:clamp(18px,3vh,28px)}
+  .setup-modes{display:flex;gap:8px}
+  .setup-note{margin:-6px 0 0;min-height:2.8em;font:400 16px/1.4 var(--font-body);color:var(--muted)}
+  .setup-actions{margin-top:auto;display:flex;align-items:center;gap:24px}
+  #createBattleBtn{flex:1 1 auto;width:auto;height:64px;border:0;border-radius:999px;background:var(--accent);
+    color:var(--accent-ink);font:900 30px/1 var(--font-display);letter-spacing:.04em;text-transform:uppercase}
+  #createBattleBtn:hover{background:var(--accent-hover)}
+  .setup-actions a{color:var(--accent);font:600 16px var(--font-body);white-space:nowrap}
+  .setup-actions a:hover{color:var(--accent-hover)}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .active:focus-visible,#createBattleBtn:focus-visible{outline-color:var(--text)}
+  @media (prefers-reduced-motion:reduce){#battleSetupOverlay{transition:none}}
+  @media (max-height:800px) and (min-width:901px){
+    .setup-panel{gap:14px;padding:22px 32px}
+    #battleSetupTitle{font-size:44px}
+    .point-presets button,.setup-modes button,#customPointsInput,#mapBiomeSelect{height:44px}
+    .setup-field{gap:8px}
+    .setup-note{margin:0;min-height:0}
+    #createBattleBtn{height:56px;font-size:26px}
   }
-  .custom-points input:focus{border-color:#6f8198;box-shadow:0 0 0 2px rgba(111,129,152,.18)}
-  .setup-toggle{
-    display:flex;align-items:center;justify-content:space-between;gap:18px;
-    padding:13px 0;border-bottom:1px solid #222c38;
+  @media (max-width:900px){
+    #battleSetupOverlay{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);overflow:auto}
+    .setup-cup{display:none}
+    .setup-brand-copy{position:static;padding:20px 20px 4px;gap:8px}
+    .setup-wordmark{font-size:56px}
+    .setup-wordmark br{display:none}
+    .setup-motto{font-size:16px}
+    .setup-panel{margin:12px;padding:22px 20px;border-radius:20px;overflow:visible}
+    .point-presets{flex-wrap:wrap}
+    .point-presets button{flex-basis:calc(50% - 5px)}
+    #customPointsInput{flex:1 1 100%;width:100%}
+    #createBattleBtn{font-size:26px}
   }
-  .setup-toggle:last-child{border-bottom:0}
-  .toggle-copy b{display:block;font-size:13px;margin-bottom:3px}
-  .toggle-copy span{display:block;font-size:11px;line-height:1.35;color:var(--muted)}
-  .switch{position:relative;display:inline-block;width:50px;height:28px;flex:0 0 auto}
-  .switch input{opacity:0;width:0;height:0}
-  .switch-track{position:absolute;inset:0;border-radius:999px;background:#27313d;border:1px solid #3b4858;transition:.15s;cursor:pointer}
-  .switch-track:before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;border-radius:50%;background:#aeb8c3;transition:.15s}
-  .switch input:checked + .switch-track{background:#345d38;border-color:#56815b}
-  .switch input:checked + .switch-track:before{transform:translateX(22px);background:#edf6ee}
-  .setup-summary{
-    display:flex;align-items:center;justify-content:space-between;gap:16px;
-    margin-top:22px;padding:12px 14px;border-radius:10px;background:#0c1117;border:1px solid #26313f;
-    font-size:12px;color:var(--muted)
-  }
-  .setup-summary strong{font-size:18px;color:#f0d36f;white-space:nowrap}
-  #createBattleBtn{
-    margin-top:12px;height:52px;font-size:14px;letter-spacing:.08em;
-    background:#354b69;border-color:#587294;
-  }
-  #createBattleBtn:hover{background:#405b80}
-  .setup-footnote{margin-top:10px;font-size:10px;color:#718092;text-align:center;line-height:1.4}
   #newBattleBtn{margin-bottom:8px}
 
 
@@ -378,34 +403,33 @@
   #battleEndOverlay{
     position:fixed;inset:0;z-index:4500;
     display:flex;align-items:center;justify-content:center;
-    padding:22px;background:rgba(5,8,12,.86);backdrop-filter:blur(7px);
+    padding:22px;background:rgba(20,14,11,.88);backdrop-filter:blur(7px);
     opacity:0;visibility:hidden;pointer-events:none;
     transition:opacity .16s ease,visibility .16s ease;
   }
   #battleEndOverlay.open{opacity:1;visibility:visible;pointer-events:auto}
   .battle-end-panel{
     width:min(760px,100%);max-height:calc(100vh - 30px);overflow:auto;
-    background:#111820;border:1px solid #3a4656;border-radius:18px;
+    background:var(--panel);border:1px solid var(--line-strong);border-radius:18px;
     box-shadow:0 24px 80px rgba(0,0,0,.62);padding:24px;
   }
-  .battle-end-kicker{font-size:11px;letter-spacing:.18em;color:#8ea1b5;font-weight:800;margin-bottom:7px}
-  #battleEndTitle{font-size:38px;line-height:1;margin:0 0 8px;letter-spacing:.05em}
+  #battleEndTitle{font:900 56px/.9 var(--font-display);margin:0 0 10px;text-transform:uppercase}
   #battleEndTitle.victory{color:#82d98c}
   #battleEndTitle.defeat{color:#ef7b72}
-  #battleEndTitle.draw{color:#f0d36f}
+  #battleEndTitle.draw{color:var(--accent)}
   #battleEndLead{font-size:12px;color:var(--muted);margin-bottom:18px}
   .battle-damage-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .battle-damage-side{background:#0c1117;border:1px solid #26313f;border-radius:11px;padding:10px}
+  .battle-damage-side{background:var(--sunken);border:1px solid var(--line);border-radius:11px;padding:10px}
   .battle-damage-side h3{margin:0 0 8px;font-size:12px;letter-spacing:.08em}
   .battle-damage-table{width:100%;border-collapse:collapse;font-size:11px}
-  .battle-damage-table th,.battle-damage-table td{padding:6px 5px;border-bottom:1px solid #202a35;text-align:right}
+  .battle-damage-table th,.battle-damage-table td{padding:6px 5px;border-bottom:1px solid var(--line);text-align:right}
   .battle-damage-table th:first-child,.battle-damage-table td:first-child{text-align:left}
-  .battle-damage-table th{font-size:9px;letter-spacing:.06em;color:#8ea1b5}
-  .battle-damage-table tfoot th{border-top:1px solid #425166;border-bottom:0;color:#e8edf3;font-size:10px;padding-top:8px}
-  .battle-unit-state{display:block;font-size:8px;color:#7f8b98;margin-top:2px}
+  .battle-damage-table th{font-size:9px;letter-spacing:.06em;color:var(--muted)}
+  .battle-damage-table tfoot th{border-top:1px solid var(--line-strong);border-bottom:0;color:var(--text);font-size:10px;padding-top:8px}
+  .battle-unit-state{display:block;font-size:8px;color:var(--muted);margin-top:2px}
   .battle-end-actions{display:flex;gap:8px;margin-top:14px}
   .battle-end-actions button{height:44px}
-  #battleEndNewBattleBtn{background:#354b69;border-color:#587294}
+  #battleEndNewBattleBtn{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
   @media (max-width:700px){
     #battleEndOverlay{padding:9px}
     .battle-end-panel{padding:16px}
@@ -422,50 +446,52 @@
     position:fixed;left:50%;bottom:12px;transform:translateX(-50%);
     z-index:2200;width:min(900px,calc(100vw - 28px));
     display:none;pointer-events:auto;
-    background:rgba(13,17,23,.96);border:1px solid #3a4656;border-radius:14px;
+    background:rgba(27,19,15,.96);border:1px solid var(--line-strong);border-radius:14px;
     box-shadow:0 10px 34px rgba(0,0,0,.5);padding:10px;
   }
   body.deployment-active #deploymentUI{display:block}
   body.deployment-active #commandPanel{display:none}
-  body.deployment-active #timeControls{opacity:.35;pointer-events:none}
+  body.deployment-active #timeControls,body.deployment-active #victoryBar{display:none}
+  body.deployment-active.deploy-top #deploymentUI{top:66px;bottom:auto}
   #deploymentTop{display:flex;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap}
-  .deploy-title{font-size:11px;font-weight:900;letter-spacing:.12em;color:#d8e0e8;margin-right:auto}
-  .deploy-budget{font:800 13px ui-monospace,SFMono-Regular,Consolas,monospace;padding:7px 10px;border-radius:8px;background:#0b1016;border:1px solid #2c3948}
-  .deploy-budget b{color:#f0d36f}
+  .deploy-title{font:800 22px/1 var(--font-display);letter-spacing:.04em;text-transform:uppercase;color:var(--text);margin-right:auto}
+  .deploy-budget{font:800 13px ui-monospace,SFMono-Regular,Consolas,monospace;padding:7px 10px;border-radius:8px;background:var(--sunken);border:1px solid var(--line-strong)}
+  .deploy-budget b{color:var(--accent)}
   .deploy-side-toggle{display:flex;gap:4px}
   .deploy-side-toggle button{width:74px;height:34px;padding:0;font-size:11px}
-  .deploy-side-toggle button.active{outline:2px solid #f0d36f;background:#344152}
+  .deploy-side-toggle button.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
   #deploymentCards{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 5px;touch-action:none}
   .unit-card{
-    flex:0 0 138px;height:82px;display:grid;grid-template-columns:52px 1fr;gap:8px;align-items:center;
-    border:1px solid #394555;background:#18202a;color:#edf1f5;border-radius:10px;padding:7px;
+    flex:0 0 176px;min-height:88px;display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center;
+    border:1px solid var(--line-strong);background:var(--btn);color:var(--text);border-radius:10px;padding:7px;
     cursor:grab;user-select:none;touch-action:none;text-align:left;
   }
   .unit-card:active{cursor:grabbing}
   .unit-card.disabled{opacity:.35;cursor:not-allowed}
-  .unit-card-preview{position:relative;width:48px;height:48px;border-radius:7px;background:#0e141b;border:1px solid #314052;overflow:hidden}
-  .unit-card-preview .reg{position:absolute;left:9px;top:14px;width:30px;height:20px;border:1px solid rgba(255,255,255,.65);background:rgba(63,121,216,.48)}
+  .unit-card-preview{position:relative;width:48px;height:48px;border-radius:7px;background:var(--sunken);border:1px solid var(--line-strong);overflow:hidden}
+  .unit-card-preview .reg{position:absolute;left:9px;top:14px;width:30px;height:20px;border:1px solid rgba(255,255,255,.65);background:rgba(91,143,209,.5)}
   .unit-card-preview .reg:before{content:"";position:absolute;left:-1px;right:-1px;top:-2px;border-top:3px solid #eef4fb}
-  .unit-card-preview .reg-icon{position:absolute;left:50%;top:50%;width:24px;height:24px;transform:translate(-50%,-50%);display:grid;place-items:center;border:1px solid rgba(255,255,255,.92);border-radius:50%;background:rgba(12,18,28,.78);padding:2px;color:#fff;pointer-events:none}
+  .unit-card-preview .reg-icon{position:absolute;left:50%;top:50%;width:24px;height:24px;transform:translate(-50%,-50%);display:grid;place-items:center;border:1px solid rgba(255,255,255,.92);border-radius:50%;background:rgba(27,19,15,.78);padding:2px;color:#fff;pointer-events:none}
   .unit-card-preview .reg-icon svg{display:block;width:100%;height:100%;overflow:visible}
   .unit-card[data-unit-type="cavalry"] .reg,
   .unit-card[data-unit-type="horse_archer"] .reg{left:14px;top:17px;width:24px;height:14px}
   .unit-card-copy strong{display:block;font-size:12px;line-height:1.1;margin-bottom:6px}
-  .unit-card-copy span{display:block;font-size:10px;color:#9aa6b2}
-  .unit-card-copy .cost{font-weight:900;color:#f0d36f;font-size:11px;margin-top:4px}
+  .unit-card-copy span{display:block;font-size:12px;line-height:1.25;color:var(--muted)}
+  .unit-card-copy .cost{font-weight:900;color:var(--accent);font-size:11px;margin-top:4px}
   #deploymentActions{display:flex;gap:7px;margin-top:7px}
   #deploymentActions button{height:36px;padding:0 12px;width:auto;font-size:11px}
-  #removeDeployUnitBtn{background:#40252a;border-color:#6d3943}
-  #startBattleFromDeployBtn{margin-left:auto;background:#345d38;border-color:#56815b;font-size:12px;min-width:160px}
-  #deployHint{font-size:10px;color:#8290a0;margin-top:6px;line-height:1.35}
+  #removeDeployUnitBtn{background:#4a2a22;border-color:#7a3b2e}
+  #deploymentActions #startBattleFromDeployBtn{height:44px;margin-left:auto;background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font:900 20px/1 var(--font-display);letter-spacing:.04em;text-transform:uppercase;min-width:180px;border-radius:999px}
+  #deployHint{font-size:14px;color:var(--muted);margin-top:8px;line-height:1.4}
   body.deployment-active canvas{touch-action:none}
 
   @media (max-width:700px){
     #deploymentUI{bottom:7px;width:calc(100vw - 14px);padding:8px}
     .deploy-title{width:100%;margin-right:0}
-    .unit-card{flex-basis:128px;height:76px}
+    .unit-card{flex-basis:156px;min-height:80px}
+    body.deployment-active.deploy-top #deploymentUI{top:54px}
     #deploymentActions{flex-wrap:wrap}
-    #startBattleFromDeployBtn{margin-left:0;flex:1 1 100%}
+    #deploymentActions #startBattleFromDeployBtn{margin-left:0;flex:1 1 100%}
   }
 
   @media (max-width: 700px){
@@ -480,12 +506,6 @@
     #sidebarRail{height:66px;width:32px}
     .card{padding:10px}
     .legend{font-size:11px}
-    #battleSetupOverlay{padding:10px}
-    .setup-panel{padding:18px;border-radius:14px}
-    .setup-panel h1{font-size:24px}
-    .point-presets{grid-template-columns:repeat(2,1fr)}
-    .custom-points{grid-template-columns:1fr 120px}
-    .setup-select{grid-template-columns:1fr}
   }
 
 
@@ -495,13 +515,12 @@
 #languageSwitcher{position:relative;margin-left:auto;flex:0 0 auto;z-index:5001}
 #languageButton{
   width:auto;min-width:72px;height:34px;padding:0 10px;display:flex;align-items:center;
-  justify-content:center;gap:7px;border-radius:9px;background:#171e27;border-color:#394555;
+  justify-content:center;gap:7px;border-radius:9px;background:var(--btn);border-color:var(--line-strong);
   font-size:12px;letter-spacing:.05em;white-space:nowrap
 }
-#languageButton .flag{font-size:17px;line-height:1}
 #languageMenu{
   position:absolute;right:0;top:calc(100% + 7px);width:190px;padding:6px;
-  background:#111820;border:1px solid #3a4656;border-radius:11px;
+  background:var(--panel);border:1px solid var(--line-strong);border-radius:11px;
   box-shadow:0 14px 38px rgba(0,0,0,.55);display:none
 }
 #languageSwitcher.open #languageMenu{display:block}
@@ -509,10 +528,9 @@
   width:100%;height:34px;padding:0 9px;display:flex;align-items:center;gap:9px;
   background:transparent;border-color:transparent;text-align:left;font-size:12px
 }
-#languageMenu button:hover{background:#202936}
-#languageMenu button.active{background:#293443;border-color:#4a5a6d}
-#languageMenu .flag{width:22px;font-size:17px;text-align:center}
-#languageMenu .code{margin-left:auto;color:#8290a0;font:700 9px ui-monospace,monospace}
+#languageMenu button:hover{background:var(--btn)}
+#languageMenu button.active{background:var(--btn-hover);border-color:var(--line-strong)}
+#languageMenu .code{margin-left:auto;color:var(--muted);font:700 9px ui-monospace,monospace}
 @media (max-width:700px){
   #languageButton{min-width:58px;height:32px;padding:0 8px}
   #languageMenu{width:176px}
@@ -522,20 +540,20 @@
 </head>
 <body>
 <header>
-  <strong>COFFEE BATTLES — CAMPAL BATTLE LAB v0.90.2</strong>
-  <span data-i18n="header.subtitle">REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement</span>
+  <strong class="brand">Coffee Battles</strong>
+  <span class="build-tag dbg-only">v0.90.2</span>
 
   <div id="languageSwitcher">
     <button id="languageButton" type="button" aria-haspopup="menu" aria-expanded="false" title="Language">
-      <span id="languageFlag" class="flag">🇬🇧</span><b id="languageCode">EN</b>
+      <b id="languageCode">EN</b>
     </button>
     <div id="languageMenu" role="menu" aria-label="Language">
-      <button type="button" data-lang="it" role="menuitem"><span class="flag">🇮🇹</span><span>Italiano</span><span class="code">IT</span></button>
-      <button type="button" data-lang="en" role="menuitem"><span class="flag">🇬🇧</span><span>English</span><span class="code">EN</span></button>
-      <button type="button" data-lang="es" role="menuitem"><span class="flag">🇪🇸</span><span>Español</span><span class="code">ES</span></button>
-      <button type="button" data-lang="fr" role="menuitem"><span class="flag">🇫🇷</span><span>Français</span><span class="code">FR</span></button>
-      <button type="button" data-lang="de" role="menuitem"><span class="flag">🇩🇪</span><span>Deutsch</span><span class="code">DE</span></button>
-      <button type="button" data-lang="ru" role="menuitem"><span class="flag">🇷🇺</span><span>Русский</span><span class="code">RU</span></button>
+      <button type="button" data-lang="it" role="menuitem"><span>Italiano</span><span class="code">IT</span></button>
+      <button type="button" data-lang="en" role="menuitem"><span>English</span><span class="code">EN</span></button>
+      <button type="button" data-lang="es" role="menuitem"><span>Español</span><span class="code">ES</span></button>
+      <button type="button" data-lang="fr" role="menuitem"><span>Français</span><span class="code">FR</span></button>
+      <button type="button" data-lang="de" role="menuitem"><span>Deutsch</span><span class="code">DE</span></button>
+      <button type="button" data-lang="ru" role="menuitem"><span>Русский</span><span class="code">RU</span></button>
     </div>
   </div>
 
@@ -543,7 +561,7 @@
 
 <div id="sourcePauseOverlay" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Codice HTML della battaglia">
   <div class="source-pause-toolbar">
-    <div class="source-pause-title">COFFEE BATTLES · SOURCE PAUSE</div>
+    <div class="source-pause-title" data-i18n="source.title">Codice sorgente</div>
     <div class="source-pause-hint" data-i18n="source.hint">SPACE chiude il codice e ripristina la velocità precedente.</div>
     <button id="sourcePauseCopyBtn" type="button" data-i18n="source.copy">COPIA TUTTO</button>
     <button id="sourcePauseCloseBtn" type="button" data-i18n="source.close">CHIUDI · SPACE</button>
@@ -552,86 +570,108 @@
 </div>
 
 <div id="battleSetupOverlay" role="dialog" aria-modal="true" aria-labelledby="battleSetupTitle">
+  <div class="setup-brand">
+    <svg class="setup-cup" viewBox="0 0 800 800" aria-hidden="true" focusable="false">
+      <circle cx="400" cy="400" r="340" fill="#231915" stroke="#3d2d24" stroke-width="2"/>
+      <circle cx="400" cy="400" r="300" fill="none" stroke="#3d2d24" stroke-width="1.5"/>
+      <rect x="650" y="374" width="120" height="52" rx="26" fill="#e9dcc6"/>
+      <circle cx="400" cy="400" r="262" fill="#e9dcc6"/>
+      <circle cx="400" cy="400" r="238" fill="#4a2c1c"/>
+      <path d="M230 350 C 260 230, 450 190, 540 260 C 630 330, 590 480, 490 530 C 390 580, 260 550, 230 470 C 215 430, 220 390, 230 350 Z" fill="#8c5a34" opacity=".55"/>
+      <path d="M280 380 C 310 300, 450 280, 510 330 C 560 380, 530 470, 450 490 C 370 510, 290 480, 282 430 C 278 412, 276 396, 280 380 Z" fill="#b07a4c" opacity=".35"/>
+      <g stroke="#1b130f" stroke-width="2">
+        <rect x="290" y="276" width="58" height="20" fill="#d9563a" transform="rotate(10 319 286)"/>
+        <rect x="360" y="260" width="58" height="20" fill="#d9563a" transform="rotate(10 389 270)"/>
+        <rect x="430" y="268" width="58" height="20" fill="#d9563a" transform="rotate(16 459 278)"/>
+        <rect x="260" y="480" width="58" height="20" fill="#5b8fd1" transform="rotate(-14 289 490)"/>
+        <rect x="338" y="462" width="58" height="20" fill="#5b8fd1" transform="rotate(-14 367 472)"/>
+        <rect x="416" y="450" width="58" height="20" fill="#5b8fd1" transform="rotate(-8 445 460)"/>
+        <rect x="496" y="430" width="40" height="20" fill="#5b8fd1" transform="rotate(-30 516 440)"/>
+      </g>
+      <path d="M530 420 C 570 380, 570 330, 530 300" fill="none" stroke="#f2e6d3" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+      <polygon points="526,290 520,306 536,304" fill="#f2e6d3" opacity=".8"/>
+    </svg>
+    <div class="setup-brand-copy">
+      <p class="setup-wordmark">Coffee <br>Battles</p>
+      <p class="setup-motto" data-i18n="setup.motto">Take a break. Grab a coffee. Fight a battle.</p>
+    </div>
+  </div>
+
   <div class="setup-panel">
-    <select id="splashLanguageSelect" aria-label="Language" title="Language" onchange="I18n.set(this.value,true)">
-      <option value="en">🇬🇧 EN</option>
-      <option value="it">🇮🇹 IT</option>
-      <option value="es">🇪🇸 ES</option>
-      <option value="fr">🇫🇷 FR</option>
-      <option value="de">🇩🇪 DE</option>
-      <option value="ru">🇷🇺 RU</option>
-    </select>
-    <div class="setup-kicker">COFFEE BATTLES · CAMPAL BATTLE LAB</div>
-    <h1 id="battleSetupTitle" data-i18n="setup.newBattle">NUOVA PARTITA</h1>
-    <div class="setup-motto" data-i18n="setup.motto">TAKE A BREAK. GRAB A COFFEE. FIGHT A BATTLE.</div>
-    <div class="setup-lead" data-i18n="setup.lead">Definisci il budget dello scenario. La composizione degli eserciti e lo schieramento saranno i passaggi successivi dell'Army Builder.</div>
+    <div class="setup-top">
+      <ol class="setup-steps">
+        <li aria-current="step" data-i18n="step.setup">Setup</li>
+        <li data-i18n="step.deploy">Deploy</li>
+        <li data-i18n="step.battle">Battle</li>
+      </ol>
+      <select id="splashLanguageSelect" aria-label="Language" title="Language">
+        <option value="en">English</option>
+        <option value="it">Italiano</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+        <option value="de">Deutsch</option>
+        <option value="ru">Русский</option>
+      </select>
+    </div>
 
-    <div class="setup-section" style="margin-top:0;border-top:0;padding-top:0">
-      <span class="setup-label" data-i18n="setup.armyPoints">PUNTI ESERCITO</span>
-      <div class="point-presets" id="pointPresets">
-        <button type="button" data-points="500">500 PT</button>
-        <button type="button" data-points="1000" class="active">1000 PT</button>
-        <button type="button" data-points="1500">1500 PT</button>
-        <button type="button" data-points="2000">2000 PT</button>
-      </div>
-      <div class="custom-points">
-        <label for="customPointsInput" data-i18n="setup.customBudget">oppure budget personalizzato</label>
-        <input id="customPointsInput" type="number" inputmode="numeric" min="100" max="10000" step="50" placeholder="Custom" />
+    <h1 id="battleSetupTitle" data-i18n="setup.newBattle">New battle</h1>
+
+    <div class="setup-field">
+      <span class="setup-label" id="setupPointsLabel" data-i18n="setup.armyPoints">Army size</span>
+      <div class="point-presets" id="pointPresets" role="group" aria-labelledby="setupPointsLabel">
+        <button type="button" data-points="500">500</button>
+        <button type="button" data-points="1000" class="active">1000</button>
+        <button type="button" data-points="1500">1500</button>
+        <button type="button" data-points="2000">2000</button>
+        <input id="customPointsInput" type="number" inputmode="numeric" min="100" max="10000" step="50" placeholder="Other" aria-label="Custom army size" title="Custom army size" data-i18n-placeholder="setup.customPlaceholder" data-i18n-title="setup.customBudget" />
       </div>
     </div>
 
-    <div class="setup-section">
-      <span class="setup-label" data-i18n="setup.biome">MAP ENGINE · BIOMA</span>
-      <div class="setup-select">
-        <label for="mapBiomeSelect" data-i18n="setup.battlefieldProfile">Profilo del campo di battaglia</label>
-        <select id="mapBiomeSelect">
-          <option value="random" selected data-i18n="biome.random">Casuale</option>
-          <option value="plains" data-i18n="biome.plains">Pianura</option>
-          <option value="hills" data-i18n="biome.hills">Colline</option>
-          <option value="valley" data-i18n="biome.valley">Vallata</option>
-          <option value="river" data-i18n="biome.river">Fiume</option>
-          <option value="forest" data-i18n="biome.forest">Foresta</option>
-          <option value="mountains" data-i18n="biome.mountains">Montagne</option>
-          <option value="village" data-i18n="biome.village">Villaggio</option>
-          <option value="sea" data-i18n="biome.sea">Mare</option>
-        </select>
-      </div>
-      <div class="setup-map-note" data-i18n="setup.mapNote">Casuale sceglie un bioma coerente. Mare: golfo o sbarco · fiumi: invalicabili salvo ponti/guadi · torrenti: terreno accidentato · montagne/edifici: ostacoli pieni.</div>
-    </div>
+    <label class="setup-field" for="mapBiomeSelect">
+      <span class="setup-label" data-i18n="setup.biome">Terrain</span>
+      <select id="mapBiomeSelect">
+        <option value="random" selected data-i18n="biome.random">Random</option>
+        <option value="plains" data-i18n="biome.plains">Plains</option>
+        <option value="hills" data-i18n="biome.hills">Hills</option>
+        <option value="valley" data-i18n="biome.valley">Valley</option>
+        <option value="river" data-i18n="biome.river">River</option>
+        <option value="forest" data-i18n="biome.forest">Forest</option>
+        <option value="mountains" data-i18n="biome.mountains">Mountains</option>
+        <option value="village" data-i18n="biome.village">Village</option>
+        <option value="sea" data-i18n="biome.sea">Sea</option>
+      </select>
+    </label>
 
-    <div class="setup-section">
-      <span class="setup-label" data-i18n="setup.armyMode">MODALITÀ ESERCITI</span>
-      <div class="setup-modes" id="setupModes">
-        <button type="button" data-mode="auto" class="active"><span data-i18n="mode.auto">AUTO</span><small data-i18n="mode.autoSub">composizione + dottrina + schieramento</small></button>
-        <button type="button" data-mode="mirrored"><span data-i18n="mode.mirrored">MIRRORED</span><small data-i18n="mode.mirroredSub">costruisci BLU, ROSSO specchiato</small></button>
-        <button type="button" data-mode="custom"><span data-i18n="mode.custom">CUSTOM</span><small data-i18n="mode.customSub">costruisci entrambi gli eserciti</small></button>
+    <div class="setup-pair">
+      <div class="setup-field">
+        <span class="setup-label" id="setupModesLabel" data-i18n="setup.armyMode">Armies</span>
+        <div class="setup-modes" id="setupModes" role="group" aria-labelledby="setupModesLabel">
+          <button type="button" data-mode="auto" class="active" title="" data-i18n-title="mode.autoSub" data-i18n="mode.auto">Auto</button>
+          <button type="button" data-mode="mirrored" title="" data-i18n-title="mode.mirroredSub" data-i18n="mode.mirrored">Mirror</button>
+          <button type="button" data-mode="custom" title="" data-i18n-title="mode.customSub" data-i18n="mode.custom">Custom</button>
+        </div>
       </div>
-      <div class="setup-mode-note" id="setupModeNote">AUTO usa Doctrine Engine: genera prima le unità, poi sceglie la dottrina in base a composizione, campo e ruolo ATT/DEF.</div>
-    </div>
-
-    <div class="setup-section">
-      <span class="setup-label" data-i18n="setup.playerRole">RUOLO GIOCATORE · BLU ALL'AVVIO</span>
-      <div class="setup-modes" id="setupRoles">
-        <button type="button" data-role="random" class="active"><span data-i18n="role.random">CASUALE</span><small data-i18n="role.randomSub">ATT o DEF assegnato a inizio partita</small></button>
-        <button type="button" data-role="attack"><span data-i18n="role.attack">ATTACCANTE</span><small data-i18n="role.attackSub">il BLU deve ottenere la vittoria entro il tempo</small></button>
-        <button type="button" data-role="defend"><span data-i18n="role.defend">DIFENSORE</span><small data-i18n="role.defendSub">il BLU vince se resiste fino al limite</small></button>
+      <div class="setup-field">
+        <span class="setup-label" id="setupRolesLabel" data-i18n="setup.playerRole">Your role</span>
+        <div class="setup-modes" id="setupRoles" role="group" aria-labelledby="setupRolesLabel">
+          <button type="button" data-role="random" class="active" title="" data-i18n-title="role.randomSub" data-i18n="role.random">Random</button>
+          <button type="button" data-role="attack" title="" data-i18n-title="role.attackSub" data-i18n="role.attack">Attack</button>
+          <button type="button" data-role="defend" title="" data-i18n-title="role.defendSub" data-i18n="role.defend">Defend</button>
+        </div>
       </div>
-      <div class="setup-mode-note" id="setupRoleNote">In DEV puoi ancora cambiare fazione durante la battaglia; il ruolo ATT/DEF resta legato al colore assegnato all'avvio.</div>
     </div>
+    <p class="setup-note" id="setupModeNote" aria-live="polite"></p>
 
-    <div class="setup-summary">
-      <span id="setupModeSummary">AUTO · Doctrine Engine</span>
-      <strong id="setupPointsSummary">1000 PT</strong>
+    <div class="setup-actions">
+      <button id="createBattleBtn" type="button" data-i18n="setup.goDeployment">Continue</button>
+      <a href="how-to-play.html" target="_blank" rel="noopener" data-i18n="setup.howToPlay">How to play</a>
     </div>
-    <button id="createBattleBtn" type="button" data-i18n="setup.goDeployment">VAI ALLO SCHIERAMENTO</button>
-    <div class="setup-footnote">v0.90.2 · Step 1/3 — Fog of War 20U + Intel Layer condiviso per lato + ghost ultima posizione nota.</div>
   </div>
 </div>
 
 
 <div id="battleEndOverlay" role="dialog" aria-modal="true" aria-labelledby="battleEndTitle">
   <div class="battle-end-panel">
-    <div class="battle-end-kicker" data-i18n="battle.resultKicker">COFFEE BATTLES · ESITO BATTAGLIA</div>
     <h1 id="battleEndTitle" data-i18n="battle.victory">VITTORIA!</h1>
     <div id="battleEndLead" data-i18n="battle.ended">La battaglia è terminata.</div>
     <div id="battleEndLog" class="battle-damage-grid"></div>
@@ -653,41 +693,41 @@
     <div class="deploy-budget"><span data-i18n="deploy.spent">Spesi</span> <b id="deploySpent">0</b> / <span id="deployBudget">1000</span> PT</div>
   </div>
   <div id="deploymentCards">
-    <button class="unit-card" type="button" data-unit-type="infantry" data-cost="100">
+    <button class="unit-card" type="button" title="C2 · AR1 · V100" data-unit-type="infantry" data-cost="100">
       <span class="unit-card-preview"><span class="reg"><span class="reg-icon" aria-hidden="true"></span></span></span>
-      <span class="unit-card-copy"><strong data-i18n="unit.infantry">Fanteria</strong><span>C2 · AR1 · V100</span><span class="cost">100 PT</span></span>
+      <span class="unit-card-copy"><strong data-i18n="unit.infantry">Fanteria</strong><span class="unit-role" data-i18n="unitrole.infantry"></span><span class="cost">100 PT</span></span>
     </button>
-    <button class="unit-card" type="button" data-unit-type="light_infantry" data-cost="80">
+    <button class="unit-card" type="button" title="C2 · Mira2 · 5U · 5s" data-unit-type="light_infantry" data-cost="80">
       <span class="unit-card-preview"><span class="reg"><span class="reg-icon" aria-hidden="true"></span></span></span>
-      <span class="unit-card-copy"><strong data-i18n="unit.light_infantry">Fanteria leggera</strong><span>C2 · Mira2 · 5U · 5s</span><span class="cost">80 PT</span></span>
+      <span class="unit-card-copy"><strong data-i18n="unit.light_infantry">Fanteria leggera</strong><span class="unit-role" data-i18n="unitrole.light_infantry"></span><span class="cost">80 PT</span></span>
     </button>
-    <button class="unit-card" type="button" data-unit-type="heavy_infantry" data-cost="140">
+    <button class="unit-card" type="button" title="C2 · AR2 · M0.8" data-unit-type="heavy_infantry" data-cost="140">
       <span class="unit-card-preview"><span class="reg"><span class="reg-icon" aria-hidden="true"></span></span></span>
-      <span class="unit-card-copy"><strong data-i18n="unit.heavy_infantry">Fanteria pesante</strong><span>C2 · AR2 · M0.8</span><span class="cost">140 PT</span></span>
+      <span class="unit-card-copy"><strong data-i18n="unit.heavy_infantry">Fanteria pesante</strong><span class="unit-role" data-i18n="unitrole.heavy_infantry"></span><span class="cost">140 PT</span></span>
     </button>
-    <button class="unit-card" type="button" data-unit-type="spearman" data-cost="120">
+    <button class="unit-card" type="button" title="C2 · AR2 · COVER FRONTE" data-unit-type="spearman" data-cost="120">
       <span class="unit-card-preview"><span class="reg"><span class="reg-icon" aria-hidden="true"></span></span></span>
-      <span class="unit-card-copy"><strong data-i18n="unit.spearman">Lanceri</strong><span>C2 · AR2 · COVER FRONTE</span><span class="cost">120 PT</span></span>
+      <span class="unit-card-copy"><strong data-i18n="unit.spearman">Lanceri</strong><span class="unit-role" data-i18n="unitrole.spearman"></span><span class="cost">120 PT</span></span>
     </button>
-    <button class="unit-card" type="button" data-unit-type="archer" data-cost="110">
+    <button class="unit-card" type="button" title="C1 · Mira2 · AR0 · 15U · 3s" data-unit-type="archer" data-cost="110">
       <span class="unit-card-preview"><span class="reg"><span class="reg-icon" aria-hidden="true"></span></span></span>
-      <span class="unit-card-copy"><strong data-i18n="unit.archer">Arcieri</strong><span>C1 · Mira2 · AR0 · 15U · 3s</span><span class="cost">110 PT</span></span>
+      <span class="unit-card-copy"><strong data-i18n="unit.archer">Arcieri</strong><span class="unit-role" data-i18n="unitrole.archer"></span><span class="cost">110 PT</span></span>
     </button>
-    <button class="unit-card" type="button" data-unit-type="crossbow" data-cost="125">
+    <button class="unit-card" type="button" title="C1 · Mira3 · AP1 · 13U · 7s" data-unit-type="crossbow" data-cost="125">
       <span class="unit-card-preview"><span class="reg"><span class="reg-icon" aria-hidden="true"></span></span></span>
-      <span class="unit-card-copy"><strong data-i18n="unit.crossbow">Balestrieri</strong><span>C1 · Mira3 · AP1 · 13U · 7s</span><span class="cost">125 PT</span></span>
+      <span class="unit-card-copy"><strong data-i18n="unit.crossbow">Balestrieri</strong><span class="unit-role" data-i18n="unitrole.crossbow"></span><span class="cost">125 PT</span></span>
     </button>
-    <button class="unit-card" type="button" data-unit-type="cavalry" data-cost="180">
+    <button class="unit-card" type="button" title="C3 · AR3 · V30" data-unit-type="cavalry" data-cost="180">
       <span class="unit-card-preview"><span class="reg"><span class="reg-icon" aria-hidden="true"></span></span></span>
-      <span class="unit-card-copy"><strong data-i18n="unit.cavalry">Cavalleria</strong><span>C3 · AR3 · V30</span><span class="cost">180 PT</span></span>
+      <span class="unit-card-copy"><strong data-i18n="unit.cavalry">Cavalleria</strong><span class="unit-role" data-i18n="unitrole.cavalry"></span><span class="cost">180 PT</span></span>
     </button>
-    <button class="unit-card" type="button" data-unit-type="horse_archer" data-cost="160">
+    <button class="unit-card" type="button" title="C1 · Mira2 · M2 · 10U" data-unit-type="horse_archer" data-cost="160">
       <span class="unit-card-preview"><span class="reg"><span class="reg-icon" aria-hidden="true"></span></span></span>
-      <span class="unit-card-copy"><strong data-i18n="unit.horse_archer">Cavalleria leggera</strong><span>C1 · Mira2 · M2 · 10U</span><span class="cost">160 PT</span></span>
+      <span class="unit-card-copy"><strong data-i18n="unit.horse_archer">Cavalleria leggera</strong><span class="unit-role" data-i18n="unitrole.horse_archer"></span><span class="cost">160 PT</span></span>
     </button>
   </div>
   <div id="deploymentActions">
-    <button id="removeDeployUnitBtn" type="button">🗑 <span data-i18n="deploy.removeSelected">RIMUOVI SELEZIONATA</span></button>
+    <button id="removeDeployUnitBtn" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg><span data-i18n="deploy.removeSelected">Rimuovi</span></button>
     <button id="rotateDeployLeftBtn" type="button">↶ 15°</button>
     <button id="rotateDeployRightBtn" type="button">↷ 15°</button>
     <button id="startBattleFromDeployBtn" type="button" data-i18n="deploy.startBattle">INIZIA BATTAGLIA</button>
@@ -700,24 +740,24 @@
   <div id="stage"><canvas id="c"></canvas></div>
 <div id="uiOverlay">
   <button id="sidebarRail" title="Apri pannello laterale" aria-label="Apri pannello laterale" data-i18n-title="sidebar.open">❮</button>
-  <div id="sideControls">
+  <div id="sideControls" class="dbg-only">
     <button id="sideBlueBtn" title="Controlla schieramento BLU" data-i18n-title="side.controlBlue" data-i18n="side.blue">BLU</button>
     <button id="sideRedBtn" title="Controlla schieramento ROSSO" data-i18n-title="side.controlRed" data-i18n="side.red">ROSSO</button>
   </div>
   <div id="commandPanel">
     <div id="stanceControls">
-      <button id="stanceHoldBtn" title="Hold the line" data-i18n-title="stance.holdTitle">🛡️</button>
-      <button id="stanceAggressiveBtn" title="Aggressivo: attacca entro 10U" data-i18n-title="stance.aggressiveTitle">⚔️</button>
-      <button id="stanceElusiveBtn" title="Elusivo: fugge a M3 entro 9U" data-i18n-title="stance.elusiveTitle">🏃</button>
+      <button id="stanceHoldBtn" title="Hold the line" data-i18n-title="stance.holdTitle" aria-label="Hold"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 5-3.2 8.3-7 10-3.8-1.7-7-5-7-10V6z"/></svg></button>
+      <button id="stanceAggressiveBtn" title="Aggressivo: attacca entro 10U" data-i18n-title="stance.aggressiveTitle" aria-label="Aggressive"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19L19 5M14 5h5v5M19 19L5 5M5 10V5h5"/></svg></button>
+      <button id="stanceElusiveBtn" title="Elusivo: fugge a M3 entro 9U" data-i18n-title="stance.elusiveTitle" aria-label="Elusive"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h2M8 12h2M13 12h7M16 8l4 4-4 4"/></svg></button>
     </div>
     <div id="formationControls">
-      <button id="formationBaseBtn" title="Base: fronte 3U × profondità 2U" data-i18n-title="formation.baseTitle">▯</button>
-      <button id="formationColumnBtn" title="Colonna: fronte 2U × profondità 3U" data-i18n-title="formation.columnTitle">▭</button>
-      <button id="formationLineBtn" title="Linea: fronte 6U × profondità 1U" data-i18n-title="formation.lineTitle">⫿</button>
+      <button id="formationBaseBtn" title="Base: fronte 3U × profondità 2U" data-i18n-title="formation.baseTitle" aria-label="Base"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="8" width="12" height="8"/><path d="M6 8h12" stroke-width="3.5"/></svg></button>
+      <button id="formationColumnBtn" title="Colonna: fronte 2U × profondità 3U" data-i18n-title="formation.columnTitle" aria-label="Column"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="5" width="8" height="14"/><path d="M8 5h8" stroke-width="3.5"/></svg></button>
+      <button id="formationLineBtn" title="Linea: fronte 6U × profondità 1U" data-i18n-title="formation.lineTitle" aria-label="Line"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="10" width="20" height="4"/><path d="M2 10h20" stroke-width="3.5"/></svg></button>
     </div>
-    <button id="chargeBtn" title="Carica: M1 ↔ M3" data-i18n-title="command.chargeTitle">C<small data-i18n="command.charge">CARICA</small></button>
-    <button id="retreatBtn" title="Ritirata: allontanati dal nemico fino ad almeno 11U" data-i18n-title="command.retreatTitle">R<small data-i18n="command.retreat">RITIRATA</small></button>
-    <button id="fireBtn" title="Fuoco a volontà: automatico entro la gittata del profilo, indipendente dalla stance" data-i18n-title="command.fireTitle">🎯<small data-i18n="command.fire">FUOCO A VOLONTÀ</small></button>
+    <button id="chargeBtn" title="Carica: M1 ↔ M3" data-i18n-title="command.chargeTitle"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 13l6-6 6 6M6 19l6-6 6 6"/></svg><small data-i18n="command.charge">CARICA</small></button>
+    <button id="retreatBtn" title="Ritirata: allontanati dal nemico fino ad almeno 11U" data-i18n-title="command.retreatTitle"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3"/></svg><small data-i18n="command.retreat">RITIRATA</small></button>
+    <button id="fireBtn" title="Fuoco a volontà: automatico entro la gittata del profilo, indipendente dalla stance" data-i18n-title="command.fireTitle"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5"/></svg><small data-i18n="command.fire">FUOCO A VOLONTÀ</small></button>
   </div>
   <div id="victoryBar" title="Morale strategico: ogni lato arriva al 100% quando metà dei punti dell'esercito avversario è stata eliminata o è fuggita dal campo." data-i18n-title="victory.title">
     <div class="victory-half blue"><div id="blueVictoryFill"></div></div>
@@ -727,51 +767,23 @@
     <span id="victoryRedLabel">0% ROSSO</span>
   </div>
   <div id="timeControls">
-    <button id="pauseBtn" title="Pausa" data-i18n-title="time.pause">⏸</button>
-    <button id="speed1Btn" title="Tempo 1×" data-i18n-title="time.x1">▶️</button>
-    <button id="speed2Btn" title="Tempo 2×" data-i18n-title="time.x2">⏩</button>
-    <button id="speed3Btn" title="Tempo 3×" data-i18n-title="time.x3">⏭️</button>
+    <button id="pauseBtn" title="Pausa" data-i18n-title="time.pause" aria-label="Pause"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+    <button id="speed1Btn" title="Tempo 1×" data-i18n-title="time.x1" aria-label="1×"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg></button>
+    <button id="speed2Btn" title="Tempo 2×" data-i18n-title="time.x2" aria-label="2×"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6l8 6-8 6zM12 6l8 6-8 6z"/></svg></button>
+    <button id="speed3Btn" title="Tempo 3×" data-i18n-title="time.x3" aria-label="3×"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 7l6 5-6 5zM9 7l6 5-6 5zM16 7l6 5-6 5z"/></svg></button>
   </div>
 </div>
   <aside>
     <div class="card">
       <h3 data-i18n="sidebar.controls">Controlli</h3>
-      <div class="legend" data-i18n-html="rules.controls">
-        <span class="pill">← / →</span> cambia schieramento BLU / ROSSO<br>
-        <span class="pill">Click sx unità amica</span> selezione singola<br>
-        <span class="pill">Ctrl + click sx</span> aggiungi/rimuovi dalla selezione<br>
-        <span class="pill">Click sx terreno</span> deselect completo<br>
-        <span class="pill">Drag dx</span> box selection RTS<br>
-        <span class="pill">Click dx unità nemica</span> lock-on immediato<br>
-        <span class="pill">Click dx terreno</span> movimento<br>
-        <span class="pill">Shift + click dx terreno</span> aggiunge waypoint<br>
-        <span class="pill">Shift + click dx nemico</span> ATTACCO terminale della chain<br>
-        <span class="pill">Drag tasto centrale</span> pan<br>
-        <span class="pill">Rotella</span> zoom<br>
-        <br><b>TOUCH / MOBILE</b><br>
-        <span class="pill">Tap amico</span> selezione singola<br>
-        <span class="pill">Press lungo amico</span> aggiungi/rimuovi selezione<br>
-        <span class="pill">Tap terreno</span> movimento<br>
-        <span class="pill">Press lungo terreno</span> aggiunge waypoint<br>
-        <span class="pill">Tap nemico</span> lock-on / attacco<br>
-        <span class="pill">Press lungo nemico</span> attacco terminale della chain<br>
-        <span class="pill">Drag 1 dito da terreno</span> box selection<br>
-        <span class="pill">2 dita drag / pinch</span> pan / zoom<br>
-        <span class="pill">Tap 2 dita</span> deselect completo<br>
-        <span class="pill">Rail ❮❯</span> apre / collassa pannello destro<br>
-        <span class="pill">🛡️ ⚔️ 🏃</span> Hold / Aggressivo / Elusivo · non cancella l’ordine manuale<br>
-        <span class="pill">▯ ▭ ⫿</span> Base / Colonna / Linea · non cancella l’ordine manuale<br>
-        <span class="pill">C</span> Carica: M1 ↔ M3<br>
-        <span class="pill">R</span> Ritirata: M3 via dal nemico fino ad almeno 11U<br>
-        <span class="pill">🎯</span> Tiratori: autofire; target esplicito = tiro anche con 🎯 OFF / Hold<br>
-        <span class="pill">Pathfinder</span> A* dinamico su griglia 1U attorno alle unità che bloccano il percorso<br>
-        <span class="pill">Pannello comandi</span> zona protetta: nessun input passa al battlefield<br>
-        <span class="pill">ROUT</span> B=0 → stance automatica 🏃 Elusivo<br>
-        <span class="pill">Bordocampo 10U</span> interdetto a unità normali/RETREAT; un ROUT che supera il tratteggio entra in ROUT permanente<br>
-        <span class="pill">SPACE</span> pausa immediata + codice HTML completo<br>
-        <span class="pill">⏸ ▶️ ⏩ ⏭️</span> tempo 0× / 1× / 2× / 3×<br>
-        Il pivot dell'unità resta il <b>centro del fronte</b>.
-      </div>
+      <dl class="controls-list" data-i18n-html="rules.controls">
+        <dt>Seleziona</dt><dd>Clic sinistro su un’unità · Ctrl + clic per aggiungere · trascina col tasto destro per un riquadro</dd>
+        <dt>Muovi</dt><dd>Clic destro sul terreno · Shift + clic destro aggiunge una tappa</dd>
+        <dt>Attacca</dt><dd>Clic destro su un nemico</dd>
+        <dt>Visuale</dt><dd>Rotella per lo zoom · trascina col tasto centrale per spostarti</dd>
+        <dt>Spazio</dt><dd>Pausa e codice HTML completo del gioco</dd>
+        <dt>Touch</dt><dd>Tocca per selezionare, muovere o attaccare · pressione lunga per aggiungere · due dita per spostare e zoomare</dd>
+      </dl>
     </div>
 
     <div class="card">
@@ -779,8 +791,8 @@
       <div id="selectedInfo" class="muted" data-i18n="common.none">Nessuna</div>
     </div>
 
-    <div class="card">
-      <h3><span data-i18n="sidebar.combatRule">Regola combattimento</span> v0.2</h3>
+    <details class="card rules-card">
+      <summary data-i18n="sidebar.combatRule">Regole di combattimento</summary>
       <div class="legend" data-i18n-html="rules.combat">
         <b>Stance:</b> Hold = attende ordini · Aggressivo = attacca entro 10U e carica entro 5U · Elusivo = fugge a M3 entro 9U.<br>
         Aggressivo sceglie lo <b>slot naturale</b> dalla regione geometrica dell’attaccante rispetto al rettangolo del difensore: davanti=FRONTE, dietro=RETRO, lateralmente=FIANCO. Lo slot viene <b>bloccato</b> e cambia solo se diventa realmente indisponibile. L'approccio e' <b>continuo</b>: la formazione curva durante l'avanzata verso il lato prenotato, senza waypoint NAV, soste o riallineamenti artificiali; al contatto reale scatta il magnet.<br>
@@ -824,7 +836,7 @@
         <b>Inseguimento:</b> un nemico già ingaggiato/targettato che entra in RETREAT/ROUT può essere inseguito automaticamente in <b>Carica</b>. Limite: <b>15U di percorso reale</b>; il bersaglio è perso anche se apre un gap oltre <b>15U</b> o l’inseguitore resta bloccato per 2s. Il primo contatto applica l'<b>impatto di carica una sola volta</b>; i contatti successivi sono normali attacchi di inseguimento. Nessun magnet permanente: il fuggitivo continua a muoversi.<br>
         Il tasto <b>Carica</b> imposta un override manuale: lock-on e AI non possono spegnerlo finché non avviene l’impatto o viene disattivato manualmente.
       </div>
-    </div>
+    </details>
 
     <div class="card">
       <h3 data-i18n="sidebar.actions">Azioni</h3>
@@ -832,7 +844,7 @@
       <button id="resetBtn" data-i18n="sidebar.resetBattle">Reset battaglia</button>
     </div>
 
-    <div class="card">
+    <div class="card dbg-only">
       <h3 data-i18n="sidebar.battleLog">Battle log</h3>
       <div id="log" data-i18n="common.ready">Pronto.</div>
     </div>
@@ -842,6 +854,9 @@
 <script>
 (() => {
   'use strict';
+  // ?debug shows developer tools: faction switch, pathfinding markers, battle log.
+  const DEBUG = new URLSearchParams(location.search).has('debug');
+  document.documentElement.classList.toggle('debug', DEBUG);
 
 
 // ============================================================
@@ -849,40 +864,7 @@
 // ============================================================
 const RULES_I18N = Object.freeze({
   en:Object.freeze({
-    'rules.controls': `<span class="pill">← / →</span> switch BLUE / RED army<br>
-      <span class="pill">Left click friendly unit</span> single selection<br>
-      <span class="pill">Ctrl + left click</span> add/remove from selection<br>
-      <span class="pill">Left click ground</span> clear selection<br>
-      <span class="pill">Right drag</span> RTS box selection<br>
-      <span class="pill">Right click enemy unit</span> immediate lock-on<br>
-      <span class="pill">Right click ground</span> move<br>
-      <span class="pill">Shift + right click ground</span> add waypoint<br>
-      <span class="pill">Shift + right click enemy</span> terminal ATTACK in the chain<br>
-      <span class="pill">Middle-button drag</span> pan<br>
-      <span class="pill">Mouse wheel</span> zoom<br>
-      <br><b>TOUCH / MOBILE</b><br>
-      <span class="pill">Tap friendly</span> single selection<br>
-      <span class="pill">Long press friendly</span> add/remove selection<br>
-      <span class="pill">Tap ground</span> move<br>
-      <span class="pill">Long press ground</span> add waypoint<br>
-      <span class="pill">Tap enemy</span> lock-on / attack<br>
-      <span class="pill">Long press enemy</span> terminal attack in the chain<br>
-      <span class="pill">1-finger drag from ground</span> box selection<br>
-      <span class="pill">2-finger drag / pinch</span> pan / zoom<br>
-      <span class="pill">2-finger tap</span> clear selection<br>
-      <span class="pill">Rail ❮❯</span> open / collapse right panel<br>
-      <span class="pill">🛡️ ⚔️ 🏃</span> Hold / Aggressive / Elusive · does not cancel a manual order<br>
-      <span class="pill">▯ ▭ ⫿</span> Base / Column / Line · does not cancel a manual order<br>
-      <span class="pill">C</span> Charge: M1 ↔ M3<br>
-      <span class="pill">R</span> Retreat: M3 away from the enemy until at least 11U<br>
-      <span class="pill">🎯</span> Ranged units: autofire; explicit target = fire even with 🎯 OFF / Hold<br>
-      <span class="pill">Pathfinder</span> dynamic A* on a 1U grid around units blocking the route<br>
-      <span class="pill">Command panel</span> protected area: no input passes through to the battlefield<br>
-      <span class="pill">ROUT</span> B=0 → automatic 🏃 Elusive stance<br>
-      <span class="pill">10U field border</span> forbidden to normal units/RETREAT; a ROUT crossing the dashed line enters permanent ROUT<br>
-      <span class="pill">SPACE</span> immediate pause + complete HTML source<br>
-      <span class="pill">⏸ ▶️ ⏩ ⏭️</span> speed 0× / 1× / 2× / 3×<br>
-      The unit pivot remains the <b>centre of the front</b>.`,
+    'rules.controls': `<dt>Select</dt><dd>Left click a unit · Ctrl + click to add · drag with the right button for a box</dd><dt>Move</dt><dd>Right click the ground · Shift + right click adds a waypoint</dd><dt>Attack</dt><dd>Right click an enemy</dd><dt>Camera</dt><dd>Wheel to zoom · drag with the middle button to pan</dd><dt>Space</dt><dd>Pause and show the game’s full HTML source</dd><dt>Touch</dt><dd>Tap to select, move or attack · long press to add · two fingers to pan and zoom</dd>`,
     'rules.combat': `<b>Stance:</b> Hold = waits for orders · Aggressive = attacks within 10U and charges within 5U · Elusive = flees at M3 within 9U.<br>
       Aggressive chooses the <b>natural slot</b> from the attacker's geometric region relative to the defender's rectangle: ahead=FRONT, behind=REAR, lateral=FLANK. The slot is <b>locked</b> and changes only if it becomes genuinely unavailable. The approach is <b>continuous</b>: the formation curves while advancing toward the reserved side, with no NAV waypoints, stops or artificial realignments; on real contact the magnet engages.<br>
       The approach is <b>dynamic</b>: phases remain relative to the target even if it moves or rotates, while the reserved slot stays stable. If two units target each other, the first physical contact resolves the engagement atomically. If the moving target closes the distance, the pursuer still remains the attacker.<br>
@@ -925,40 +907,7 @@ const RULES_I18N = Object.freeze({
       The <b>Charge</b> button sets a manual override: lock-on and AI cannot switch it off until impact occurs or it is manually disabled.`
   }),
   es:Object.freeze({
-    'rules.controls': `<span class="pill">← / →</span> cambia ejército AZUL / ROJO<br>
-      <span class="pill">Clic izq. unidad amiga</span> selección individual<br>
-      <span class="pill">Ctrl + clic izq.</span> añadir/quitar de la selección<br>
-      <span class="pill">Clic izq. terreno</span> limpiar selección<br>
-      <span class="pill">Arrastre der.</span> selección de caja RTS<br>
-      <span class="pill">Clic der. unidad enemiga</span> lock-on inmediato<br>
-      <span class="pill">Clic der. terreno</span> movimiento<br>
-      <span class="pill">Shift + clic der. terreno</span> añade waypoint<br>
-      <span class="pill">Shift + clic der. enemigo</span> ATAQUE terminal de la cadena<br>
-      <span class="pill">Arrastre botón central</span> desplazamiento<br>
-      <span class="pill">Rueda</span> zoom<br>
-      <br><b>TOUCH / MOBILE</b><br>
-      <span class="pill">Tap aliado</span> selección individual<br>
-      <span class="pill">Pulsación larga aliado</span> añadir/quitar selección<br>
-      <span class="pill">Tap terreno</span> movimiento<br>
-      <span class="pill">Pulsación larga terreno</span> añade waypoint<br>
-      <span class="pill">Tap enemigo</span> lock-on / ataque<br>
-      <span class="pill">Pulsación larga enemigo</span> ataque terminal de la cadena<br>
-      <span class="pill">Arrastre 1 dedo desde terreno</span> selección de caja<br>
-      <span class="pill">Arrastre 2 dedos / pellizco</span> desplazamiento / zoom<br>
-      <span class="pill">Tap con 2 dedos</span> limpiar selección<br>
-      <span class="pill">Rail ❮❯</span> abre / cierra el panel derecho<br>
-      <span class="pill">🛡️ ⚔️ 🏃</span> Hold / Agresivo / Evasivo · no cancela la orden manual<br>
-      <span class="pill">▯ ▭ ⫿</span> Base / Columna / Línea · no cancela la orden manual<br>
-      <span class="pill">C</span> Carga: M1 ↔ M3<br>
-      <span class="pill">R</span> Retirada: M3 alejándose del enemigo hasta al menos 11U<br>
-      <span class="pill">🎯</span> Tiradores: autofuego; objetivo explícito = dispara incluso con 🎯 OFF / Hold<br>
-      <span class="pill">Pathfinder</span> A* dinámico en cuadrícula de 1U alrededor de unidades que bloquean la ruta<br>
-      <span class="pill">Panel de mando</span> zona protegida: ninguna entrada pasa al campo de batalla<br>
-      <span class="pill">ROUT</span> B=0 → postura automática 🏃 Evasivo<br>
-      <span class="pill">Borde 10U</span> prohibido a unidades normales/RETREAT; un ROUT que cruza la línea discontinua entra en ROUT permanente<br>
-      <span class="pill">SPACE</span> pausa inmediata + código HTML completo<br>
-      <span class="pill">⏸ ▶️ ⏩ ⏭️</span> velocidad 0× / 1× / 2× / 3×<br>
-      El pivote de la unidad permanece en el <b>centro del frente</b>.`,
+    'rules.controls': `<dt>Seleccionar</dt><dd>Clic izquierdo en una unidad · Ctrl + clic para añadir · arrastra con el botón derecho para un recuadro</dd><dt>Mover</dt><dd>Clic derecho en el terreno · Mayús + clic derecho añade un punto de paso</dd><dt>Atacar</dt><dd>Clic derecho en un enemigo</dd><dt>Cámara</dt><dd>Rueda para el zoom · arrastra con el botón central para desplazarte</dd><dt>Espacio</dt><dd>Pausa y código HTML completo del juego</dd><dt>Táctil</dt><dd>Toca para seleccionar, mover o atacar · pulsación larga para añadir · dos dedos para desplazar y hacer zoom</dd>`,
     'rules.combat': `<b>Postura:</b> Hold = espera órdenes · Agresivo = ataca dentro de 10U y carga dentro de 5U · Evasivo = huye a M3 dentro de 9U.<br>
       Agresivo elige el <b>slot natural</b> según la región geométrica del atacante respecto al rectángulo del defensor: delante=FRENTE, detrás=RETRO, lateral=FLANCO. El slot queda <b>bloqueado</b> y solo cambia si deja de estar realmente disponible. La aproximación es <b>continua</b>: la formación curva durante el avance hacia el lado reservado, sin waypoints NAV, pausas ni realineamientos artificiales; al contacto real se activa el magnet.<br>
       La aproximación es <b>dinámica</b>: las fases siguen siendo relativas al objetivo aunque se mueva o gire, mientras el slot reservado permanece estable. Si dos unidades se apuntan mutuamente, el primer contacto físico resuelve el combate de forma atómica. Si el objetivo móvil cierra la distancia, el pursuer sigue siendo el atacante.<br>
@@ -1001,40 +950,7 @@ const RULES_I18N = Object.freeze({
       El botón <b>Carga</b> establece un override manual: lock-on e IA no pueden desactivarlo hasta que se produzca el impacto o se desactive manualmente.`
   }),
   fr:Object.freeze({
-    'rules.controls': `<span class="pill">← / →</span> change l'armée BLEUE / ROUGE<br>
-      <span class="pill">Clic gauche unité alliée</span> sélection unique<br>
-      <span class="pill">Ctrl + clic gauche</span> ajouter/retirer de la sélection<br>
-      <span class="pill">Clic gauche terrain</span> désélection complète<br>
-      <span class="pill">Glisser droit</span> sélection rectangulaire RTS<br>
-      <span class="pill">Clic droit unité ennemie</span> lock-on immédiat<br>
-      <span class="pill">Clic droit terrain</span> déplacement<br>
-      <span class="pill">Shift + clic droit terrain</span> ajoute un waypoint<br>
-      <span class="pill">Shift + clic droit ennemi</span> ATTAQUE terminale de la chaîne<br>
-      <span class="pill">Glisser bouton central</span> panoramique<br>
-      <span class="pill">Molette</span> zoom<br>
-      <br><b>TOUCH / MOBILE</b><br>
-      <span class="pill">Tap allié</span> sélection unique<br>
-      <span class="pill">Appui long allié</span> ajouter/retirer de la sélection<br>
-      <span class="pill">Tap terrain</span> déplacement<br>
-      <span class="pill">Appui long terrain</span> ajoute un waypoint<br>
-      <span class="pill">Tap ennemi</span> lock-on / attaque<br>
-      <span class="pill">Appui long ennemi</span> attaque terminale de la chaîne<br>
-      <span class="pill">Glisser 1 doigt depuis le terrain</span> sélection rectangulaire<br>
-      <span class="pill">Glisser 2 doigts / pincement</span> panoramique / zoom<br>
-      <span class="pill">Tap 2 doigts</span> désélection complète<br>
-      <span class="pill">Rail ❮❯</span> ouvre / replie le panneau droit<br>
-      <span class="pill">🛡️ ⚔️ 🏃</span> Hold / Agressif / Évasif · n'annule pas l'ordre manuel<br>
-      <span class="pill">▯ ▭ ⫿</span> Base / Colonne / Ligne · n'annule pas l'ordre manuel<br>
-      <span class="pill">C</span> Charge : M1 ↔ M3<br>
-      <span class="pill">R</span> Retraite : M3 loin de l'ennemi jusqu'à au moins 11U<br>
-      <span class="pill">🎯</span> Tireurs : tir auto ; cible explicite = tir même avec 🎯 OFF / Hold<br>
-      <span class="pill">Pathfinder</span> A* dynamique sur grille 1U autour des unités bloquant la route<br>
-      <span class="pill">Panneau de commande</span> zone protégée : aucune entrée ne passe au champ de bataille<br>
-      <span class="pill">ROUT</span> B=0 → posture automatique 🏃 Évasif<br>
-      <span class="pill">Bord de 10U</span> interdit aux unités normales/RETREAT ; un ROUT franchissant les pointillés passe en ROUT permanent<br>
-      <span class="pill">SPACE</span> pause immédiate + code HTML complet<br>
-      <span class="pill">⏸ ▶️ ⏩ ⏭️</span> vitesse 0× / 1× / 2× / 3×<br>
-      Le pivot de l'unité reste le <b>centre du front</b>.`,
+    'rules.controls': `<dt>Sélection</dt><dd>Clic gauche sur une unité · Ctrl + clic pour ajouter · glisser avec le bouton droit pour un cadre</dd><dt>Déplacement</dt><dd>Clic droit sur le terrain · Maj + clic droit ajoute une étape</dd><dt>Attaque</dt><dd>Clic droit sur un ennemi</dd><dt>Caméra</dt><dd>Molette pour zoomer · glisser avec le bouton du milieu pour se déplacer</dd><dt>Espace</dt><dd>Pause et code HTML complet du jeu</dd><dt>Tactile</dt><dd>Touchez pour sélectionner, déplacer ou attaquer · appui long pour ajouter · deux doigts pour déplacer et zoomer</dd>`,
     'rules.combat': `<b>Posture :</b> Hold = attend les ordres · Agressif = attaque à moins de 10U et charge à moins de 5U · Évasif = fuit à M3 à moins de 9U.<br>
       Agressif choisit le <b>slot naturel</b> selon la région géométrique de l'attaquant par rapport au rectangle du défenseur : devant=FRONT, derrière=ARRIÈRE, latéralement=FLANC. Le slot est <b>verrouillé</b> et ne change que s'il devient réellement indisponible. L'approche est <b>continue</b> : la formation courbe pendant l'avance vers le côté réservé, sans waypoint NAV, arrêt ni réalignement artificiel ; au contact réel, le magnet s'active.<br>
       L'approche est <b>dynamique</b> : les phases restent relatives à la cible même si elle se déplace ou pivote, tandis que le slot réservé reste stable. Si deux unités se ciblent mutuellement, le premier contact physique résout atomiquement l'engagement. Si la cible mobile ferme la distance, le pursuer reste quand même l'attaquant.<br>
@@ -1077,40 +993,7 @@ const RULES_I18N = Object.freeze({
       Le bouton <b>Charge</b> définit un override manuel : le lock-on et l'IA ne peuvent pas le désactiver avant l'impact ou une désactivation manuelle.`
   }),
   de:Object.freeze({
-    'rules.controls': `<span class="pill">← / →</span> BLAUE / ROTE Armee wechseln<br>
-      <span class="pill">Linksklick eigene Einheit</span> Einzelauswahl<br>
-      <span class="pill">Ctrl + Linksklick</span> Auswahl hinzufügen/entfernen<br>
-      <span class="pill">Linksklick Gelände</span> Auswahl aufheben<br>
-      <span class="pill">Rechts ziehen</span> RTS-Rahmenauswahl<br>
-      <span class="pill">Rechtsklick Feindeinheit</span> sofortiger Lock-on<br>
-      <span class="pill">Rechtsklick Gelände</span> Bewegung<br>
-      <span class="pill">Shift + Rechtsklick Gelände</span> Wegpunkt hinzufügen<br>
-      <span class="pill">Shift + Rechtsklick Feind</span> terminaler ANGRIFF der Kette<br>
-      <span class="pill">Mittlere Taste ziehen</span> Verschieben<br>
-      <span class="pill">Mausrad</span> Zoom<br>
-      <br><b>TOUCH / MOBILE</b><br>
-      <span class="pill">Eigene Einheit antippen</span> Einzelauswahl<br>
-      <span class="pill">Eigene Einheit lange drücken</span> Auswahl hinzufügen/entfernen<br>
-      <span class="pill">Gelände antippen</span> Bewegung<br>
-      <span class="pill">Gelände lange drücken</span> Wegpunkt hinzufügen<br>
-      <span class="pill">Feind antippen</span> Lock-on / Angriff<br>
-      <span class="pill">Feind lange drücken</span> terminaler Angriff der Kette<br>
-      <span class="pill">1-Finger-Ziehen vom Gelände</span> Rahmenauswahl<br>
-      <span class="pill">2-Finger-Ziehen / Pinch</span> Verschieben / Zoom<br>
-      <span class="pill">2-Finger-Tap</span> Auswahl aufheben<br>
-      <span class="pill">Rail ❮❯</span> rechten Bereich öffnen / einklappen<br>
-      <span class="pill">🛡️ ⚔️ 🏃</span> Hold / Aggressiv / Ausweichend · hebt manuellen Befehl nicht auf<br>
-      <span class="pill">▯ ▭ ⫿</span> Basis / Kolonne / Linie · hebt manuellen Befehl nicht auf<br>
-      <span class="pill">C</span> Sturmangriff: M1 ↔ M3<br>
-      <span class="pill">R</span> Rückzug: M3 vom Feind weg bis mindestens 11U<br>
-      <span class="pill">🎯</span> Fernkämpfer: Autofeuer; explizites Ziel = Schuss auch bei 🎯 OFF / Hold<br>
-      <span class="pill">Pathfinder</span> dynamisches A* auf 1U-Raster um Einheiten, die den Weg blockieren<br>
-      <span class="pill">Befehlsfeld</span> geschützter Bereich: keine Eingabe gelangt zum Schlachtfeld<br>
-      <span class="pill">ROUT</span> B=0 → automatische Haltung 🏃 Ausweichend<br>
-      <span class="pill">10U-Feldrand</span> für normale Einheiten/RETREAT gesperrt; ROUT jenseits der gestrichelten Linie wird permanent<br>
-      <span class="pill">SPACE</span> sofortige Pause + vollständiger HTML-Code<br>
-      <span class="pill">⏸ ▶️ ⏩ ⏭️</span> Geschwindigkeit 0× / 1× / 2× / 3×<br>
-      Der Pivot der Einheit bleibt der <b>Mittelpunkt der Front</b>.`,
+    'rules.controls': `<dt>Auswählen</dt><dd>Linksklick auf eine Einheit · Strg + Klick zum Hinzufügen · mit der rechten Taste ziehen für einen Rahmen</dd><dt>Bewegen</dt><dd>Rechtsklick auf das Gelände · Umschalt + Rechtsklick fügt einen Wegpunkt hinzu</dd><dt>Angreifen</dt><dd>Rechtsklick auf einen Gegner</dd><dt>Kamera</dt><dd>Mausrad zum Zoomen · mit der mittleren Taste ziehen zum Verschieben</dd><dt>Leertaste</dt><dd>Pause und vollständiger HTML-Quelltext des Spiels</dd><dt>Touch</dt><dd>Tippen zum Auswählen, Bewegen oder Angreifen · lange drücken zum Hinzufügen · zwei Finger zum Verschieben und Zoomen</dd>`,
     'rules.combat': `<b>Haltung:</b> Hold = wartet auf Befehle · Aggressiv = greift innerhalb 10U an und stürmt innerhalb 5U · Ausweichend = flieht mit M3 innerhalb 9U.<br>
       Aggressiv wählt den <b>natürlichen Slot</b> aus der geometrischen Region des Angreifers relativ zum Rechteck des Verteidigers: vorne=FRONT, hinten=RÜCKEN, seitlich=FLANKE. Der Slot wird <b>gesperrt</b> und ändert sich nur, wenn er tatsächlich nicht mehr verfügbar ist. Der Anmarsch ist <b>kontinuierlich</b>: die Formation kurvt beim Vorrücken zur reservierten Seite, ohne NAV-Wegpunkte, Stopps oder künstliche Neuausrichtungen; beim echten Kontakt greift der Magnet.<br>
       Der Anmarsch ist <b>dynamisch</b>: die Phasen bleiben relativ zum Ziel, auch wenn es sich bewegt oder dreht, während der reservierte Slot stabil bleibt. Wenn zwei Einheiten einander gegenseitig anvisieren, löst der erste physische Kontakt das Gefecht atomar aus. Schließt das bewegte Ziel die Distanz, bleibt der pursuer trotzdem der Angreifer.<br>
@@ -1153,40 +1036,7 @@ const RULES_I18N = Object.freeze({
       Die Taste <b>Sturmangriff</b> setzt einen manuellen Override: Lock-on und KI können ihn bis zum Aufprall oder zur manuellen Deaktivierung nicht ausschalten.`
   }),
   ru:Object.freeze({
-    'rules.controls': `<span class="pill">← / →</span> переключить СИНЮЮ / КРАСНУЮ армию<br>
-      <span class="pill">ЛКМ по своей части</span> одиночный выбор<br>
-      <span class="pill">Ctrl + ЛКМ</span> добавить/убрать из выбора<br>
-      <span class="pill">ЛКМ по земле</span> снять выделение<br>
-      <span class="pill">Протянуть ПКМ</span> рамочное выделение RTS<br>
-      <span class="pill">ПКМ по врагу</span> немедленный lock-on<br>
-      <span class="pill">ПКМ по земле</span> движение<br>
-      <span class="pill">Shift + ПКМ по земле</span> добавить waypoint<br>
-      <span class="pill">Shift + ПКМ по врагу</span> конечная АТАКА цепочки<br>
-      <span class="pill">Перетаскивание средней кнопкой</span> панорама<br>
-      <span class="pill">Колесо мыши</span> масштаб<br>
-      <br><b>TOUCH / MOBILE</b><br>
-      <span class="pill">Тап по своей части</span> одиночный выбор<br>
-      <span class="pill">Долгое нажатие по своей части</span> добавить/убрать из выбора<br>
-      <span class="pill">Тап по земле</span> движение<br>
-      <span class="pill">Долгое нажатие по земле</span> добавить waypoint<br>
-      <span class="pill">Тап по врагу</span> lock-on / атака<br>
-      <span class="pill">Долгое нажатие по врагу</span> конечная атака цепочки<br>
-      <span class="pill">Перетаскивание 1 пальцем от земли</span> рамочное выделение<br>
-      <span class="pill">2 пальца drag / pinch</span> панорама / масштаб<br>
-      <span class="pill">Тап 2 пальцами</span> снять выделение<br>
-      <span class="pill">Rail ❮❯</span> открыть / свернуть правую панель<br>
-      <span class="pill">🛡️ ⚔️ 🏃</span> Hold / Агрессивный / Уклоняющийся · не отменяет ручной приказ<br>
-      <span class="pill">▯ ▭ ⫿</span> База / Колонна / Линия · не отменяет ручной приказ<br>
-      <span class="pill">C</span> Атака с хода: M1 ↔ M3<br>
-      <span class="pill">R</span> Отступление: M3 от врага минимум до 11U<br>
-      <span class="pill">🎯</span> Стрелки: автоогонь; явная цель = стрельба даже при 🎯 OFF / Hold<br>
-      <span class="pill">Pathfinder</span> динамический A* по сетке 1U вокруг блокирующих путь частей<br>
-      <span class="pill">Панель команд</span> защищённая зона: ввод не проходит на поле боя<br>
-      <span class="pill">ROUT</span> B=0 → автоматическая стойка 🏃 Уклоняющийся<br>
-      <span class="pill">Граница поля 10U</span> закрыта для обычных частей/RETREAT; ROUT за пунктиром становится постоянным<br>
-      <span class="pill">SPACE</span> немедленная пауза + полный HTML-код<br>
-      <span class="pill">⏸ ▶️ ⏩ ⏭️</span> скорость 0× / 1× / 2× / 3×<br>
-      Пивот части остаётся в <b>центре фронта</b>.`,
+    'rules.controls': `<dt>Выбор</dt><dd>ЛКМ по отряду · Ctrl + клик — добавить · тяните ПКМ для рамки</dd><dt>Движение</dt><dd>ПКМ по местности · Shift + ПКМ — добавить точку пути</dd><dt>Атака</dt><dd>ПКМ по врагу</dd><dt>Камера</dt><dd>Колесо — масштаб · тяните средней кнопкой — сдвиг</dd><dt>Пробел</dt><dd>Пауза и полный HTML-код игры</dd><dt>Касание</dt><dd>Касание — выбрать, двигаться или атаковать · долгое нажатие — добавить · двумя пальцами — сдвиг и масштаб</dd>`,
     'rules.combat': `<b>Стойка:</b> Hold = ждёт приказа · Агрессивный = атакует в пределах 10U и идёт в атаку с хода в пределах 5U · Уклоняющийся = отходит на M3 в пределах 9U.<br>
       Агрессивный выбирает <b>естественный slot</b> по геометрической области атакующего относительно прямоугольника защитника: спереди=FRONT, сзади=REAR, сбоку=FLANK. Slot <b>блокируется</b> и меняется только если действительно становится недоступным. Сближение <b>непрерывное</b>: строй поворачивает по дуге при движении к зарезервированной стороне без NAV waypoint, остановок и искусственных перестроений; при реальном контакте включается magnet.<br>
       Сближение <b>динамическое</b>: фазы остаются относительными к цели, даже если она движется или поворачивается, а зарезервированный slot остаётся стабильным. Если две части взаимно целятся друг в друга, первый физический контакт атомарно разрешает вступление в бой. Если движущаяся цель сама закрывает дистанцию, pursuer всё равно остаётся атакующим.<br>
@@ -1242,17 +1092,31 @@ const I18N = Object.freeze({
   }),
   strings: Object.freeze({
     it:Object.freeze({
-      'language':'Lingua','header.subtitle':'REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + bordocampo 10U · schieramento sui lati lunghi · front-pivot · multi-engagement',
-      'source.hint':'SPACE chiude il codice e ripristina la velocità precedente.','source.copy':'COPIA TUTTO','source.close':'CHIUDI · SPACE',
-      'setup.newBattle':'NUOVA PARTITA','setup.motto':'FAI UNA PAUSA. PRENDI UN CAFFÈ. COMBATTI UNA BATTAGLIA.','setup.lead':'Definisci il budget dello scenario. La composizione degli eserciti e lo schieramento saranno i passaggi successivi dell’Army Builder.','setup.armyPoints':'PUNTI ESERCITO','setup.customBudget':'oppure budget personalizzato','setup.biome':'MAP ENGINE · BIOMA','setup.battlefieldProfile':'Profilo del campo di battaglia','setup.mapNote':'Casuale sceglie un bioma coerente. Mare: golfo o sbarco · fiumi: invalicabili salvo ponti/guadi · torrenti: terreno accidentato · montagne/edifici: ostacoli pieni.','setup.armyMode':'MODALITÀ ESERCITI','setup.playerRole':'RUOLO GIOCATORE · BLU ALL’AVVIO','setup.goDeployment':'VAI ALLO SCHIERAMENTO','setup.generateDeployment':'GENERA SCHIERAMENTO',
+      'source.title':'Codice sorgente',
+      'unitrole.horse_archer':'Veloce, tira a distanza',
+      'unitrole.cavalry':'Carica d’urto pesante',
+      'unitrole.crossbow':'Tiri perforanti',
+      'unitrole.archer':'Tiro lungo',
+      'unitrole.spearman':'Fronte protetto dai tiri',
+      'unitrole.heavy_infantry':'Corazza pesante, più lenta',
+      'unitrole.light_infantry':'Schermagliatori rapidi, tiro corto',
+      'unitrole.infantry':'Fanteria di linea solida',
+      'step.battle':'Battaglia',
+      'step.deploy':'Schieramento',
+      'step.setup':'Preparazione',
+      'setup.howToPlay':'Come si gioca',
+      'setup.customPlaceholder':'Altro',
+      'language':'Lingua',
+      'source.hint':'La battaglia è in pausa. Spazio chiude il codice e ripristina la velocità precedente.','source.copy':'Copia tutto','source.close':'Chiudi',
+      'setup.newBattle':'Nuova partita','setup.motto':'Fai una pausa. Prendi un caffè. Combatti una battaglia.','setup.armyPoints':'Dimensione esercito','setup.customBudget':'Dimensione personalizzata','setup.biome':'Terreno','setup.armyMode':'Eserciti','setup.playerRole':'Il tuo ruolo','setup.goDeployment':'Continua',
       'biome.random':'Casuale','biome.plains':'Pianura','biome.hills':'Colline','biome.valley':'Vallata','biome.river':'Fiume','biome.forest':'Foresta','biome.mountains':'Montagne','biome.village':'Villaggio','biome.sea':'Mare',
-      'mode.auto':'AUTO','mode.autoSub':'composizione + dottrina + schieramento','mode.autoNote':'AUTO usa Doctrine Engine: genera prima le unità, poi sceglie la dottrina in base a composizione, campo e ruolo ATT/DEF.','mode.mirrored':'MIRRORED','mode.mirroredSub':'costruisci BLU, ROSSO specchiato','mode.mirroredNote':'MIRRORED: costruisci il BLU; composizione, posizione e orientamento del ROSSO vengono specchiati.','mode.custom':'CUSTOM','mode.customSub':'costruisci entrambi gli eserciti','mode.customNote':'CUSTOM: costruisci e schiera liberamente entrambi gli eserciti entro lo stesso budget.',
-      'role.random':'CASUALE','role.randomSub':'ATT o DEF assegnato a inizio partita','role.randomNote':'Il ruolo del BLU viene estratto a inizio partita; il ROSSO riceve automaticamente il ruolo opposto.','role.attack':'ATTACCANTE','role.attackSub':'il BLU deve ottenere la vittoria entro il tempo','role.attackNote':'BLU = ATTACCANTE · ROSSO = DIFENSORE.','role.defend':'DIFENSORE','role.defendSub':'il BLU vince se resiste fino al limite','role.defendNote':'BLU = DIFENSORE · ROSSO = ATTACCANTE.','role.devSuffix':'In DEV puoi ancora cambiare fazione durante la battaglia.',
-      'battle.resultKicker':'COFFEE BATTLES · ESITO BATTAGLIA','battle.victory':'VITTORIA!','battle.defeat':'SCONFITTA','battle.draw':'PAREGGIO','battle.ended':'La battaglia è terminata.','battle.closeLog':'CHIUDI LOG','battle.enemyGone':'Non ci sono più unità nemiche attive sul campo.','battle.alliesGone':'Non ci sono più unità alleate attive sul campo.','battle.bothGone':'Entrambi gli eserciti non hanno più unità attive sul campo.','battle.damageNote':'DMG = punti Vita reali; ↑ inflitti / ↓ subiti.','battle.unit':'UNITÀ','battle.total':'TOTALE','battle.winner':'Vincitore: {side}.',
-      'deploy.step':'STEP 2/3 · SCHIERAMENTO','deploy.spent':'Spesi','deploy.removeSelected':'RIMUOVI SELEZIONATA','deploy.startBattle':'INIZIA BATTAGLIA','deploy.hint':'Trascina un reggimento sul campo e rilascialo nella zona del tuo schieramento. Le unità già piazzate possono essere trascinate. Mirror Army replica la composizione; Mirror Deployment (ON di default) replica anche posizione e orientamento rispetto alla mezzeria del campo.','deploy.mirroredHint':'MIRRORED · Trascina le unità BLU: il ROSSO replica automaticamente composizione, posizione e orientamento.','deploy.customHint':'CUSTOM · Trascina e posiziona liberamente entrambi gli eserciti entro il budget.','deploy.autoHint':'AUTO · BLU {blueRole}: ESERCITO VUOTO — scegli composizione e schieramento entro {budget} PT. ROSSO {redRole}: già generato e schierato, NASCOSTO fino all’inizio.','deploy.zoneBlue':'ZONA SCHIERAMENTO BLU','deploy.zoneRed':'ZONA SCHIERAMENTO ROSSO','deploy.dragUnit':'Trascina {unit} sul campo.','deploy.budgetInsufficient':'Budget insufficiente.','deploy.mirrorLocked':'Mirror Army attivo: la composizione ROSSA replica automaticamente il BLU.',
+      'mode.auto':'Auto','mode.autoSub':'Il computer costruisce l’esercito nemico, tu il tuo.','mode.autoNote':'Il computer costruisce l’esercito nemico, tu il tuo.','mode.mirrored':'Specchio','mode.mirroredSub':'L’esercito nemico copia il tuo.','mode.mirroredNote':'L’esercito nemico copia il tuo, specchiato sul campo.','mode.custom':'Libero','mode.customSub':'Costruisci entrambi gli eserciti.','mode.customNote':'Costruisci e schieri entrambi gli eserciti.',
+      'role.random':'Casuale','role.randomSub':'Attacco o difesa vengono estratti all’inizio della battaglia.','role.randomNote':'Attacco o difesa vengono estratti all’inizio della battaglia.','role.attack':'Attacco','role.attackSub':'Vinci prima che scada il tempo.','role.attackNote':'Attacchi: vinci prima che scada il tempo.','role.defend':'Difesa','role.defendSub':'Resisti finché non scade il tempo.','role.defendNote':'Difendi: resisti finché non scade il tempo.',
+      'battle.victory':'VITTORIA!','battle.defeat':'SCONFITTA','battle.draw':'PAREGGIO','battle.ended':'La battaglia è terminata.','battle.closeLog':'Chiudi','battle.enemyGone':'Non ci sono più unità nemiche attive sul campo.','battle.alliesGone':'Non ci sono più unità alleate attive sul campo.','battle.bothGone':'Entrambi gli eserciti non hanno più unità attive sul campo.','battle.damageNote':'DMG = punti Vita reali; ↑ inflitti / ↓ subiti.','battle.unit':'UNITÀ','battle.total':'TOTALE','battle.winner':'Vincitore: {side}.',
+      'deploy.step':'Schieramento','deploy.spent':'Spesi','deploy.removeSelected':'Rimuovi','deploy.startBattle':'Inizia la battaglia','deploy.hint':'Trascina i reggimenti nella tua zona. Trascinali di nuovo per spostarli.','deploy.mirroredHint':'Schiera i tuoi reggimenti; il nemico li replica specchiati.','deploy.customHint':'Schiera i reggimenti di entrambi gli eserciti entro il budget.','deploy.autoHint':'Il tuo ruolo: {blueRole}. Schiera i tuoi reggimenti; il nemico è già schierato, nascosto fino all’inizio della battaglia.','deploy.zoneBlue':'Zona di schieramento blu','deploy.zoneRed':'Zona di schieramento rossa','deploy.dragUnit':'Trascina {unit} sul campo.','deploy.budgetInsufficient':'Budget insufficiente.','deploy.mirrorLocked':'Mirror Army attivo: la composizione ROSSA replica automaticamente il BLU.',
       'side.blue':'BLU','side.red':'ROSSO','side.controlBlue':'Controlla schieramento BLU','side.controlRed':'Controlla schieramento ROSSO',
       'unit.infantry':'Fanteria','unit.light_infantry':'Fanteria leggera','unit.heavy_infantry':'Fanteria pesante','unit.spearman':'Lanceri','unit.archer':'Arcieri','unit.crossbow':'Balestrieri','unit.cavalry':'Cavalleria','unit.horse_archer':'Cavalleria leggera',
-      'sidebar.open':'Apri pannello laterale','sidebar.close':'Collassa pannello laterale','sidebar.controls':'Controlli','sidebar.selectedUnit':'Unità selezionata','sidebar.combatRule':'Regola combattimento','sidebar.actions':'Azioni','sidebar.resetBattle':'Reset battaglia','sidebar.battleLog':'Battle log',
+      'sidebar.open':'Apri pannello laterale','sidebar.close':'Collassa pannello laterale','sidebar.controls':'Controlli','sidebar.selectedUnit':'Unità selezionata','sidebar.combatRule':'Regole di combattimento','sidebar.actions':'Azioni','sidebar.resetBattle':'Reset battaglia','sidebar.battleLog':'Battle log',
       'stance.holdTitle':'Mantieni la linea','stance.aggressiveTitle':'Aggressivo: attacca entro 10U','stance.elusiveTitle':'Elusivo: fugge a M3 entro 9U','formation.baseTitle':'Base: fronte 3U × profondità 2U','formation.columnTitle':'Colonna: fronte 2U × profondità 3U','formation.lineTitle':'Linea: fronte 6U × profondità 1U',
       'command.charge':'CARICA','command.chargeTitle':'Carica: M1 ↔ M3','command.retreat':'RITIRATA','command.retreatTitle':'Ritirata: allontanati dal nemico fino ad almeno 11U','command.fire':'FUOCO A VOLONTÀ','command.fireTitle':'Fuoco a volontà: automatico entro la gittata del profilo, indipendente dalla stance',
       'victory.title':'Morale strategico: ogni lato arriva al 100% quando metà dei punti dell’esercito avversario è stata eliminata o è fuggita dal campo.','victory.detail':'BLU: {redLost}/{redHalf} PT ROSSI annientati · ROSSO: {blueLost}/{blueHalf} PT BLU annientati',
@@ -1261,17 +1125,31 @@ const I18N = Object.freeze({
       'selected.unit':'Unità','selected.selection':'Selezione','selected.side':'Schieramento','selected.type':'Tipo','selected.order':'Ordine','selected.lock':'Lock-on','selected.finalAttack':'Attacco terminale','selected.aiTarget':'Target AI','selected.path':'Path obstacle','selected.approach':'Approccio','selected.pursuit':'Inseguimento','selected.health':'Vita [V]','selected.energy':'Energia [E]','selected.brain':'Brain [B]','selected.morale':'Morale','selected.shock':'Shock [S]','selected.combat':'Combattimento [C]','selected.armor':'Armor [AR]','selected.stance':'Stance','selected.formation':'Formazione','selected.front':'Fronte [F]','selected.contactFront':'Fronte contatto [Fc]','selected.depth':'Profondità','selected.movement':'Movimento [M]','selected.charge':'Carica','selected.chargeOverride':'Override carica','selected.retreatRout':'Ritirata/ROUT','selected.moveCost':'Consumo mov.','selected.chargeCost':'Consumo carica','selected.aim':'Mira','selected.range':'Gittata','selected.fireAtWill':'Fuoco a volontà','selected.shotTarget':'Target tiro','selected.shotTimer':'Timer tiro','selected.rate':'Cadenza','selected.shotCost':'Costo tiro','selected.maneuver':'Manovra','selected.status':'Stato','selected.engagements':'Ingaggi','selected.outboundSlot':'Slot outbound'
     }),
     en:Object.freeze({
-      'language':'Language','header.subtitle':'REFRACTOR CORE · Army Deployment Builder · Field 90×60U + 10U border · deployment on long edges · front pivot · multi-engagement',
-      'source.hint':'SPACE closes the source and restores the previous speed.','source.copy':'COPY ALL','source.close':'CLOSE · SPACE',
-      'setup.newBattle':'NEW BATTLE','setup.motto':'TAKE A BREAK. GRAB A COFFEE. FIGHT A BATTLE.','setup.lead':'Set the scenario budget. Army composition and deployment are the next steps in the Army Builder.','setup.armyPoints':'ARMY POINTS','setup.customBudget':'or custom budget','setup.biome':'MAP ENGINE · BIOME','setup.battlefieldProfile':'Battlefield profile','setup.mapNote':'Random selects a coherent biome. Sea: gulf or landing · rivers: impassable except bridges/fords · streams: rough terrain · mountains/buildings: solid obstacles.','setup.armyMode':'ARMY MODE','setup.playerRole':'PLAYER ROLE · BLUE AT START','setup.goDeployment':'GO TO DEPLOYMENT','setup.generateDeployment':'GENERATE DEPLOYMENT',
+      'source.title':'Source code',
+      'unitrole.horse_archer':'Fast, shoots from range',
+      'unitrole.cavalry':'Heavy shock charge',
+      'unitrole.crossbow':'Armour-piercing shots',
+      'unitrole.archer':'Long range',
+      'unitrole.spearman':'Front shielded against missiles',
+      'unitrole.heavy_infantry':'Heavy armour, slower',
+      'unitrole.light_infantry':'Fast skirmishers, short range',
+      'unitrole.infantry':'Solid line infantry',
+      'step.battle':'Battle',
+      'step.deploy':'Deploy',
+      'step.setup':'Setup',
+      'setup.howToPlay':'How to play',
+      'setup.customPlaceholder':'Other',
+      'language':'Language',
+      'source.hint':'The battle is paused. Space closes the source and restores the previous speed.','source.copy':'Copy all','source.close':'Close',
+      'setup.newBattle':'New battle','setup.motto':'Take a break. Grab a coffee. Fight a battle.','setup.armyPoints':'Army size','setup.customBudget':'Custom army size','setup.biome':'Terrain','setup.armyMode':'Armies','setup.playerRole':'Your role','setup.goDeployment':'Continue',
       'biome.random':'Random','biome.plains':'Plains','biome.hills':'Hills','biome.valley':'Valley','biome.river':'River','biome.forest':'Forest','biome.mountains':'Mountains','biome.village':'Village','biome.sea':'Sea',
-      'mode.auto':'AUTO','mode.autoSub':'composition + doctrine + deployment','mode.autoNote':'AUTO uses the Doctrine Engine: it generates units first, then selects doctrine from composition, terrain and ATT/DEF role.','mode.mirrored':'MIRRORED','mode.mirroredSub':'build BLUE, mirror RED','mode.mirroredNote':'MIRRORED: build BLUE; RED composition, position and facing are mirrored.','mode.custom':'CUSTOM','mode.customSub':'build both armies','mode.customNote':'CUSTOM: freely build and deploy both armies within the same budget.',
-      'role.random':'RANDOM','role.randomSub':'ATT or DEF assigned at battle start','role.randomNote':'BLUE’s role is drawn at battle start; RED automatically gets the opposite role.','role.attack':'ATTACKER','role.attackSub':'BLUE must win before time expires','role.attackNote':'BLUE = ATTACKER · RED = DEFENDER.','role.defend':'DEFENDER','role.defendSub':'BLUE wins by holding until the limit','role.defendNote':'BLUE = DEFENDER · RED = ATTACKER.','role.devSuffix':'In DEV you can still switch faction during the battle.',
-      'battle.resultKicker':'COFFEE BATTLES · BATTLE RESULT','battle.victory':'VICTORY!','battle.defeat':'DEFEAT','battle.draw':'DRAW','battle.ended':'The battle has ended.','battle.closeLog':'CLOSE LOG','battle.enemyGone':'No enemy units remain active on the field.','battle.alliesGone':'No allied units remain active on the field.','battle.bothGone':'Neither army has active units left on the field.','battle.damageNote':'DMG = actual Health points; ↑ dealt / ↓ taken.','battle.unit':'UNIT','battle.total':'TOTAL','battle.winner':'Winner: {side}.',
-      'deploy.step':'STEP 2/3 · DEPLOYMENT','deploy.spent':'Spent','deploy.removeSelected':'REMOVE SELECTED','deploy.startBattle':'START BATTLE','deploy.hint':'Drag a regiment onto the field and drop it inside your deployment zone. Placed units can be dragged again. Mirror Army copies composition; Mirror Deployment (ON by default) also mirrors position and facing across the field centreline.','deploy.mirroredHint':'MIRRORED · Drag BLUE units: RED automatically mirrors composition, position and facing.','deploy.customHint':'CUSTOM · Freely drag and place both armies within the budget.','deploy.autoHint':'AUTO · BLUE {blueRole}: EMPTY ARMY — choose composition and deployment within {budget} PT. RED {redRole}: already generated and deployed, HIDDEN until battle starts.','deploy.zoneBlue':'BLUE DEPLOYMENT ZONE','deploy.zoneRed':'RED DEPLOYMENT ZONE','deploy.dragUnit':'Drag {unit} onto the field.','deploy.budgetInsufficient':'Insufficient budget.','deploy.mirrorLocked':'Mirror Army is active: RED composition automatically mirrors BLUE.',
+      'mode.auto':'Auto','mode.autoSub':'The computer builds the enemy army; you build yours.','mode.autoNote':'The computer builds the enemy army; you build yours.','mode.mirrored':'Mirror','mode.mirroredSub':'The enemy army copies yours.','mode.mirroredNote':'The enemy army copies yours, mirrored across the field.','mode.custom':'Custom','mode.customSub':'You build both armies.','mode.customNote':'You build and deploy both armies.',
+      'role.random':'Random','role.randomSub':'Attack or defence is drawn when the battle starts.','role.randomNote':'Attack or defence is drawn when the battle starts.','role.attack':'Attack','role.attackSub':'Win before time runs out.','role.attackNote':'You attack: win before time runs out.','role.defend':'Defend','role.defendSub':'Hold out until time runs out.','role.defendNote':'You defend: hold out until time runs out.',
+      'battle.victory':'VICTORY!','battle.defeat':'DEFEAT','battle.draw':'DRAW','battle.ended':'The battle has ended.','battle.closeLog':'Close','battle.enemyGone':'No enemy units remain active on the field.','battle.alliesGone':'No allied units remain active on the field.','battle.bothGone':'Neither army has active units left on the field.','battle.damageNote':'DMG = actual Health points; ↑ dealt / ↓ taken.','battle.unit':'UNIT','battle.total':'TOTAL','battle.winner':'Winner: {side}.',
+      'deploy.step':'Deployment','deploy.spent':'Spent','deploy.removeSelected':'Remove','deploy.startBattle':'Start battle','deploy.hint':'Drag regiments into your zone. Drag them again to move them.','deploy.mirroredHint':'Place your regiments; the enemy mirrors them across the field.','deploy.customHint':'Place regiments for both armies within the budget.','deploy.autoHint':'Your role: {blueRole}. Place your regiments; the enemy is already deployed, hidden until the battle starts.','deploy.zoneBlue':'Blue deployment zone','deploy.zoneRed':'Red deployment zone','deploy.dragUnit':'Drag {unit} onto the field.','deploy.budgetInsufficient':'Insufficient budget.','deploy.mirrorLocked':'Mirror Army is active: RED composition automatically mirrors BLUE.',
       'side.blue':'BLUE','side.red':'RED','side.controlBlue':'Control BLUE army','side.controlRed':'Control RED army',
       'unit.infantry':'Infantry','unit.light_infantry':'Light Infantry','unit.heavy_infantry':'Heavy Infantry','unit.spearman':'Spearmen','unit.archer':'Archers','unit.crossbow':'Crossbowmen','unit.cavalry':'Cavalry','unit.horse_archer':'Light Cavalry',
-      'sidebar.open':'Open side panel','sidebar.close':'Collapse side panel','sidebar.controls':'Controls','sidebar.selectedUnit':'Selected unit','sidebar.combatRule':'Combat rule','sidebar.actions':'Actions','sidebar.resetBattle':'Reset battle','sidebar.battleLog':'Battle log',
+      'sidebar.open':'Open side panel','sidebar.close':'Collapse side panel','sidebar.controls':'Controls','sidebar.selectedUnit':'Selected unit','sidebar.combatRule':'Combat rules','sidebar.actions':'Actions','sidebar.resetBattle':'Reset battle','sidebar.battleLog':'Battle log',
       'stance.holdTitle':'Hold the line','stance.aggressiveTitle':'Aggressive: attack within 10U','stance.elusiveTitle':'Elusive: flee at M3 within 9U','formation.baseTitle':'Base: 3U frontage × 2U depth','formation.columnTitle':'Column: 2U frontage × 3U depth','formation.lineTitle':'Line: 6U frontage × 1U depth',
       'command.charge':'CHARGE','command.chargeTitle':'Charge: M1 ↔ M3','command.retreat':'RETREAT','command.retreatTitle':'Retreat: move away from the enemy to at least 11U','command.fire':'FIRE AT WILL','command.fireTitle':'Fire at will: automatic within profile range, independent of stance',
       'victory.title':'Strategic morale: each side reaches 100% when half of the opposing army points have been eliminated or routed off the field.','victory.detail':'BLUE: {redLost}/{redHalf} RED PT eliminated · RED: {blueLost}/{blueHalf} BLUE PT eliminated',
@@ -1280,17 +1158,31 @@ const I18N = Object.freeze({
       'selected.unit':'Unit','selected.selection':'Selection','selected.side':'Army','selected.type':'Type','selected.order':'Order','selected.lock':'Lock-on','selected.finalAttack':'Terminal attack','selected.aiTarget':'AI target','selected.path':'Obstacle path','selected.approach':'Approach','selected.pursuit':'Pursuit','selected.health':'Health [V]','selected.energy':'Energy [E]','selected.brain':'Brain [B]','selected.morale':'Morale','selected.shock':'Shock [S]','selected.combat':'Combat [C]','selected.armor':'Armor [AR]','selected.stance':'Stance','selected.formation':'Formation','selected.front':'Frontage [F]','selected.contactFront':'Contact frontage [Fc]','selected.depth':'Depth','selected.movement':'Movement [M]','selected.charge':'Charge','selected.chargeOverride':'Charge override','selected.retreatRout':'Retreat/ROUT','selected.moveCost':'Move cost','selected.chargeCost':'Charge cost','selected.aim':'Aim','selected.range':'Range','selected.fireAtWill':'Fire at will','selected.shotTarget':'Ranged target','selected.shotTimer':'Shot timer','selected.rate':'Rate','selected.shotCost':'Shot cost','selected.maneuver':'Maneuver','selected.status':'Status','selected.engagements':'Engagements','selected.outboundSlot':'Outbound slot'
     }),
     es:Object.freeze({
-      'language':'Idioma','header.subtitle':'REFRACTOR CORE · Army Deployment Builder · Campo 90×60U + borde 10U · despliegue en lados largos · pivote frontal · multi-combate',
-      'source.hint':'SPACE cierra el código y restaura la velocidad anterior.','source.copy':'COPIAR TODO','source.close':'CERRAR · SPACE',
-      'setup.newBattle':'NUEVA BATALLA','setup.motto':'HAZ UNA PAUSA. TOMA UN CAFÉ. LIBRA UNA BATALLA.','setup.lead':'Define el presupuesto del escenario. La composición y el despliegue de los ejércitos son los siguientes pasos del Army Builder.','setup.armyPoints':'PUNTOS DE EJÉRCITO','setup.customBudget':'o presupuesto personalizado','setup.biome':'MAP ENGINE · BIOMA','setup.battlefieldProfile':'Perfil del campo de batalla','setup.mapNote':'Aleatorio elige un bioma coherente. Mar: golfo o desembarco · ríos: infranqueables salvo puentes/vados · arroyos: terreno difícil · montañas/edificios: obstáculos sólidos.','setup.armyMode':'MODO DE EJÉRCITOS','setup.playerRole':'ROL DEL JUGADOR · AZUL AL INICIO','setup.goDeployment':'IR AL DESPLIEGUE','setup.generateDeployment':'GENERAR DESPLIEGUE',
+      'source.title':'Código fuente',
+      'unitrole.horse_archer':'Rápida, dispara a distancia',
+      'unitrole.cavalry':'Carga de choque pesada',
+      'unitrole.crossbow':'Disparos perforantes',
+      'unitrole.archer':'Largo alcance',
+      'unitrole.spearman':'Frente protegido de proyectiles',
+      'unitrole.heavy_infantry':'Armadura pesada, más lenta',
+      'unitrole.light_infantry':'Escaramuzadores rápidos, corto alcance',
+      'unitrole.infantry':'Infantería de línea sólida',
+      'step.battle':'Batalla',
+      'step.deploy':'Despliegue',
+      'step.setup':'Preparación',
+      'setup.howToPlay':'Cómo se juega',
+      'setup.customPlaceholder':'Otro',
+      'language':'Idioma',
+      'source.hint':'La batalla está en pausa. Espacio cierra el código y restaura la velocidad anterior.','source.copy':'Copiar todo','source.close':'Cerrar',
+      'setup.newBattle':'Nueva partida','setup.motto':'Haz una pausa. Toma un café. Libra una batalla.','setup.armyPoints':'Tamaño del ejército','setup.customBudget':'Tamaño personalizado','setup.biome':'Terreno','setup.armyMode':'Ejércitos','setup.playerRole':'Tu papel','setup.goDeployment':'Continuar',
       'biome.random':'Aleatorio','biome.plains':'Llanura','biome.hills':'Colinas','biome.valley':'Valle','biome.river':'Río','biome.forest':'Bosque','biome.mountains':'Montañas','biome.village':'Aldea','biome.sea':'Mar',
-      'mode.auto':'AUTO','mode.autoSub':'composición + doctrina + despliegue','mode.autoNote':'AUTO usa Doctrine Engine: primero genera las unidades y luego elige la doctrina según composición, terreno y rol ATT/DEF.','mode.mirrored':'MIRRORED','mode.mirroredSub':'construye AZUL, ROJO reflejado','mode.mirroredNote':'MIRRORED: construye AZUL; la composición, posición y orientación de ROJO se reflejan.','mode.custom':'CUSTOM','mode.customSub':'construye ambos ejércitos','mode.customNote':'CUSTOM: construye y despliega libremente ambos ejércitos con el mismo presupuesto.',
-      'role.random':'ALEATORIO','role.randomSub':'ATT o DEF al iniciar la batalla','role.randomNote':'El rol de AZUL se sortea al inicio; ROJO recibe automáticamente el rol opuesto.','role.attack':'ATACANTE','role.attackSub':'AZUL debe vencer antes de que termine el tiempo','role.attackNote':'AZUL = ATACANTE · ROJO = DEFENSOR.','role.defend':'DEFENSOR','role.defendSub':'AZUL vence si resiste hasta el límite','role.defendNote':'AZUL = DEFENSOR · ROJO = ATACANTE.','role.devSuffix':'En DEV aún puedes cambiar de facción durante la batalla.',
-      'battle.resultKicker':'COFFEE BATTLES · RESULTADO','battle.victory':'¡VICTORIA!','battle.defeat':'DERROTA','battle.draw':'EMPATE','battle.ended':'La batalla ha terminado.','battle.closeLog':'CERRAR REGISTRO','battle.enemyGone':'No quedan unidades enemigas activas en el campo.','battle.alliesGone':'No quedan unidades aliadas activas en el campo.','battle.bothGone':'Ningún ejército tiene unidades activas en el campo.','battle.damageNote':'DMG = puntos de Vida reales; ↑ infligido / ↓ recibido.','battle.unit':'UNIDAD','battle.total':'TOTAL','battle.winner':'Ganador: {side}.',
-      'deploy.step':'PASO 2/3 · DESPLIEGUE','deploy.spent':'Gastados','deploy.removeSelected':'QUITAR SELECCIONADA','deploy.startBattle':'INICIAR BATALLA','deploy.hint':'Arrastra un regimiento al campo y suéltalo en tu zona de despliegue. Las unidades colocadas pueden volver a arrastrarse. Mirror Army copia la composición; Mirror Deployment también refleja posición y orientación.','deploy.mirroredHint':'MIRRORED · Arrastra unidades AZULES: ROJO replica automáticamente composición, posición y orientación.','deploy.customHint':'CUSTOM · Coloca libremente ambos ejércitos dentro del presupuesto.','deploy.autoHint':'AUTO · AZUL {blueRole}: EJÉRCITO VACÍO — elige composición y despliegue hasta {budget} PT. ROJO {redRole}: ya generado y desplegado, OCULTO hasta el inicio.','deploy.zoneBlue':'ZONA DE DESPLIEGUE AZUL','deploy.zoneRed':'ZONA DE DESPLIEGUE ROJA','deploy.dragUnit':'Arrastra {unit} al campo.','deploy.budgetInsufficient':'Presupuesto insuficiente.','deploy.mirrorLocked':'Mirror Army activo: la composición ROJA replica automáticamente la AZUL.',
+      'mode.auto':'Auto','mode.autoSub':'El ordenador crea el ejército enemigo; tú creas el tuyo.','mode.autoNote':'El ordenador crea el ejército enemigo; tú creas el tuyo.','mode.mirrored':'Espejo','mode.mirroredSub':'El ejército enemigo copia el tuyo.','mode.mirroredNote':'El ejército enemigo copia el tuyo, reflejado en el campo.','mode.custom':'Libre','mode.customSub':'Creas ambos ejércitos.','mode.customNote':'Creas y despliegas ambos ejércitos.',
+      'role.random':'Aleatorio','role.randomSub':'Ataque o defensa se sortean al empezar la batalla.','role.randomNote':'Ataque o defensa se sortean al empezar la batalla.','role.attack':'Ataque','role.attackSub':'Gana antes de que se acabe el tiempo.','role.attackNote':'Atacas: gana antes de que se acabe el tiempo.','role.defend':'Defensa','role.defendSub':'Resiste hasta que se acabe el tiempo.','role.defendNote':'Defiendes: resiste hasta que se acabe el tiempo.',
+      'battle.victory':'¡VICTORIA!','battle.defeat':'DERROTA','battle.draw':'EMPATE','battle.ended':'La batalla ha terminado.','battle.closeLog':'Cerrar','battle.enemyGone':'No quedan unidades enemigas activas en el campo.','battle.alliesGone':'No quedan unidades aliadas activas en el campo.','battle.bothGone':'Ningún ejército tiene unidades activas en el campo.','battle.damageNote':'DMG = puntos de Vida reales; ↑ infligido / ↓ recibido.','battle.unit':'UNIDAD','battle.total':'TOTAL','battle.winner':'Ganador: {side}.',
+      'deploy.step':'Despliegue','deploy.spent':'Gastados','deploy.removeSelected':'Quitar','deploy.startBattle':'Empezar la batalla','deploy.hint':'Arrastra los regimientos a tu zona. Vuelve a arrastrarlos para moverlos.','deploy.mirroredHint':'Coloca tus regimientos; el enemigo los refleja en el campo.','deploy.customHint':'Coloca regimientos de ambos ejércitos dentro del presupuesto.','deploy.autoHint':'Tu papel: {blueRole}. Coloca tus regimientos; el enemigo ya está desplegado, oculto hasta que empiece la batalla.','deploy.zoneBlue':'Zona de despliegue azul','deploy.zoneRed':'Zona de despliegue roja','deploy.dragUnit':'Arrastra {unit} al campo.','deploy.budgetInsufficient':'Presupuesto insuficiente.','deploy.mirrorLocked':'Mirror Army activo: la composición ROJA replica automáticamente la AZUL.',
       'side.blue':'AZUL','side.red':'ROJO','side.controlBlue':'Controlar ejército AZUL','side.controlRed':'Controlar ejército ROJO',
       'unit.infantry':'Infantería','unit.light_infantry':'Infantería ligera','unit.heavy_infantry':'Infantería pesada','unit.spearman':'Lanceros','unit.archer':'Arqueros','unit.crossbow':'Ballesteros','unit.cavalry':'Caballería','unit.horse_archer':'Caballería ligera',
-      'sidebar.open':'Abrir panel lateral','sidebar.close':'Cerrar panel lateral','sidebar.controls':'Controles','sidebar.selectedUnit':'Unidad seleccionada','sidebar.combatRule':'Regla de combate','sidebar.actions':'Acciones','sidebar.resetBattle':'Reiniciar batalla','sidebar.battleLog':'Registro de batalla',
+      'sidebar.open':'Abrir panel lateral','sidebar.close':'Cerrar panel lateral','sidebar.controls':'Controles','sidebar.selectedUnit':'Unidad seleccionada','sidebar.combatRule':'Reglas de combate','sidebar.actions':'Acciones','sidebar.resetBattle':'Reiniciar batalla','sidebar.battleLog':'Registro de batalla',
       'stance.holdTitle':'Mantener la línea','stance.aggressiveTitle':'Agresivo: ataca dentro de 10U','stance.elusiveTitle':'Evasivo: huye a M3 dentro de 9U','formation.baseTitle':'Base: frente 3U × profundidad 2U','formation.columnTitle':'Columna: frente 2U × profundidad 3U','formation.lineTitle':'Línea: frente 6U × profundidad 1U',
       'command.charge':'CARGA','command.chargeTitle':'Carga: M1 ↔ M3','command.retreat':'RETIRADA','command.retreatTitle':'Retirada: aléjate del enemigo hasta al menos 11U','command.fire':'FUEGO LIBRE','command.fireTitle':'Fuego libre: automático dentro del alcance, independiente de la postura',
       'victory.title':'Moral estratégica: cada bando llega al 100% cuando se elimina o expulsa del campo la mitad de los puntos enemigos.','victory.detail':'AZUL: {redLost}/{redHalf} PT ROJOS eliminados · ROJO: {blueLost}/{blueHalf} PT AZULES eliminados',
@@ -1298,17 +1190,31 @@ const I18N = Object.freeze({
       'state.exited':'HUYÓ DEL CAMPO','state.destroyed':'DESTRUIDA','state.permanentRout':'HUIDA PERMANENTE','state.rout':'HUIDA','state.active':'ACTIVA'
     }),
     fr:Object.freeze({
-      'language':'Langue','header.subtitle':'REFRACTOR CORE · Army Deployment Builder · Champ 90×60U + bordure 10U · déploiement sur les grands côtés · pivot frontal · multi-engagement',
-      'source.hint':'ESPACE ferme le code et restaure la vitesse précédente.','source.copy':'TOUT COPIER','source.close':'FERMER · ESPACE',
-      'setup.newBattle':'NOUVELLE BATAILLE','setup.motto':'FAITES UNE PAUSE. PRENEZ UN CAFÉ. LIVREZ BATAILLE.','setup.lead':'Définissez le budget du scénario. La composition et le déploiement des armées sont les étapes suivantes de l’Army Builder.','setup.armyPoints':'POINTS D’ARMÉE','setup.customBudget':'ou budget personnalisé','setup.biome':'MAP ENGINE · BIOME','setup.battlefieldProfile':'Profil du champ de bataille','setup.mapNote':'Aléatoire choisit un biome cohérent. Mer : golfe ou débarquement · rivières : infranchissables sauf ponts/gués · ruisseaux : terrain difficile · montagnes/bâtiments : obstacles solides.','setup.armyMode':'MODE DES ARMÉES','setup.playerRole':'RÔLE DU JOUEUR · BLEU AU DÉPART','setup.goDeployment':'ALLER AU DÉPLOIEMENT','setup.generateDeployment':'GÉNÉRER LE DÉPLOIEMENT',
+      'source.title':'Code source',
+      'unitrole.horse_archer':'Rapide, tire à distance',
+      'unitrole.cavalry':'Charge de choc lourde',
+      'unitrole.crossbow':'Tirs perforants',
+      'unitrole.archer':'Longue portée',
+      'unitrole.spearman':'Front protégé des tirs',
+      'unitrole.heavy_infantry':'Armure lourde, plus lente',
+      'unitrole.light_infantry':'Tirailleurs rapides, courte portée',
+      'unitrole.infantry':'Infanterie de ligne solide',
+      'step.battle':'Bataille',
+      'step.deploy':'Déploiement',
+      'step.setup':'Préparation',
+      'setup.howToPlay':'Comment jouer',
+      'setup.customPlaceholder':'Autre',
+      'language':'Langue',
+      'source.hint':'La bataille est en pause. Espace ferme le code et rétablit la vitesse précédente.','source.copy':'Tout copier','source.close':'Fermer',
+      'setup.newBattle':'Nouvelle partie','setup.motto':'Faites une pause. Prenez un café. Livrez bataille.','setup.armyPoints':'Taille de l’armée','setup.customBudget':'Taille personnalisée','setup.biome':'Terrain','setup.armyMode':'Armées','setup.playerRole':'Votre rôle','setup.goDeployment':'Continuer',
       'biome.random':'Aléatoire','biome.plains':'Plaine','biome.hills':'Collines','biome.valley':'Vallée','biome.river':'Rivière','biome.forest':'Forêt','biome.mountains':'Montagnes','biome.village':'Village','biome.sea':'Mer',
-      'mode.auto':'AUTO','mode.autoSub':'composition + doctrine + déploiement','mode.autoNote':'AUTO utilise le Doctrine Engine : il génère d’abord les unités puis choisit la doctrine selon la composition, le terrain et le rôle ATT/DEF.','mode.mirrored':'MIRRORED','mode.mirroredSub':'construire BLEU, ROUGE en miroir','mode.mirroredNote':'MIRRORED : construisez BLEU ; la composition, la position et l’orientation de ROUGE sont reproduites en miroir.','mode.custom':'CUSTOM','mode.customSub':'construire les deux armées','mode.customNote':'CUSTOM : construisez et déployez librement les deux armées avec le même budget.',
-      'role.random':'ALÉATOIRE','role.randomSub':'ATT ou DEF attribué au départ','role.randomNote':'Le rôle de BLEU est tiré au début ; ROUGE reçoit automatiquement le rôle opposé.','role.attack':'ATTAQUANT','role.attackSub':'BLEU doit gagner avant la fin du temps','role.attackNote':'BLEU = ATTAQUANT · ROUGE = DÉFENSEUR.','role.defend':'DÉFENSEUR','role.defendSub':'BLEU gagne s’il tient jusqu’à la limite','role.defendNote':'BLEU = DÉFENSEUR · ROUGE = ATTAQUANT.','role.devSuffix':'En DEV, vous pouvez encore changer de faction pendant la bataille.',
-      'battle.resultKicker':'COFFEE BATTLES · RÉSULTAT','battle.victory':'VICTOIRE !','battle.defeat':'DÉFAITE','battle.draw':'ÉGALITÉ','battle.ended':'La bataille est terminée.','battle.closeLog':'FERMER LE JOURNAL','battle.enemyGone':'Aucune unité ennemie active ne reste sur le champ.','battle.alliesGone':'Aucune unité alliée active ne reste sur le champ.','battle.bothGone':'Aucune des deux armées n’a encore d’unités actives.','battle.damageNote':'DMG = points de Vie réels ; ↑ infligés / ↓ subis.','battle.unit':'UNITÉ','battle.total':'TOTAL','battle.winner':'Vainqueur : {side}.',
-      'deploy.step':'ÉTAPE 2/3 · DÉPLOIEMENT','deploy.spent':'Dépensés','deploy.removeSelected':'RETIRER LA SÉLECTION','deploy.startBattle':'COMMENCER LA BATAILLE','deploy.hint':'Faites glisser un régiment sur le champ et déposez-le dans votre zone de déploiement. Les unités placées peuvent être déplacées. Mirror Army copie la composition ; Mirror Deployment copie aussi position et orientation.','deploy.mirroredHint':'MIRRORED · Placez les unités BLEUES : ROUGE reproduit automatiquement composition, position et orientation.','deploy.customHint':'CUSTOM · Placez librement les deux armées dans la limite du budget.','deploy.autoHint':'AUTO · BLEU {blueRole} : ARMÉE VIDE — choisissez composition et déploiement dans {budget} PT. ROUGE {redRole} : déjà généré et déployé, CACHÉ jusqu’au début.','deploy.zoneBlue':'ZONE DE DÉPLOIEMENT BLEUE','deploy.zoneRed':'ZONE DE DÉPLOIEMENT ROUGE','deploy.dragUnit':'Faites glisser {unit} sur le champ.','deploy.budgetInsufficient':'Budget insuffisant.','deploy.mirrorLocked':'Mirror Army actif : la composition ROUGE reproduit automatiquement BLEU.',
+      'mode.auto':'Auto','mode.autoSub':'L’ordinateur compose l’armée ennemie ; vous composez la vôtre.','mode.autoNote':'L’ordinateur compose l’armée ennemie ; vous composez la vôtre.','mode.mirrored':'Miroir','mode.mirroredSub':'L’armée ennemie copie la vôtre.','mode.mirroredNote':'L’armée ennemie copie la vôtre, en miroir sur le terrain.','mode.custom':'Libre','mode.customSub':'Vous composez les deux armées.','mode.customNote':'Vous composez et déployez les deux armées.',
+      'role.random':'Aléatoire','role.randomSub':'Attaque ou défense est tirée au début de la bataille.','role.randomNote':'Attaque ou défense est tirée au début de la bataille.','role.attack':'Attaque','role.attackSub':'Gagnez avant la fin du temps.','role.attackNote':'Vous attaquez : gagnez avant la fin du temps.','role.defend':'Défense','role.defendSub':'Tenez jusqu’à la fin du temps.','role.defendNote':'Vous défendez : tenez jusqu’à la fin du temps.',
+      'battle.victory':'VICTOIRE !','battle.defeat':'DÉFAITE','battle.draw':'ÉGALITÉ','battle.ended':'La bataille est terminée.','battle.closeLog':'Fermer','battle.enemyGone':'Aucune unité ennemie active ne reste sur le champ.','battle.alliesGone':'Aucune unité alliée active ne reste sur le champ.','battle.bothGone':'Aucune des deux armées n’a encore d’unités actives.','battle.damageNote':'DMG = points de Vie réels ; ↑ infligés / ↓ subis.','battle.unit':'UNITÉ','battle.total':'TOTAL','battle.winner':'Vainqueur : {side}.',
+      'deploy.step':'Déploiement','deploy.spent':'Dépensés','deploy.removeSelected':'Retirer','deploy.startBattle':'Lancer la bataille','deploy.hint':'Faites glisser les régiments dans votre zone. Faites-les glisser à nouveau pour les déplacer.','deploy.mirroredHint':'Placez vos régiments ; l’ennemi les reproduit en miroir.','deploy.customHint':'Placez les régiments des deux armées dans la limite du budget.','deploy.autoHint':'Votre rôle : {blueRole}. Placez vos régiments ; l’ennemi est déjà déployé, caché jusqu’au début de la bataille.','deploy.zoneBlue':'Zone de déploiement bleue','deploy.zoneRed':'Zone de déploiement rouge','deploy.dragUnit':'Faites glisser {unit} sur le champ.','deploy.budgetInsufficient':'Budget insuffisant.','deploy.mirrorLocked':'Mirror Army actif : la composition ROUGE reproduit automatiquement BLEU.',
       'side.blue':'BLEU','side.red':'ROUGE','side.controlBlue':'Contrôler l’armée BLEUE','side.controlRed':'Contrôler l’armée ROUGE',
       'unit.infantry':'Infanterie','unit.light_infantry':'Infanterie légère','unit.heavy_infantry':'Infanterie lourde','unit.spearman':'Lanciers','unit.archer':'Archers','unit.crossbow':'Arbalétriers','unit.cavalry':'Cavalerie','unit.horse_archer':'Cavalerie légère',
-      'sidebar.open':'Ouvrir le panneau latéral','sidebar.close':'Replier le panneau latéral','sidebar.controls':'Commandes','sidebar.selectedUnit':'Unité sélectionnée','sidebar.combatRule':'Règle de combat','sidebar.actions':'Actions','sidebar.resetBattle':'Réinitialiser la bataille','sidebar.battleLog':'Journal de bataille',
+      'sidebar.open':'Ouvrir le panneau latéral','sidebar.close':'Replier le panneau latéral','sidebar.controls':'Commandes','sidebar.selectedUnit':'Unité sélectionnée','sidebar.combatRule':'Règles de combat','sidebar.actions':'Actions','sidebar.resetBattle':'Réinitialiser la bataille','sidebar.battleLog':'Journal de bataille',
       'stance.holdTitle':'Tenir la ligne','stance.aggressiveTitle':'Agressif : attaque à moins de 10U','stance.elusiveTitle':'Évasif : fuit à M3 à moins de 9U','formation.baseTitle':'Base : front 3U × profondeur 2U','formation.columnTitle':'Colonne : front 2U × profondeur 3U','formation.lineTitle':'Ligne : front 6U × profondeur 1U',
       'command.charge':'CHARGE','command.chargeTitle':'Charge : M1 ↔ M3','command.retreat':'RETRAITE','command.retreatTitle':'Retraite : s’éloigner de l’ennemi jusqu’à au moins 11U','command.fire':'FEU À VOLONTÉ','command.fireTitle':'Feu à volonté : automatique dans la portée du profil, indépendamment de la posture',
       'victory.title':'Moral stratégique : chaque camp atteint 100 % quand la moitié des points adverses est éliminée ou mise en déroute hors du champ.','victory.detail':'BLEU : {redLost}/{redHalf} PT ROUGES éliminés · ROUGE : {blueLost}/{blueHalf} PT BLEUS éliminés',
@@ -1316,17 +1222,31 @@ const I18N = Object.freeze({
       'state.exited':'FUITE HORS DU CHAMP','state.destroyed':'DÉTRUITE','state.permanentRout':'DÉROUTE PERMANENTE','state.rout':'DÉROUTE','state.active':'ACTIVE'
     }),
     de:Object.freeze({
-      'language':'Sprache','header.subtitle':'REFRACTOR CORE · Army Deployment Builder · Feld 90×60U + 10U Rand · Aufstellung an den Längsseiten · Front-Pivot · Mehrfachgefecht',
-      'source.hint':'LEERTASTE schließt den Code und stellt die vorherige Geschwindigkeit wieder her.','source.copy':'ALLES KOPIEREN','source.close':'SCHLIESSEN · LEERTASTE',
-      'setup.newBattle':'NEUE SCHLACHT','setup.motto':'MACH EINE PAUSE. HOL DIR EINEN KAFFEE. SCHLAG EINE SCHLACHT.','setup.lead':'Lege das Szenariobudget fest. Armeezusammenstellung und Aufstellung sind die nächsten Schritte im Army Builder.','setup.armyPoints':'ARMEEPUNKTE','setup.customBudget':'oder eigenes Budget','setup.biome':'MAP ENGINE · BIOM','setup.battlefieldProfile':'Schlachtfeldprofil','setup.mapNote':'Zufall wählt ein stimmiges Biom. Meer: Golf oder Landung · Flüsse: unpassierbar außer Brücken/Furten · Bäche: schwieriges Gelände · Berge/Gebäude: feste Hindernisse.','setup.armyMode':'ARMEEMODUS','setup.playerRole':'SPIELERROLLE · BLAU ZU BEGINN','setup.goDeployment':'ZUR AUFSTELLUNG','setup.generateDeployment':'AUFSTELLUNG ERZEUGEN',
+      'source.title':'Quelltext',
+      'unitrole.horse_archer':'Schnell, schießt auf Distanz',
+      'unitrole.cavalry':'Schwerer Schockangriff',
+      'unitrole.crossbow':'Panzerbrechende Schüsse',
+      'unitrole.archer':'Große Reichweite',
+      'unitrole.spearman':'Front gegen Beschuss geschützt',
+      'unitrole.heavy_infantry':'Schwere Rüstung, langsamer',
+      'unitrole.light_infantry':'Schnelle Plänkler, kurze Reichweite',
+      'unitrole.infantry':'Solide Linieninfanterie',
+      'step.battle':'Schlacht',
+      'step.deploy':'Aufstellung',
+      'step.setup':'Vorbereitung',
+      'setup.howToPlay':'Spielanleitung',
+      'setup.customPlaceholder':'Andere',
+      'language':'Sprache',
+      'source.hint':'Die Schlacht ist pausiert. Leertaste schließt den Quelltext und stellt das vorige Tempo wieder her.','source.copy':'Alles kopieren','source.close':'Schließen',
+      'setup.newBattle':'Neue Partie','setup.motto':'Mach eine Pause. Hol dir einen Kaffee. Kämpfe eine Schlacht.','setup.armyPoints':'Armeegröße','setup.customBudget':'Eigene Armeegröße','setup.biome':'Gelände','setup.armyMode':'Armeen','setup.playerRole':'Deine Rolle','setup.goDeployment':'Weiter',
       'biome.random':'Zufall','biome.plains':'Ebene','biome.hills':'Hügel','biome.valley':'Tal','biome.river':'Fluss','biome.forest':'Wald','biome.mountains':'Berge','biome.village':'Dorf',
-      'mode.auto':'AUTO','mode.autoSub':'Zusammenstellung + Doktrin + Aufstellung','mode.autoNote':'AUTO nutzt die Doctrine Engine: zuerst Einheiten erzeugen, dann Doktrin anhand von Zusammenstellung, Gelände und ATT/DEF-Rolle wählen.','mode.mirrored':'MIRRORED','mode.mirroredSub':'BLAU bauen, ROT spiegeln','mode.mirroredNote':'MIRRORED: Baue BLAU; Zusammenstellung, Position und Ausrichtung von ROT werden gespiegelt.','mode.custom':'CUSTOM','mode.customSub':'beide Armeen bauen','mode.customNote':'CUSTOM: Beide Armeen innerhalb desselben Budgets frei bauen und aufstellen.',
-      'role.random':'ZUFALL','role.randomSub':'ATT oder DEF beim Start','role.randomNote':'Die Rolle von BLAU wird zu Beginn ausgelost; ROT erhält automatisch die Gegenrolle.','role.attack':'ANGREIFER','role.attackSub':'BLAU muss vor Ablauf der Zeit gewinnen','role.attackNote':'BLAU = ANGREIFER · ROT = VERTEIDIGER.','role.defend':'VERTEIDIGER','role.defendSub':'BLAU gewinnt, wenn es bis zum Limit hält','role.defendNote':'BLAU = VERTEIDIGER · ROT = ANGREIFER.','role.devSuffix':'Im DEV-Modus kannst du die Fraktion während der Schlacht weiterhin wechseln.',
-      'battle.resultKicker':'COFFEE BATTLES · SCHLACHTERGEBNIS','battle.victory':'SIEG!','battle.defeat':'NIEDERLAGE','battle.draw':'UNENTSCHIEDEN','battle.ended':'Die Schlacht ist beendet.','battle.closeLog':'PROTOKOLL SCHLIESSEN','battle.enemyGone':'Keine aktiven Feindeinheiten mehr auf dem Feld.','battle.alliesGone':'Keine aktiven verbündeten Einheiten mehr auf dem Feld.','battle.bothGone':'Keine der beiden Armeen hat noch aktive Einheiten auf dem Feld.','battle.damageNote':'DMG = tatsächliche Lebenspunkte; ↑ verursacht / ↓ erlitten.','battle.unit':'EINHEIT','battle.total':'GESAMT','battle.winner':'Sieger: {side}.',
-      'deploy.step':'SCHRITT 2/3 · AUFSTELLUNG','deploy.spent':'Ausgegeben','deploy.removeSelected':'AUSWAHL ENTFERNEN','deploy.startBattle':'SCHLACHT STARTEN','deploy.hint':'Ziehe ein Regiment auf das Feld und lege es in deiner Aufstellungszone ab. Bereits platzierte Einheiten können verschoben werden. Mirror Army kopiert die Zusammenstellung; Mirror Deployment spiegelt zusätzlich Position und Ausrichtung.','deploy.mirroredHint':'MIRRORED · Ziehe BLAUE Einheiten: ROT spiegelt automatisch Zusammenstellung, Position und Ausrichtung.','deploy.customHint':'CUSTOM · Beide Armeen innerhalb des Budgets frei platzieren.','deploy.autoHint':'AUTO · BLAU {blueRole}: LEERE ARMEE — wähle Zusammenstellung und Aufstellung bis {budget} PT. ROT {redRole}: bereits erzeugt und aufgestellt, bis zum Start VERBORGEN.','deploy.zoneBlue':'BLAUE AUFSTELLUNGSZONE','deploy.zoneRed':'ROTE AUFSTELLUNGSZONE','deploy.dragUnit':'Ziehe {unit} auf das Feld.','deploy.budgetInsufficient':'Budget reicht nicht aus.','deploy.mirrorLocked':'Mirror Army aktiv: ROT spiegelt automatisch die BLAUE Zusammenstellung.',
+      'mode.auto':'Auto','mode.autoSub':'Der Computer stellt die feindliche Armee zusammen, du deine.','mode.autoNote':'Der Computer stellt die feindliche Armee zusammen, du deine.','mode.mirrored':'Spiegel','mode.mirroredSub':'Die feindliche Armee kopiert deine.','mode.mirroredNote':'Die feindliche Armee kopiert deine, gespiegelt auf dem Feld.','mode.custom':'Frei','mode.customSub':'Du stellst beide Armeen zusammen.','mode.customNote':'Du stellst beide Armeen zusammen und auf.',
+      'role.random':'Zufall','role.randomSub':'Angriff oder Verteidigung wird zu Beginn der Schlacht gelost.','role.randomNote':'Angriff oder Verteidigung wird zu Beginn der Schlacht gelost.','role.attack':'Angriff','role.attackSub':'Gewinne, bevor die Zeit abläuft.','role.attackNote':'Du greifst an: Gewinne, bevor die Zeit abläuft.','role.defend':'Verteidigung','role.defendSub':'Halte durch, bis die Zeit abläuft.','role.defendNote':'Du verteidigst: Halte durch, bis die Zeit abläuft.',
+      'battle.victory':'SIEG!','battle.defeat':'NIEDERLAGE','battle.draw':'UNENTSCHIEDEN','battle.ended':'Die Schlacht ist beendet.','battle.closeLog':'Schließen','battle.enemyGone':'Keine aktiven Feindeinheiten mehr auf dem Feld.','battle.alliesGone':'Keine aktiven verbündeten Einheiten mehr auf dem Feld.','battle.bothGone':'Keine der beiden Armeen hat noch aktive Einheiten auf dem Feld.','battle.damageNote':'DMG = tatsächliche Lebenspunkte; ↑ verursacht / ↓ erlitten.','battle.unit':'EINHEIT','battle.total':'GESAMT','battle.winner':'Sieger: {side}.',
+      'deploy.step':'Aufstellung','deploy.spent':'Ausgegeben','deploy.removeSelected':'Entfernen','deploy.startBattle':'Schlacht beginnen','deploy.hint':'Ziehe Regimenter in deine Zone. Zieh sie erneut, um sie zu verschieben.','deploy.mirroredHint':'Stelle deine Regimenter auf; der Gegner spiegelt sie.','deploy.customHint':'Stelle Regimenter beider Armeen im Rahmen des Budgets auf.','deploy.autoHint':'Deine Rolle: {blueRole}. Stelle deine Regimenter auf; der Gegner steht bereits, verborgen bis zum Beginn der Schlacht.','deploy.zoneBlue':'Blaue Aufstellungszone','deploy.zoneRed':'Rote Aufstellungszone','deploy.dragUnit':'Ziehe {unit} auf das Feld.','deploy.budgetInsufficient':'Budget reicht nicht aus.','deploy.mirrorLocked':'Mirror Army aktiv: ROT spiegelt automatisch die BLAUE Zusammenstellung.',
       'side.blue':'BLAU','side.red':'ROT','side.controlBlue':'BLAUE Armee steuern','side.controlRed':'ROTE Armee steuern',
       'unit.infantry':'Infanterie','unit.light_infantry':'Leichte Infanterie','unit.heavy_infantry':'Schwere Infanterie','unit.spearman':'Speerträger','unit.archer':'Bogenschützen','unit.crossbow':'Armbrustschützen','unit.cavalry':'Kavallerie','unit.horse_archer':'Leichte Kavallerie',
-      'sidebar.open':'Seitenleiste öffnen','sidebar.close':'Seitenleiste einklappen','sidebar.controls':'Steuerung','sidebar.selectedUnit':'Ausgewählte Einheit','sidebar.combatRule':'Kampfregel','sidebar.actions':'Aktionen','sidebar.resetBattle':'Schlacht zurücksetzen','sidebar.battleLog':'Schlachtprotokoll',
+      'sidebar.open':'Seitenleiste öffnen','sidebar.close':'Seitenleiste einklappen','sidebar.controls':'Steuerung','sidebar.selectedUnit':'Ausgewählte Einheit','sidebar.combatRule':'Kampfregeln','sidebar.actions':'Aktionen','sidebar.resetBattle':'Schlacht zurücksetzen','sidebar.battleLog':'Schlachtprotokoll',
       'stance.holdTitle':'Linie halten','stance.aggressiveTitle':'Aggressiv: Angriff innerhalb 10U','stance.elusiveTitle':'Ausweichend: Flucht mit M3 innerhalb 9U','formation.baseTitle':'Basis: Front 3U × Tiefe 2U','formation.columnTitle':'Kolonne: Front 2U × Tiefe 3U','formation.lineTitle':'Linie: Front 6U × Tiefe 1U',
       'command.charge':'ANGRIFF','command.chargeTitle':'Sturmangriff: M1 ↔ M3','command.retreat':'RÜCKZUG','command.retreatTitle':'Rückzug: Abstand zum Feind auf mindestens 11U erhöhen','command.fire':'FEUER FREI','command.fireTitle':'Feuer frei: automatisch innerhalb der Profilreichweite, unabhängig von der Haltung',
       'victory.title':'Strategische Moral: Eine Seite erreicht 100 %, wenn die Hälfte der gegnerischen Armeepunkte vernichtet oder vom Feld vertrieben wurde.','victory.detail':'BLAU: {redLost}/{redHalf} ROTE PT vernichtet · ROT: {blueLost}/{blueHalf} BLAUE PT vernichtet',
@@ -1334,14 +1254,28 @@ const I18N = Object.freeze({
       'state.exited':'VOM FELD GEFLOHEN','state.destroyed':'VERNICHTET','state.permanentRout':'DAUERHAFTE FLUCHT','state.rout':'FLUCHT','state.active':'AKTIV'
     }),
     ru:Object.freeze({
-      'language':'Язык','header.subtitle':'REFRACTOR CORE · Army Deployment Builder · Поле 90×60U + край 10U · развёртывание по длинным сторонам · фронтальный pivot · multi-engagement',
-      'source.hint':'ПРОБЕЛ закрывает код и возвращает прежнюю скорость.','source.copy':'КОПИРОВАТЬ ВСЁ','source.close':'ЗАКРЫТЬ · ПРОБЕЛ',
-      'setup.newBattle':'НОВАЯ БИТВА','setup.motto':'СДЕЛАЙТЕ ПЕРЕРЫВ. ВОЗЬМИТЕ КОФЕ. ВСТУПИТЕ В БОЙ.','setup.lead':'Задайте бюджет сценария. Состав армий и развёртывание — следующие этапы Army Builder.','setup.armyPoints':'ОЧКИ АРМИИ','setup.customBudget':'или свой бюджет','setup.biome':'MAP ENGINE · БИОМ','setup.battlefieldProfile':'Профиль поля боя','setup.mapNote':'Случайно выбирается подходящий биом. Море: залив или высадка · реки: непроходимы кроме мостов/бродов · ручьи: сложная местность · горы/здания: твёрдые препятствия.','setup.armyMode':'РЕЖИМ АРМИЙ','setup.playerRole':'РОЛЬ ИГРОКА · СИНИЕ В НАЧАЛЕ','setup.goDeployment':'К РАЗВЁРТЫВАНИЮ','setup.generateDeployment':'СОЗДАТЬ РАЗВЁРТЫВАНИЕ',
+      'source.title':'Исходный код',
+      'unitrole.horse_archer':'Быстрая, стреляет издалека',
+      'unitrole.cavalry':'Мощный таранный удар',
+      'unitrole.crossbow':'Бронебойные выстрелы',
+      'unitrole.archer':'Большая дальность',
+      'unitrole.spearman':'Фронт защищён от стрел',
+      'unitrole.heavy_infantry':'Тяжёлая броня, медленнее',
+      'unitrole.light_infantry':'Быстрые застрельщики, малая дальность',
+      'unitrole.infantry':'Надёжная линейная пехота',
+      'step.battle':'Бой',
+      'step.deploy':'Расстановка',
+      'step.setup':'Подготовка',
+      'setup.howToPlay':'Как играть',
+      'setup.customPlaceholder':'Другое',
+      'language':'Язык',
+      'source.hint':'Бой на паузе. Пробел закрывает код и возвращает прежнюю скорость.','source.copy':'Копировать всё','source.close':'Закрыть',
+      'setup.newBattle':'Новая партия','setup.motto':'Сделай перерыв. Возьми кофе. Вступи в бой.','setup.armyPoints':'Размер армии','setup.customBudget':'Свой размер армии','setup.biome':'Местность','setup.armyMode':'Армии','setup.playerRole':'Ваша роль','setup.goDeployment':'Далее',
       'biome.random':'Случайно','biome.plains':'Равнина','biome.hills':'Холмы','biome.valley':'Долина','biome.river':'Река','biome.forest':'Лес','biome.mountains':'Горы','biome.village':'Деревня','biome.sea':'Море',
-      'mode.auto':'AUTO','mode.autoSub':'состав + доктрина + развёртывание','mode.autoNote':'AUTO использует Doctrine Engine: сначала создаёт подразделения, затем выбирает доктрину по составу, местности и роли ATT/DEF.','mode.mirrored':'MIRRORED','mode.mirroredSub':'соберите СИНИХ, КРАСНЫЕ зеркально','mode.mirroredNote':'MIRRORED: соберите СИНИХ; состав, позиции и направление КРАСНЫХ зеркально повторяются.','mode.custom':'CUSTOM','mode.customSub':'соберите обе армии','mode.customNote':'CUSTOM: свободно соберите и разверните обе армии в рамках одного бюджета.',
-      'role.random':'СЛУЧАЙНО','role.randomSub':'ATT или DEF назначается в начале','role.randomNote':'Роль СИНИХ определяется в начале; КРАСНЫЕ автоматически получают противоположную роль.','role.attack':'АТАКУЮЩИЙ','role.attackSub':'СИНИЕ должны победить до истечения времени','role.attackNote':'СИНИЕ = АТАКУЮЩИЙ · КРАСНЫЕ = ЗАЩИТНИК.','role.defend':'ЗАЩИТНИК','role.defendSub':'СИНИЕ побеждают, если удержатся до лимита','role.defendNote':'СИНИЕ = ЗАЩИТНИК · КРАСНЫЕ = АТАКУЮЩИЙ.','role.devSuffix':'В DEV можно по-прежнему менять сторону во время боя.',
-      'battle.resultKicker':'COFFEE BATTLES · РЕЗУЛЬТАТ БИТВЫ','battle.victory':'ПОБЕДА!','battle.defeat':'ПОРАЖЕНИЕ','battle.draw':'НИЧЬЯ','battle.ended':'Битва завершена.','battle.closeLog':'ЗАКРЫТЬ ЖУРНАЛ','battle.enemyGone':'На поле не осталось активных вражеских подразделений.','battle.alliesGone':'На поле не осталось активных союзных подразделений.','battle.bothGone':'У обеих армий не осталось активных подразделений.','battle.damageNote':'DMG = реальные очки здоровья; ↑ нанесено / ↓ получено.','battle.unit':'ПОДРАЗДЕЛЕНИЕ','battle.total':'ИТОГО','battle.winner':'Победитель: {side}.',
-      'deploy.step':'ШАГ 2/3 · РАЗВЁРТЫВАНИЕ','deploy.spent':'Потрачено','deploy.removeSelected':'УБРАТЬ ВЫБРАННОЕ','deploy.startBattle':'НАЧАТЬ БИТВУ','deploy.hint':'Перетащите полк на поле и отпустите в своей зоне развёртывания. Размещённые подразделения можно перемещать. Mirror Army копирует состав; Mirror Deployment также зеркалит позицию и направление.','deploy.mirroredHint':'MIRRORED · Размещайте СИНИХ: КРАСНЫЕ автоматически повторяют состав, позицию и направление.','deploy.customHint':'CUSTOM · Свободно разместите обе армии в пределах бюджета.','deploy.autoHint':'AUTO · СИНИЕ {blueRole}: ПУСТАЯ АРМИЯ — выберите состав и развёртывание до {budget} PT. КРАСНЫЕ {redRole}: уже созданы и развернуты, СКРЫТЫ до начала.','deploy.zoneBlue':'ЗОНА РАЗВЁРТЫВАНИЯ СИНИХ','deploy.zoneRed':'ЗОНА РАЗВЁРТЫВАНИЯ КРАСНЫХ','deploy.dragUnit':'Перетащите {unit} на поле.','deploy.budgetInsufficient':'Недостаточно очков.','deploy.mirrorLocked':'Mirror Army включён: состав КРАСНЫХ автоматически повторяет СИНИХ.',
+      'mode.auto':'Авто','mode.autoSub':'Компьютер собирает армию противника, вы — свою.','mode.autoNote':'Компьютер собирает армию противника, вы — свою.','mode.mirrored':'Зеркало','mode.mirroredSub':'Армия противника копирует вашу.','mode.mirroredNote':'Армия противника копирует вашу, зеркально на поле.','mode.custom':'Свободно','mode.customSub':'Вы собираете обе армии.','mode.customNote':'Вы собираете и расставляете обе армии.',
+      'role.random':'Случайно','role.randomSub':'Атака или оборона определяется в начале боя.','role.randomNote':'Атака или оборона определяется в начале боя.','role.attack':'Атака','role.attackSub':'Победите до истечения времени.','role.attackNote':'Вы атакуете: победите до истечения времени.','role.defend':'Оборона','role.defendSub':'Продержитесь до истечения времени.','role.defendNote':'Вы обороняетесь: продержитесь до истечения времени.',
+      'battle.victory':'ПОБЕДА!','battle.defeat':'ПОРАЖЕНИЕ','battle.draw':'НИЧЬЯ','battle.ended':'Битва завершена.','battle.closeLog':'Закрыть','battle.enemyGone':'На поле не осталось активных вражеских подразделений.','battle.alliesGone':'На поле не осталось активных союзных подразделений.','battle.bothGone':'У обеих армий не осталось активных подразделений.','battle.damageNote':'DMG = реальные очки здоровья; ↑ нанесено / ↓ получено.','battle.unit':'ПОДРАЗДЕЛЕНИЕ','battle.total':'ИТОГО','battle.winner':'Победитель: {side}.',
+      'deploy.step':'Расстановка','deploy.spent':'Потрачено','deploy.removeSelected':'Убрать','deploy.startBattle':'Начать бой','deploy.hint':'Перетащите полки в свою зону. Перетащите снова, чтобы переместить.','deploy.mirroredHint':'Расставьте свои полки; противник повторит их зеркально.','deploy.customHint':'Расставьте полки обеих армий в пределах бюджета.','deploy.autoHint':'Ваша роль: {blueRole}. Расставьте полки; противник уже расставлен и скрыт до начала боя.','deploy.zoneBlue':'Зона расстановки синих','deploy.zoneRed':'Зона расстановки красных','deploy.dragUnit':'Перетащите {unit} на поле.','deploy.budgetInsufficient':'Недостаточно очков.','deploy.mirrorLocked':'Mirror Army включён: состав КРАСНЫХ автоматически повторяет СИНИХ.',
       'side.blue':'СИНИЕ','side.red':'КРАСНЫЕ','side.controlBlue':'Управлять СИНИМИ','side.controlRed':'Управлять КРАСНЫМИ',
       'unit.infantry':'Пехота','unit.light_infantry':'Лёгкая пехота','unit.heavy_infantry':'Тяжёлая пехота','unit.spearman':'Копейщики','unit.archer':'Лучники','unit.crossbow':'Арбалетчики','unit.cavalry':'Кавалерия','unit.horse_archer':'Лёгкая кавалерия',
       'sidebar.open':'Открыть боковую панель','sidebar.close':'Свернуть боковую панель','sidebar.controls':'Управление','sidebar.selectedUnit':'Выбранное подразделение','sidebar.combatRule':'Правила боя','sidebar.actions':'Действия','sidebar.resetBattle':'Сбросить битву','sidebar.battleLog':'Журнал битвы',
@@ -1377,7 +1311,7 @@ const I18n = {
   biome(type){return this.t(`biome.${type||'random'}`);},
   apply(root=document){
     document.documentElement.lang=this.current;
-    document.title=`COFFEE BATTLES — Campal Battle Lab v0.90.2`;
+    document.title='Coffee Battles';
     root.querySelectorAll?.('[data-i18n]').forEach(el=>el.textContent=this.t(el.dataset.i18n));
   root.querySelectorAll?.('[data-i18n-html]').forEach(el=>{
     if(!I18N_HTML_DEFAULTS.has(el)) I18N_HTML_DEFAULTS.set(el,el.innerHTML);
@@ -1389,6 +1323,7 @@ const I18n = {
     const table=RULES_I18N[this.current]||RULES_I18N.en;
     el.innerHTML=table[key]??RULES_I18N.en[key]??I18N_HTML_DEFAULTS.get(el);
   });
+    root.querySelectorAll?.('[data-i18n-placeholder]').forEach(el=>{el.placeholder=this.t(el.dataset.i18nPlaceholder);});
     root.querySelectorAll?.('[data-i18n-title]').forEach(el=>{
       const value=this.t(el.dataset.i18nTitle);
       el.title=value;
@@ -1407,8 +1342,10 @@ const I18n = {
   },
   translateSelectedPanel(root){
     if(!root)return;
+    const playerRows=new Set(['selected.unit','selected.selection','selected.type','selected.order','selected.health','selected.energy','selected.morale','selected.stance','selected.formation','selected.range','selected.fireAtWill']);
     root.querySelectorAll('.row > span:first-child').forEach(span=>{
       const key=this.selectedLabelKeys[span.textContent.trim()];
+      span.parentElement.classList.toggle('dbg-only',!playerRows.has(key));
       if(key)span.textContent=this.t(key);
     });
   },
@@ -1437,6 +1374,7 @@ const I18n = {
       wrap.classList.remove('open');
       button?.setAttribute('aria-expanded','false');
     }));
+    document.getElementById('splashLanguageSelect')?.addEventListener('change',e=>this.set(e.target.value,true));
     document.addEventListener('click',()=>{
       wrap?.classList.remove('open');
       button?.setAttribute('aria-expanded','false');
@@ -1492,10 +1430,7 @@ I18n.current=I18n.detect();
     mapBiomeSelect: document.getElementById('mapBiomeSelect'),
     setupModes: document.getElementById('setupModes'),
     setupModeNote: document.getElementById('setupModeNote'),
-    setupModeSummary: document.getElementById('setupModeSummary'),
     setupRoles: document.getElementById('setupRoles'),
-    setupRoleNote: document.getElementById('setupRoleNote'),
-    setupPointsSummary: document.getElementById('setupPointsSummary'),
     createBattleBtn: document.getElementById('createBattleBtn'),
     deploymentUI: document.getElementById('deploymentUI'),
     deploymentCards: document.getElementById('deploymentCards'),
@@ -1503,6 +1438,7 @@ I18n.current=I18n.detect();
     deployRedBtn: document.getElementById('deployRedBtn'),
     deploySpent: document.getElementById('deploySpent'),
     deployBudget: document.getElementById('deployBudget'),
+    deployHint: document.getElementById('deployHint'),
     removeDeployUnitBtn: document.getElementById('removeDeployUnitBtn'),
     rotateDeployLeftBtn: document.getElementById('rotateDeployLeftBtn'),
     rotateDeployRightBtn: document.getElementById('rotateDeployRightBtn'),
@@ -4315,9 +4251,9 @@ I18n.current=I18n.detect();
 
       const factories=[
         (forced=null,ang=null)=>{const p=forced||randomPos();return{id:'hill-1',type:'hill',x:p.x,y:p.y,angle:ang??this.rand(-0.6,0.6),rx:10*U,ry:5*U,fill:'#7a5b34',edge:'#a77f49'};},
-        (forced=null,ang=null)=>{const p=forced||randomPos();return{id:'forest-1',type:'forest',x:p.x,y:p.y,angle:ang??this.rand(-0.8,0.8),fill:'#204622',edge:'#3e7f42',blob:this.makeBlob(10*U,5*U,22,0.20)};},
+        (forced=null,ang=null)=>{const p=forced||randomPos();return{id:'forest-1',type:'forest',x:p.x,y:p.y,angle:ang??this.rand(-0.8,0.8),fill:'#2e3c1d',edge:'#5c7438',blob:this.makeBlob(10*U,5*U,22,0.20)};},
         (forced=null,ang=null)=>{const p=forced||randomPos();return{id:'rough-1',type:'rough',x:p.x,y:p.y,angle:ang??this.rand(-0.9,0.9),rx:6*U,ry:4*U,fill:'#7c6940',edge:'#a18a5a'};},
-        (forced=null,ang=null)=>{const p=forced||randomPos();return{id:'pond-1',type:'pond',x:p.x,y:p.y,angle:ang??this.rand(-0.7,0.7),fill:'#4d9fcb',edge:'#94d0ef',blob:this.makeBlob(5*U,3*U,20,0.22)};},
+        (forced=null,ang=null)=>{const p=forced||randomPos();return{id:'pond-1',type:'pond',x:p.x,y:p.y,angle:ang??this.rand(-0.7,0.7),fill:'#3f7f8a',edge:'#8ab9bd',blob:this.makeBlob(5*U,3*U,20,0.22)};},
         (forced=null,ang=null)=>{const p=forced||randomPos();return{id:'wall-1',type:'wall',x:p.x,y:p.y,angle:ang??this.rand(-Math.PI,Math.PI),w:8*U,h:0.5*U,fill:'#9d8b71',edge:'#ddd0b5'};}
       ];
 
@@ -4767,7 +4703,7 @@ I18n.current=I18n.detect();
         ctx.fillStyle=t.fill;ctx.strokeStyle=t.edge;ctx.lineWidth=2;ctx.fill();ctx.stroke();
         if(t.type==='forest'){
           ctx.save();ctx.globalAlpha=.18;
-          for(let i=-2;i<=2;i++){ctx.beginPath();ctx.ellipse(t.x+i*16,t.y+Math.sin(i)*10,18,10,0,0,Math.PI*2);ctx.fillStyle='#7cbc58';ctx.fill();}
+          for(let i=-2;i<=2;i++){ctx.beginPath();ctx.ellipse(t.x+i*16,t.y+Math.sin(i)*10,18,10,0,0,Math.PI*2);ctx.fillStyle='#7f9a4a';ctx.fill();}
           ctx.restore();
         }
         if(t.type==='hill'){
@@ -4783,14 +4719,14 @@ I18n.current=I18n.detect();
   // ============================================================
   const MapEngine = {
     BIOMES: Object.freeze({
-      plains:    Object.freeze({ label:'Pianura',   field:'#1b281c' }),
-      hills:     Object.freeze({ label:'Colline',   field:'#26301e' }),
-      valley:    Object.freeze({ label:'Vallata',   field:'#20291d' }),
-      river:     Object.freeze({ label:'Fiume',     field:'#1c2a22' }),
-      forest:    Object.freeze({ label:'Foresta',   field:'#16271a' }),
-      mountains: Object.freeze({ label:'Montagne',  field:'#252823' }),
-      village:   Object.freeze({ label:'Villaggio', field:'#29261d' }),
-      sea:       Object.freeze({ label:'Mare',       field:'#1b281c' })
+      plains:    Object.freeze({ label:'Pianura',   field:'#2a2818' }),
+      hills:     Object.freeze({ label:'Colline',   field:'#2f2a19' }),
+      valley:    Object.freeze({ label:'Vallata',   field:'#28271a' }),
+      river:     Object.freeze({ label:'Fiume',     field:'#24271c' }),
+      forest:    Object.freeze({ label:'Foresta',   field:'#1f2516' }),
+      mountains: Object.freeze({ label:'Montagne',  field:'#2b2620' }),
+      village:   Object.freeze({ label:'Villaggio', field:'#2f271b' }),
+      sea:       Object.freeze({ label:'Mare',       field:'#2a2818' })
     }),
 
     GENERATION_PHASES: Object.freeze(['Coast','Orography','Hydrology','Settlement','Buildings','Roads','Crossings','Tactical','Fields']),
@@ -4813,7 +4749,7 @@ I18n.current=I18n.detect();
       if (resolved) return I18n.biome(resolved);
       return I18n.biome(State.battleSetup.biome || 'random');
     },
-    fieldColor() { return this.BIOMES[this.current()]?.field || '#18211a'; },
+    fieldColor() { return this.BIOMES[this.current()]?.field || '#27251a'; },
 
     worldZone() {
       const b = Geometry.worldBounds();
@@ -4914,8 +4850,8 @@ I18n.current=I18n.detect();
       return {
         id:id||`${type}-1`, type, controlPoints:controls, samples,
         width:(type==='river'?3.2:1.25)*CFG.U,
-        fill:type==='river'?'#3b86ad':'#5aa4c4',
-        edge:type==='river'?'#8ac5df':'#9dd4e5'
+        fill:type==='river'?'#3a7684':'#4f8d95',
+        edge:type==='river'?'#88b4b8':'#9cc6c6'
       };
     },
 
@@ -4956,9 +4892,9 @@ I18n.current=I18n.detect();
   return {id,type:'hill',x,y,angle:a,rx:rx*CFG.U,ry:ry*CFG.U,summit,blob,smoothBlob:Terrain.smoothClosedBlob(blob,8),fill:'#7a5b34',edge:'#a77f49'};
 },
 makeRough(id,x,y,rx=6,ry=4,angle=null){return{id,type:'rough',x,y,angle:angle??this.rand(-.9,.9),rx:rx*CFG.U,ry:ry*CFG.U,fill:'#7c6940',edge:'#a18a5a'};},
-makeForest(id,x,y,rx=10,ry=5,angle=null){const blob=Terrain.makeBlob(rx*CFG.U,ry*CFG.U,30,.09);return{id,type:'forest',x,y,angle:angle??this.rand(-.8,.8),fill:'#204622',edge:'#3e7f42',blob,smoothBlob:Terrain.smoothClosedBlob(blob,9)};},
-makePond(id,x,y,rx=5,ry=3,angle=null){return{id,type:'pond',x,y,angle:angle??this.rand(-.7,.7),fill:'#4d9fcb',edge:'#94d0ef',blob:Terrain.makeBlob(rx*CFG.U,ry*CFG.U,20,.22)};},
-makeMountain(id,x,y,rx=8,ry=5,angle=null){const blob=Terrain.makeBlob(rx*CFG.U,ry*CFG.U,26,.11);return{id,type:'mountain',x,y,angle:angle??this.rand(-.35,.35),fill:'#50534c',edge:'#8b9185',blob,smoothBlob:Terrain.smoothClosedBlob(blob,7)};},
+makeForest(id,x,y,rx=10,ry=5,angle=null){const blob=Terrain.makeBlob(rx*CFG.U,ry*CFG.U,30,.09);return{id,type:'forest',x,y,angle:angle??this.rand(-.8,.8),fill:'#2e3c1d',edge:'#5c7438',blob,smoothBlob:Terrain.smoothClosedBlob(blob,9)};},
+makePond(id,x,y,rx=5,ry=3,angle=null){return{id,type:'pond',x,y,angle:angle??this.rand(-.7,.7),fill:'#3f7f8a',edge:'#8ab9bd',blob:Terrain.makeBlob(rx*CFG.U,ry*CFG.U,20,.22)};},
+makeMountain(id,x,y,rx=8,ry=5,angle=null){const blob=Terrain.makeBlob(rx*CFG.U,ry*CFG.U,26,.11);return{id,type:'mountain',x,y,angle:angle??this.rand(-.35,.35),fill:'#56493c',edge:'#968470',blob,smoothBlob:Terrain.smoothClosedBlob(blob,7)};},
 makeWall(id,x,y,w=8,h=.5,angle=null){return{id,type:'wall',x,y,angle:angle??this.rand(-Math.PI,Math.PI),w:w*CFG.U,h:h*CFG.U,fill:'#9d8b71',edge:'#ddd0b5'};},
 makeBuilding(id,x,y,w=4,h=3,angle=0){return{id,type:'building',x,y,angle,w:w*CFG.U,h:h*CFG.U,fill:'#725647',edge:'#c39a79'};},
 makeField(id,x,y,wU,hU,angle=0){return{id,type:'field',x,y,angle,w:wU*CFG.U,h:hU*CFG.U,fill:'rgba(203,181,128,.34)',edge:'rgba(232,211,164,.46)'};},
@@ -5104,7 +5040,7 @@ makeCoastScenario(){
 
   const sea={
     id:'sea-1',type:'sea',mode,side,attackerSide,points,coastline:coast,
-    fill:'#245d78',edge:'#8bcbdc'
+    fill:'#23505a',edge:'#86b3b5'
   };
   const shipCount=mode==='landing'?Math.max(1,Math.ceil(State.battleSetup.points/500)):0;
   const ships=mode==='landing'?this.makeLandingShips(sea,shipCount):[];
@@ -5536,7 +5472,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         if(t.coastline?.length){
           ctx.beginPath();t.coastline.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
           ctx.strokeStyle=t.edge;ctx.lineWidth=3;ctx.stroke();
-          ctx.globalAlpha=.28;ctx.strokeStyle='#d8f2f4';ctx.lineWidth=1;
+          ctx.globalAlpha=.28;ctx.strokeStyle='#dcebe4';ctx.lineWidth=1;
           for(let k=1;k<=2;k++){
             ctx.beginPath();
             t.coastline.forEach((p,i)=>{
@@ -7667,7 +7603,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       ctx.fillRect(b.x, b.y, b.w, b.h);
 
       // Confine del campo: il superamento da parte di un ROUT è il punto di non ritorno.
-      ctx.strokeStyle = 'rgba(240,211,111,.78)';
+      ctx.strokeStyle = 'rgba(224,138,60,.72)';
       ctx.lineWidth = 2;
       ctx.setLineDash([8, 7]);
       ctx.strokeRect(b.x, b.y, b.w, b.h);
@@ -7683,27 +7619,27 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const rz = Deployment.zone('red');
       const hideRed = Deployment.enemyHiddenDuringSetup();
       ctx.save();
-      ctx.fillStyle = 'rgba(63,121,216,.10)';
+      ctx.fillStyle = 'rgba(91,143,209,.12)';
       ctx.fillRect(bz.x, bz.y, bz.w, bz.h);
       if (!hideRed) {
-        ctx.fillStyle = 'rgba(207,77,77,.10)';
+        ctx.fillStyle = 'rgba(217,86,58,.12)';
         ctx.fillRect(rz.x, rz.y, rz.w, rz.h);
       }
       ctx.setLineDash([7,6]);
       ctx.lineWidth = 2;
-      ctx.strokeStyle = 'rgba(103,158,244,.70)';
+      ctx.strokeStyle = 'rgba(128,170,224,.70)';
       ctx.strokeRect(bz.x, bz.y, bz.w, bz.h);
       if (!hideRed) {
-        ctx.strokeStyle = 'rgba(235,104,104,.70)';
+        ctx.strokeStyle = 'rgba(232,120,92,.70)';
         ctx.strokeRect(rz.x, rz.y, rz.w, rz.h);
       }
       ctx.setLineDash([]);
       ctx.font = 'bold 13px Segoe UI, Arial';
       ctx.textBaseline = 'top';
-      ctx.fillStyle = 'rgba(160,198,255,.85)';
+      ctx.fillStyle = 'rgba(176,204,238,.88)';
       ctx.fillText(I18n.t('deploy.zoneBlue'), bz.x + 8, bz.y + 8);
       if (!hideRed) {
-        ctx.fillStyle = 'rgba(255,170,170,.85)';
+        ctx.fillStyle = 'rgba(246,184,160,.88)';
         ctx.fillText(I18n.t('deploy.zoneRed'), rz.x + 8, rz.y + 8);
       }
 
@@ -7732,7 +7668,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
 
     grid(w, h) {
       ctx.save();
-      ctx.strokeStyle = 'rgba(255,255,255,0.055)';
+      ctx.strokeStyle = 'rgba(242,230,211,0.045)';
       ctx.lineWidth = 1;
       for (let x = 0; x <= w; x += CFG.U) {
         ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
@@ -7777,7 +7713,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       ctx.stroke();
       ctx.setLineDash([]);
 
-      if (astarPoints.length) {
+      if (DEBUG && astarPoints.length) {
         ctx.save();
         ctx.setLineDash([3, 3]);
         astarPoints.forEach((p, i) => {
@@ -7866,7 +7802,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const fctx = layer.getContext('2d');
       fctx.clearRect(0, 0, iw, ih);
       fctx.globalCompositeOperation = 'source-over';
-      fctx.fillStyle = 'rgba(72,76,82,.72)';
+      fctx.fillStyle = 'rgba(33,23,18,.6)';
       fctx.fillRect(0, 0, iw, ih);
 
       fctx.globalCompositeOperation = 'destination-out';
@@ -7936,7 +7872,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       ctx.setLineDash([6, 5]);
       ctx.strokeRect(-d.depth, -d.front / 2, d.depth, d.front);
       ctx.setLineDash([]);
-      ctx.strokeStyle = 'rgba(241,211,107,.68)';
+      ctx.strokeStyle = 'rgba(224,138,60,.75)';
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(0, -d.front / 2);
@@ -7966,7 +7902,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
                   : (Selection.isSelected(u) ? '#ffffff' : 'rgba(255,255,255,.55)')));
         ctx.lineWidth = u.status.routing ? 5 : ((moraleState === 'wavering' || moraleState === 'shaken') ? 4 : (Selection.isSelected(u) ? 4 : 2));
         ctx.strokeRect(-d.depth, -d.front / 2, d.depth, d.front);
-        ctx.strokeStyle = '#f1d36b';
+        ctx.strokeStyle = '#f2e6d3';
         ctx.lineWidth = 6;
         ctx.beginPath(); ctx.moveTo(0, -d.front / 2); ctx.lineTo(0, d.front / 2); ctx.stroke();
         UnitIcons.drawBadge(ctx, u);
@@ -8009,9 +7945,14 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         ctx.fillStyle = color; ctx.fillRect(x, yy, barW * Math.max(0, Math.min(1, ratio)), barH);
         ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1; ctx.strokeRect(x, yy, barW, barH);
       };
-      bar(y, u.stats.hp / u.stats.maxHp, '#d84545');
-      bar(y + barH + gap, u.stats.energy / CFG.MAX_ENERGY, '#e6c84f');
-      bar(y + (barH + gap) * 2, u.stats.brain / CFG.MAX_BRAIN, '#8e5ad7');
+      // Health always; energy and brain only for selected units (all units in debug).
+      const detailed = DEBUG || (u.side === State.selectedSide && Selection.isSelected(u));
+      const top = detailed ? y : y + (barH + gap) * 2;
+      bar(top, u.stats.hp / u.stats.maxHp, '#e25b4b');
+      if (detailed) {
+        bar(y + barH + gap, u.stats.energy / CFG.MAX_ENERGY, '#e3b644');
+        bar(y + (barH + gap) * 2, u.stats.brain / CFG.MAX_BRAIN, '#a488d0');
+      }
     },
 
     projectiles() {
@@ -8079,12 +8020,13 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const viewSide = Intel.viewSide();
       this.fogOverlay(w, h, viewSide);
       const visibleUnits = State.units.filter(u => Intel.renderVisible(viewSide, u));
-      visibleUnits.filter(u => u.side === State.battle.playerSide).forEach(u => this.orders(u));
+      visibleUnits.filter(u => u.side === State.battle.playerSide && (DEBUG || Selection.isSelected(u))).forEach(u => this.orders(u));
       const p = Selection.primary();
       if (p && Intel.renderVisible(viewSide, p)) this.lock(p);
       visibleUnits.forEach(u => this.unit(u));
       Intel.ghosts(viewSide).forEach(({ record, unit }) => this.ghost(record, unit));
       this.projectiles();
+      if (DEBUG) {
       ctx.save();
       ctx.fillStyle = 'rgba(255,255,255,.7)';
       ctx.font = '12px Segoe UI, Arial';
@@ -8092,6 +8034,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       ctx.strokeStyle = 'rgba(255,255,255,.7)';
       ctx.beginPath(); ctx.moveTo(18, h - 12); ctx.lineTo(18 + CFG.U, h - 12); ctx.stroke();
       ctx.restore();
+      }
       ctx.restore();
 
       const hudUnits = State.units.filter(u => Intel.renderVisible(Intel.viewSide(), u));
@@ -8164,6 +8107,9 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       DOM.deployBlueBtn.classList.toggle('active', side === 'blue');
       DOM.deployRedBtn.classList.toggle('active', side === 'red');
       DOM.deployRedBtn.style.display = autoPlayerDeploy ? 'none' : '';
+      DOM.deployBlueBtn.style.display = autoPlayerDeploy ? 'none' : '';
+      // Keep the panel away from the zone being deployed: BLUE is at the bottom, RED at the top.
+      document.body.classList.toggle('deploy-top', side === 'blue');
       if (DOM.sideRedBtn) DOM.sideRedBtn.disabled = autoPlayerDeploy;
       if (DOM.sideBlueBtn) DOM.sideBlueBtn.disabled = false;
       DOM.sideBlueBtn?.classList.toggle('active', side === 'blue');
@@ -8195,7 +8141,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       State.deployment.counters[side] += 1;
       const n = State.deployment.counters[side];
       const spec = this.spec(type);
-      const color = side === 'blue' ? '#3f79d8' : '#cf4d4d';
+      const color = side === 'blue' ? '#5b8fd1' : '#d9563a';
       const a = angle === null ? (side === 'blue' ? -Math.PI / 2 : Math.PI / 2) : angle;
       const prefix = side === 'blue' ? 'BLU' : 'ROSSA';
       const suffix = spec.short ? ` ${spec.short}` : '';
@@ -8883,7 +8829,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     modeCopy(mode) {
       if (mode === 'mirrored') return { summary:I18n.t('mode.mirrored'), note:I18n.t('mode.mirroredNote') };
       if (mode === 'custom') return { summary:I18n.t('mode.custom'), note:I18n.t('mode.customNote') };
-      return { summary:`${I18n.t('mode.auto')} · Doctrine Engine`, note:I18n.t('mode.autoNote') };
+      return { summary:I18n.t('mode.auto'), note:I18n.t('mode.autoNote') };
     },
 
     roleCopy(role) {
@@ -8918,13 +8864,10 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     sync() {
       const points = this.sanitizePoints(State.battleSetup.points);
       State.battleSetup.points = points;
-      DOM.setupPointsSummary.textContent = `${points} PT`;
       DOM.mapBiomeSelect.value = State.battleSetup.biome || 'random';
       const copy = this.modeCopy(State.battleSetup.mode);
       const roleCopy = this.roleCopy(State.battleSetup.role);
-      DOM.setupModeSummary.textContent = `${copy.summary} · ${roleCopy.summary} · ${I18n.biome(State.battleSetup.biome)}`;
-      DOM.setupModeNote.textContent = copy.note;
-      DOM.setupRoleNote.textContent = `${roleCopy.note} ${I18n.t('role.devSuffix')}`;
+      DOM.setupModeNote.textContent = `${copy.note} ${roleCopy.note}`;
       DOM.setupModes.querySelectorAll('[data-mode]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.mode === State.battleSetup.mode);
       });
@@ -8934,7 +8877,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       DOM.pointPresets.querySelectorAll('[data-points]').forEach(btn => {
         btn.classList.toggle('active', Number(btn.dataset.points) === points && !DOM.customPointsInput.value);
       });
-      DOM.createBattleBtn.textContent = State.battleSetup.mode === 'auto' ? I18n.t('setup.generateDeployment') : I18n.t('setup.goDeployment');
+      DOM.createBattleBtn.textContent = I18n.t('setup.goDeployment');
     },
 
     selectPreset(points) {
@@ -8985,7 +8928,6 @@ makeMountainSectorChain(minLen=3,maxLen=6){
           return;
         }
         State.battleSetup.points = this.sanitizePoints(DOM.customPointsInput.value);
-        DOM.setupPointsSummary.textContent = `${State.battleSetup.points} PT`;
         DOM.pointPresets.querySelectorAll('[data-points]').forEach(btn => btn.classList.remove('active'));
       });
       DOM.mapBiomeSelect.addEventListener('change', () => {
@@ -9652,6 +9594,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
           return;
         }
         if (SourcePause.open || SourcePause.isTypingTarget(e.target)) return;
+        if (!DEBUG && !State.deployment.active) return;
         if (e.key === 'ArrowLeft') { e.preventDefault(); if (State.deployment.active) Deployment.setSide('blue'); else { Selection.switchSide('blue'); this.syncSideButtons(); } }
         if (e.key === 'ArrowRight') { e.preventDefault(); if (State.deployment.active) Deployment.setSide('red'); else { Selection.switchSide('red'); this.syncSideButtons(); } }
       });
@@ -9690,12 +9633,12 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const row = 8 * CFG.U;
       const restoredDeployment = !State.deployment.active && Deployment.restoreSnapshot();
       if (!restoredDeployment) State.units = [
-        makeUnit('blue-1', 'BLU 1', 'blue', cx - sep, cy - row, 0, '#3f79d8', 'infantry'),
-        makeUnit('blue-2', 'BLU ARC', 'blue', cx - sep, cy,       0, '#3f79d8', 'archer'),
-        makeUnit('blue-3', 'BLU CAV', 'blue', cx - sep, cy + row, 0, '#3f79d8', 'cavalry'),
-        makeUnit('red-1', 'ROSSA 1', 'red', cx + sep, cy - row, Math.PI, '#cf4d4d', 'infantry'),
-        makeUnit('red-2', 'ROSSA ARC', 'red', cx + sep, cy,       Math.PI, '#cf4d4d', 'archer'),
-        makeUnit('red-3', 'ROSSA CAV', 'red', cx + sep, cy + row, Math.PI, '#cf4d4d', 'cavalry')
+        makeUnit('blue-1', 'BLU 1', 'blue', cx - sep, cy - row, 0, '#5b8fd1', 'infantry'),
+        makeUnit('blue-2', 'BLU ARC', 'blue', cx - sep, cy,       0, '#5b8fd1', 'archer'),
+        makeUnit('blue-3', 'BLU CAV', 'blue', cx - sep, cy + row, 0, '#5b8fd1', 'cavalry'),
+        makeUnit('red-1', 'ROSSA 1', 'red', cx + sep, cy - row, Math.PI, '#d9563a', 'infantry'),
+        makeUnit('red-2', 'ROSSA ARC', 'red', cx + sep, cy,       Math.PI, '#d9563a', 'archer'),
+        makeUnit('red-3', 'ROSSA CAV', 'red', cx + sep, cy + row, Math.PI, '#d9563a', 'cavalry')
       ];
       if (!restoredDeployment) {
         State.selectedSide = 'blue';
