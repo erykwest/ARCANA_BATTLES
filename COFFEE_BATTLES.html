@@ -5784,6 +5784,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     CELL_U: 1.5,
     REPLAN_INTERVAL: 0.80,
     DIRECT_CHECK_INTERVAL: 0.18,
+    FAIL_BACKOFF: 1.0,
     MAX_EXPANSIONS: 3200,
 
     clear(u) {
@@ -5819,6 +5820,17 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       if (u.order.approach?.enemyId === other.id) return true;
       if (u.order.pursuit?.enemyId === other.id) return true;
       if (u.ranged?.approachTargetId === other.id) return true;
+      // Linea di contatto condivisa: il posto finale e' accanto agli alleati
+      // sullo stesso lato. Trattarli come ostacoli rende la meta irraggiungibile
+      // e fa ripartire A* in continuazione; il contatto reale lo gestisce il
+      // collision solver.
+      const ap = u.order.approach;
+      if (ap && other.side === u.side) {
+        const out = other.engagement.outbound;
+        if (out?.defenderId === ap.enemyId && out.slot === ap.slot) return true;
+        const oap = other.order.approach;
+        if (oap?.enemyId === ap.enemyId && oap.slot === ap.slot) return true;
+      }
       return false;
     },
 
@@ -5908,6 +5920,19 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       return null;
     },
 
+    goalHasFreeNeighbor(u, goalCell, startCell, ctx) {
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          if (!dx && !dy) continue;
+          const x = goalCell.x + dx, y = goalCell.y + dy;
+          // La partenza viene espansa anche se bloccata.
+          if (x === startCell.x && y === startCell.y) return true;
+          if (this.validCell(u, x, y, goalCell, ctx)) return true;
+        }
+      }
+      return false;
+    },
+
     heapPush(heap, node) {
       let i = heap.length;
       heap.push(node);
@@ -5950,6 +5975,11 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const startIdx = startCell.y * cols + startCell.x;
       const goalIdx = goalCell.y * cols + goalCell.x;
       if (startIdx === goalIdx) return [goalPoint];
+
+      // La cella obiettivo e' sempre accettata, ma ci si arriva solo da un
+      // vicino libero: se sono tutti bloccati il percorso e' impossibile.
+      // Usciamo subito invece di esplorare MAX_EXPANSIONS celle a vuoto.
+      if (!this.goalHasFreeNeighbor(u, goalCell, startCell, ctx)) return null;
 
       const gScore = new Float64Array(total);
       gScore.fill(Infinity);
@@ -6069,7 +6099,11 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const start = { x:u.pose.x, y:u.pose.y };
       const path = this.astar(u, start, finalTarget);
       if (!path?.length) {
+        // Una ricerca fallita esplora fino a MAX_EXPANSIONS celle (>100 ms):
+        // ripeterla ogni DIRECT_CHECK_INTERVAL bloccava il frame. Si procede
+        // in linea diretta (collision solver) e si riprova dopo FAIL_BACKOFF.
         u.motion.detour = null;
+        u.motion.pathCheckAt = State.simTime + this.FAIL_BACKOFF;
         return null;
       }
 
