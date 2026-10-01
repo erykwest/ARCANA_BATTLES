@@ -1,0 +1,62 @@
+name: Apply multiplayer shell to main
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-multiplayer-shell-main.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Load the reviewed patch from the feature branch
+        shell: bash
+        run: |
+          git fetch origin feat/multiplayer-shell
+          git show origin/feat/multiplayer-shell:.github/workflows/apply-multiplayer-shell.yml > /tmp/source.yml
+          awk '
+            /^[[:space:]]*python - <<'"'"'PY'"'"'$/ { capture=1; next }
+            capture && /^[[:space:]]*PY$/ { exit }
+            capture { sub(/^          /, ""); print }
+          ' /tmp/source.yml > /tmp/apply_multiplayer.py
+          test -s /tmp/apply_multiplayer.py
+          python /tmp/apply_multiplayer.py
+
+      - name: Validate merged HTML and JavaScript
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          s = Path('COFFEE_BATTLES.html').read_text(encoding='utf-8')
+          required = [
+            'id="randomMatchBtn"', 'id="onlineUsersBadge"', 'id="matchmakingOverlay"',
+            'id="aiFallbackOverlay"', "client.rpc('find_random_match')", "client.rpc('leave_matchmaking')",
+            "window.__CB_MULTIPLAYER_SIDE__ || 'blue'", '@supabase/supabase-js@2'
+          ]
+          missing = [x for x in required if x not in s]
+          if missing: raise SystemExit('Missing markers: ' + repr(missing))
+          if s.count('id="randomMatchBtn"') != 1: raise SystemExit('Duplicate multiplayer UI detected')
+          scripts = re.findall(r'<script(?:\s[^>]*)?>([\s\S]*?)</script>', s)
+          Path('/tmp/coffee-battles.js').write_text('\n'.join(scripts), encoding='utf-8')
+          print('Validation OK; HTML bytes:', len(s.encode('utf-8')))
+          PY
+          node --check /tmp/coffee-battles.js
+
+      - name: Commit merged game and remove one-shot runner
+        shell: bash
+        run: |
+          rm -f .github/workflows/apply-multiplayer-shell-main.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add COFFEE_BATTLES.html .github/workflows/apply-multiplayer-shell-main.yml
+          git commit -m "feat: add Supabase random 1v1 matchmaking shell"
+          git push origin main
