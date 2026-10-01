@@ -28,6 +28,30 @@ jobs:
             capture { sub(/^          /, ""); print }
           ' /tmp/source.yml > /tmp/apply_multiplayer.py
           test -s /tmp/apply_multiplayer.py
+
+          # The current v0.90.2 source has two generic player-side resets.
+          # Restrict the multiplayer override to BattleSetup.resolveRoles(), leaving Battle.reset() untouched.
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('/tmp/apply_multiplayer.py')
+          t = p.read_text(encoding='utf-8')
+          bad = '''replace_once("      State.battle.playerSide = 'blue';", "      State.battle.playerSide = window.__CB_MULTIPLAYER_SIDE__ || 'blue';", 'player side resolver')'''
+          good = '''anchor = "    resolveRoles() {"
+          start = s.find(anchor)
+          if start < 0:
+              raise SystemExit('player side resolver: resolveRoles anchor not found')
+          old_side = "      State.battle.playerSide = 'blue';"
+          pos = s.find(old_side, start)
+          end = s.find("    setMode(mode) {", start)
+          if pos < 0 or end < 0 or pos > end:
+              raise SystemExit('player side resolver: scoped playerSide line not found')
+          new_side = "      State.battle.playerSide = window.__CB_MULTIPLAYER_SIDE__ || 'blue';"
+          s = s[:pos] + new_side + s[pos + len(old_side):]'''
+          if bad not in t:
+              raise SystemExit('runner fix: expected patch line not found')
+          p.write_text(t.replace(bad, good, 1), encoding='utf-8')
+          PY
+
           python /tmp/apply_multiplayer.py
 
       - name: Validate merged HTML and JavaScript
