@@ -1,0 +1,390 @@
+name: Apply multiplayer shell
+
+on:
+  push:
+    branches:
+      - feat/multiplayer-shell
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/multiplayer-shell
+          fetch-depth: 0
+
+      - name: Merge multiplayer shell into latest game HTML
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('COFFEE_BATTLES.html')
+          s = path.read_text(encoding='utf-8')
+
+          if 'id="randomMatchBtn"' in s:
+              raise SystemExit('Multiplayer shell already present; refusing to duplicate it.')
+
+          def replace_once(old, new, label):
+              global s
+              n = s.count(old)
+              if n != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 anchor, found {n}')
+              s = s.replace(old, new, 1)
+
+          css = r'''
+
+          /* ============================================================
+             MULTIPLAYER SHELL — Supabase guest lobby + random 1v1
+             ============================================================ */
+          #onlineUsersBadge{
+            display:flex;align-items:center;gap:6px;flex:0 0 auto;
+            padding:5px 8px;border:1px solid var(--line-strong);border-radius:999px;background:var(--btn);
+            font:800 10px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.06em;color:var(--text-2);
+          }
+          #onlineUsersBadge .cbmp-dot,.cbmp-lobby-title .cbmp-dot{
+            width:7px;height:7px;border-radius:50%;background:#72665d;box-shadow:0 0 0 2px rgba(114,102,93,.15)
+          }
+          #onlineUsersBadge.connected .cbmp-dot,.cbmp-lobby-title.connected .cbmp-dot{
+            background:#65d17a;box-shadow:0 0 0 3px rgba(101,209,122,.12)
+          }
+          .cbmp-lobby-card{
+            display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+            margin:0 0 14px;padding:12px 14px;border:1px solid var(--line-strong);border-radius:14px;background:var(--sunken)
+          }
+          .cbmp-lobby-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+          .cbmp-lobby-meta{margin-top:5px;font-size:11px;color:var(--muted);line-height:1.35}
+          #randomMatchBtn{width:auto;min-width:190px;height:46px;padding:0 16px;background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:900}
+          #randomMatchBtn:hover{background:var(--accent-hover)}
+          #randomMatchBtn:disabled{opacity:.42;cursor:not-allowed}
+          #matchmakingOverlay,#aiFallbackOverlay{
+            position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:20px;
+            background:rgba(18,13,10,.88);backdrop-filter:blur(7px);opacity:0;visibility:hidden;pointer-events:none;
+            transition:opacity .16s ease,visibility .16s ease
+          }
+          #matchmakingOverlay{z-index:5200}
+          #aiFallbackOverlay{z-index:5300;background:rgba(18,13,10,.76)}
+          #matchmakingOverlay.open,#aiFallbackOverlay.open{opacity:1;visibility:visible;pointer-events:auto}
+          .cbmp-panel{
+            width:min(520px,100%);background:var(--panel);border:1px solid var(--line-strong);border-radius:18px;
+            box-shadow:0 24px 80px rgba(0,0,0,.62);padding:24px;text-align:center
+          }
+          .cbmp-kicker{font-size:10px;letter-spacing:.18em;color:var(--muted);font-weight:900;margin-bottom:9px}
+          #matchmakingTitle,#aiFallbackTitle{margin:0 0 8px;font:900 30px/1 var(--font-display);letter-spacing:.04em;text-transform:uppercase}
+          #matchmakingStatus,#aiFallbackText{font-size:12px;line-height:1.5;color:var(--muted);min-height:36px}
+          .cbmp-searchline{display:flex;justify-content:center;align-items:center;gap:12px;margin:20px 0}
+          .cbmp-spinner{width:24px;height:24px;border:3px solid var(--line-strong);border-top-color:var(--accent);border-radius:50%;animation:cbmpSpin .75s linear infinite}
+          @keyframes cbmpSpin{to{transform:rotate(360deg)}}
+          #matchmakingElapsed{font:900 28px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--accent);letter-spacing:.05em}
+          #matchSideBadge{display:none;margin:18px auto 7px;width:max-content;padding:10px 16px;border-radius:10px;font-size:20px;font-weight:950;letter-spacing:.12em}
+          #matchSideBadge.blue{display:block;background:rgba(91,143,209,.18);border:1px solid #5b8fd1;color:#a9c9f4}
+          #matchSideBadge.red{display:block;background:rgba(217,86,58,.18);border:1px solid #d9563a;color:#ffb1a0}
+          #matchIdText{font:700 9px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted);overflow-wrap:anywhere;margin:7px 0 0}
+          .cbmp-actions{display:flex;gap:8px;margin-top:18px}
+          .cbmp-actions button{height:44px}
+          #continueMatchedBtn,#playAiFallbackBtn{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:900}
+          #continueMatchedBtn[hidden]{display:none}
+          .cbmp-note{margin-top:10px;font-size:9px;color:var(--muted);line-height:1.4}
+          @media (max-width:700px){
+            #onlineUsersBadge{font-size:9px;padding:5px 7px}
+            .cbmp-lobby-card{grid-template-columns:1fr}
+            #randomMatchBtn{width:100%;min-width:0}
+            .cbmp-panel{padding:18px}
+            #matchmakingTitle,#aiFallbackTitle{font-size:24px}
+          }
+          '''
+          replace_once('\n</style>', css + '\n</style>', 'style close')
+
+          header_badge = r'''
+            <div id="onlineUsersBadge" title="Connected Coffee Battles sessions"><i class="cbmp-dot"></i><b id="headerOnlineCount">—</b> ONLINE</div>
+          '''
+          replace_once('\n</header>', header_badge + '\n</header>', 'header close')
+
+          title = '<h1 id="battleSetupTitle" data-i18n="setup.newBattle">New battle</h1>'
+          lobby = r'''
+
+              <div class="cbmp-lobby-card">
+                <div>
+                  <div id="onlineLobbyTitle" class="cbmp-lobby-title"><i class="cbmp-dot"></i><span><b id="onlineUsersCount">—</b> ONLINE</span></div>
+                  <div id="onlineLobbyStatus" class="cbmp-lobby-meta">Connecting to multiplayer lobby…</div>
+                </div>
+                <button id="randomMatchBtn" type="button" disabled>⚔ RANDOM MATCH 1V1</button>
+              </div>
+          '''
+          replace_once(title, title + lobby, 'battle setup title')
+
+          overlays = r'''
+          <div id="matchmakingOverlay" role="dialog" aria-modal="true" aria-labelledby="matchmakingTitle">
+            <div class="cbmp-panel">
+              <div class="cbmp-kicker">COFFEE BATTLES · ONLINE 1V1</div>
+              <h1 id="matchmakingTitle">SEARCHING FOR OPPONENT</h1>
+              <div id="matchmakingStatus">Joining the random queue…</div>
+              <div id="matchmakingSearchLine" class="cbmp-searchline">
+                <div class="cbmp-spinner" aria-hidden="true"></div>
+                <div id="matchmakingElapsed">00:00</div>
+              </div>
+              <div id="matchSideBadge"></div>
+              <div id="matchIdText"></div>
+              <div class="cbmp-actions">
+                <button id="cancelMatchBtn" type="button">CANCEL</button>
+                <button id="continueMatchedBtn" type="button" hidden>CONTINUE · DEV</button>
+              </div>
+              <div id="matchmakingDevNote" class="cbmp-note">MVP: guest auth + queue + BLUE/RED pairing. Shared deployment and battle-state sync come next.</div>
+            </div>
+          </div>
+
+          <div id="aiFallbackOverlay" role="dialog" aria-modal="true" aria-labelledby="aiFallbackTitle">
+            <div class="cbmp-panel">
+              <div class="cbmp-kicker">NO MATCH AFTER 60 SECONDS</div>
+              <h2 id="aiFallbackTitle">PLAY AGAINST AI?</h2>
+              <div id="aiFallbackText">Keep searching for a player, or leave the queue and start immediately against the AI.</div>
+              <div class="cbmp-actions">
+                <button id="keepSearchingBtn" type="button">KEEP SEARCHING</button>
+                <button id="playAiFallbackBtn" type="button">PLAY VS AI</button>
+              </div>
+            </div>
+          </div>
+
+          '''
+          replace_once('\n<div id="battleEndOverlay"', '\n' + overlays + '<div id="battleEndOverlay"', 'battle end anchor')
+
+          replace_once("      State.battle.playerSide = 'blue';", "      State.battle.playerSide = window.__CB_MULTIPLAYER_SIDE__ || 'blue';", 'player side resolver')
+
+          multiplayer_script = r'''
+          <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+          <script>
+          (() => {
+            'use strict';
+            const SUPABASE_URL = 'https://fnmvntfpaenhjeuecfyj.supabase.co';
+            const SUPABASE_KEY = 'sb_publishable_zu2ZSLE2UR2w16FFbrTobA_Kqg-WdBh';
+            const $ = id => document.getElementById(id);
+            const UI = {
+              badge:$('onlineUsersBadge'), headerCount:$('headerOnlineCount'), lobbyTitle:$('onlineLobbyTitle'),
+              onlineCount:$('onlineUsersCount'), lobbyStatus:$('onlineLobbyStatus'), random:$('randomMatchBtn'),
+              matchOverlay:$('matchmakingOverlay'), matchTitle:$('matchmakingTitle'), matchStatus:$('matchmakingStatus'),
+              searchLine:$('matchmakingSearchLine'), elapsed:$('matchmakingElapsed'), side:$('matchSideBadge'),
+              matchId:$('matchIdText'), cancel:$('cancelMatchBtn'), proceed:$('continueMatchedBtn'), note:$('matchmakingDevNote'),
+              fallback:$('aiFallbackOverlay'), keep:$('keepSearchingBtn'), ai:$('playAiFallbackBtn')
+            };
+
+            let client = null, user = null, presenceChannel = null, queueChannel = null;
+            let searching = false, matched = false, matchedRow = null, startedAt = 0;
+            let elapsedTimer = null, pollTimer = null, fallbackTimer = null;
+
+            function setConnected(text, connected=false){
+              UI.lobbyStatus.textContent = text;
+              UI.lobbyTitle.classList.toggle('connected', connected);
+              UI.badge.classList.toggle('connected', connected);
+            }
+            function updateOnlineCount(){
+              if (!presenceChannel) return;
+              const count = Object.keys(presenceChannel.presenceState() || {}).length;
+              UI.onlineCount.textContent = String(count);
+              UI.headerCount.textContent = String(count);
+            }
+            function formatElapsed(){
+              const sec = Math.max(0, Math.floor((performance.now() - startedAt) / 1000));
+              return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+            }
+            function resetMatchUI(){
+              UI.matchTitle.textContent = 'SEARCHING FOR OPPONENT';
+              UI.matchStatus.textContent = 'Joining the random queue…';
+              UI.elapsed.textContent = '00:00';
+              UI.searchLine.style.display = 'flex';
+              UI.side.className = '';
+              UI.side.textContent = '';
+              UI.matchId.textContent = '';
+              UI.proceed.hidden = true;
+              UI.cancel.textContent = 'CANCEL';
+              UI.note.textContent = 'MVP: guest auth + queue + BLUE/RED pairing. Shared deployment and battle-state sync come next.';
+            }
+            function stopTimers(){
+              clearInterval(elapsedTimer); elapsedTimer = null;
+              clearInterval(pollTimer); pollTimer = null;
+              clearTimeout(fallbackTimer); fallbackTimer = null;
+            }
+            async function stopQueueChannel(){
+              if (queueChannel && client) await client.removeChannel(queueChannel);
+              queueChannel = null;
+            }
+            async function leaveQueue(){
+              if (!client) return;
+              const { error } = await client.rpc('leave_matchmaking');
+              if (error) console.warn('[MATCHMAKING] leave_matchmaking', error);
+            }
+            function armFallback(){
+              clearTimeout(fallbackTimer);
+              fallbackTimer = setTimeout(() => {
+                if (searching && !matched) UI.fallback.classList.add('open');
+              }, 60000);
+            }
+            async function subscribeQueue(){
+              if (!client || !user) return;
+              await stopQueueChannel();
+              queueChannel = client.channel(`matchmaking-${user.id}`)
+                .on('postgres_changes', {
+                  event:'UPDATE', schema:'public', table:'matchmaking_queue', filter:`user_id=eq.${user.id}`
+                }, () => checkMatch())
+                .subscribe();
+            }
+            function found(row){
+              if (matched) return;
+              searching = false; matched = true; matchedRow = row;
+              stopTimers(); stopQueueChannel();
+              UI.fallback.classList.remove('open');
+              UI.matchTitle.textContent = 'MATCH FOUND';
+              UI.matchStatus.textContent = 'Opponent paired. Server side assignment is ready.';
+              UI.searchLine.style.display = 'none';
+              const side = row.player_side === 'red' ? 'red' : 'blue';
+              UI.side.className = side;
+              UI.side.textContent = `YOU ARE ${side.toUpperCase()}`;
+              UI.matchId.textContent = `MATCH ${row.match_id}`;
+              UI.proceed.hidden = false;
+              UI.cancel.textContent = 'LEAVE MATCH';
+              UI.note.textContent = 'CONTINUE opens the current battle lab on your assigned side. Shared deployment and orders are the next multiplayer layer.';
+            }
+            async function checkMatch(){
+              if (!searching || matched || !client) return;
+              const { data, error } = await client.rpc('find_random_match');
+              if (error){
+                console.error('[MATCHMAKING] find_random_match', error);
+                UI.matchStatus.textContent = 'Matchmaking error · retrying automatically…';
+                return;
+              }
+              const row = Array.isArray(data) ? data[0] : data;
+              if (!row) return;
+              if (row.match_id) found(row);
+              else UI.matchStatus.textContent = 'In queue · looking for the first available opponent';
+            }
+            async function startSearch(){
+              if (searching || matched || !client || !user) return;
+              window.__CB_MULTIPLAYER_SIDE__ = null;
+              searching = true; matched = false; matchedRow = null;
+              startedAt = performance.now();
+              resetMatchUI();
+              UI.matchOverlay.classList.add('open');
+              elapsedTimer = setInterval(() => UI.elapsed.textContent = formatElapsed(), 250);
+              pollTimer = setInterval(checkMatch, 4000);
+              armFallback();
+              await subscribeQueue();
+              await checkMatch();
+            }
+            async function cancelMatch(){
+              if (!searching && !matched) { UI.matchOverlay.classList.remove('open'); return; }
+              stopTimers(); await stopQueueChannel(); await leaveQueue();
+              searching = false; matched = false; matchedRow = null;
+              window.__CB_MULTIPLAYER_SIDE__ = null;
+              UI.fallback.classList.remove('open');
+              UI.matchOverlay.classList.remove('open');
+            }
+            function continueSearching(){
+              if (!searching || matched) return;
+              UI.fallback.classList.remove('open');
+              armFallback();
+              UI.matchStatus.textContent = 'Extended search · staying in queue';
+            }
+            async function playAI(){
+              if (!searching || matched) return;
+              stopTimers(); await stopQueueChannel(); await leaveQueue();
+              searching = false; matched = false; matchedRow = null;
+              window.__CB_MULTIPLAYER_SIDE__ = null;
+              UI.fallback.classList.remove('open');
+              UI.matchOverlay.classList.remove('open');
+              window.__COFFEE_BATTLES_DEBUG__?.BattleSetup?.closeAndCreate?.();
+            }
+            function continueMatch(){
+              if (!matched || !matchedRow) return;
+              const side = matchedRow.player_side === 'red' ? 'red' : 'blue';
+              window.__CB_MULTIPLAYER_SIDE__ = side;
+              matched = false;
+              UI.matchOverlay.classList.remove('open');
+              window.__COFFEE_BATTLES_DEBUG__?.BattleSetup?.closeAndCreate?.();
+            }
+
+            async function bootstrap(){
+              try{
+                if (!window.supabase?.createClient) throw new Error('Supabase client unavailable');
+                let tabId = sessionStorage.getItem('cb-mp-tab-id');
+                if (!tabId){ tabId = crypto.randomUUID(); sessionStorage.setItem('cb-mp-tab-id', tabId); }
+                client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                  auth:{ storage:sessionStorage, storageKey:`cb-mp-auth-${tabId}`, persistSession:true, autoRefreshToken:true, detectSessionInUrl:false }
+                });
+                let { data:{ session }, error } = await client.auth.getSession();
+                if (error) throw error;
+                if (!session){
+                  const signIn = await client.auth.signInAnonymously();
+                  if (signIn.error) throw signIn.error;
+                  session = signIn.data.session;
+                }
+                if (!session?.user) throw new Error('Guest session unavailable');
+                user = session.user;
+                if (client.realtime?.setAuth && session.access_token) client.realtime.setAuth(session.access_token);
+                setConnected('Guest ready · connecting realtime lobby…');
+                presenceChannel = client.channel('coffee-battles-online', { config:{ presence:{ key:user.id } } });
+                presenceChannel
+                  .on('presence',{event:'sync'},updateOnlineCount)
+                  .on('presence',{event:'join'},updateOnlineCount)
+                  .on('presence',{event:'leave'},updateOnlineCount)
+                  .subscribe(async status => {
+                    if (status === 'SUBSCRIBED'){
+                      await presenceChannel.track({ user_id:user.id, online_at:new Date().toISOString() });
+                      updateOnlineCount();
+                      setConnected(`Lobby connected · guest ${user.id.slice(0,8)}`, true);
+                      UI.random.disabled = false;
+                    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){
+                      setConnected('Realtime unavailable · reconnecting automatically…');
+                    }
+                  });
+              }catch(err){
+                console.error('[MULTIPLAYER] bootstrap', err);
+                setConnected('Multiplayer offline · local battle remains available');
+                UI.random.disabled = true;
+              }
+            }
+
+            UI.random.addEventListener('click', startSearch);
+            UI.cancel.addEventListener('click', cancelMatch);
+            UI.keep.addEventListener('click', continueSearching);
+            UI.ai.addEventListener('click', playAI);
+            UI.proceed.addEventListener('click', continueMatch);
+            bootstrap();
+          })();
+          </script>
+          '''
+          replace_once('\n</body>', '\n' + multiplayer_script + '\n</body>', 'body close')
+
+          path.write_text(s, encoding='utf-8')
+          print('Multiplayer shell merged into', path)
+          PY
+
+      - name: Validate merged HTML markers
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s = Path('COFFEE_BATTLES.html').read_text(encoding='utf-8')
+          required = [
+            'id="randomMatchBtn"', 'id="onlineUsersBadge"', 'id="matchmakingOverlay"',
+            'id="aiFallbackOverlay"', "client.rpc('find_random_match')", "client.rpc('leave_matchmaking')",
+            "window.__CB_MULTIPLAYER_SIDE__ || 'blue'", '@supabase/supabase-js@2'
+          ]
+          missing = [x for x in required if x not in s]
+          if missing: raise SystemExit('Missing markers: ' + repr(missing))
+          if s.count('id="randomMatchBtn"') != 1: raise SystemExit('Duplicate multiplayer UI detected')
+          print('Validation OK; bytes:', len(s.encode('utf-8')))
+          PY
+
+      - name: Commit merged game and remove one-shot workflow
+        shell: bash
+        run: |
+          rm -f .github/workflows/apply-multiplayer-shell.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add COFFEE_BATTLES.html .github/workflows/apply-multiplayer-shell.yml
+          git commit -m "feat: add Supabase random 1v1 matchmaking shell"
+          git push origin HEAD:feat/multiplayer-shell
