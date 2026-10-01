@@ -5,7 +5,7 @@
   if (!D) throw new Error('COFFEE BATTLES debug API non disponibile.');
 
   const {
-    State, Units, ArmyAI, Simulation, CFG,
+    State, Random, Units, ArmyAI, Simulation, CFG,
     Battle, BattleSetup, Deployment, DoctrineEngine
   } = D;
 
@@ -15,7 +15,7 @@
   const COAST_MODES = new Set(['random','none','gulf','landing']);
 
   const SimLab = {
-    version: '0.1',
+    version: '0.3',
     running: false,
     batchRunning: false,
     stopRequested: false,
@@ -40,17 +40,6 @@
       yieldEvery: 1
     }),
 
-    rng(seed = 1) {
-      let a = (Number(seed) || 1) >>> 0;
-      return function mulberry32() {
-        a |= 0;
-        a = a + 0x6D2B79F5 | 0;
-        let t = Math.imul(a ^ a >>> 15, 1 | a);
-        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-        return ((t ^ t >>> 14) >>> 0) / 4294967296;
-      };
-    },
-
     normalizeOptions(input = {}) {
       const o = { ...this.DEFAULTS, ...input };
       o.points = BattleSetup.sanitizePoints(o.points);
@@ -73,7 +62,7 @@
     beginRuntime(o) {
       const logEl = document.getElementById('log');
       const saved = {
-        random: Math.random,
+        randomState: Random.capture(),
         updateVictoryBar: Battle.updateVictoryBar,
         showResult: Battle.showResult,
         armyEnabled: State.armyAI.enabled,
@@ -82,7 +71,7 @@
         logShadowed: false
       };
 
-      Math.random = this.rng(o.seed);
+      Random.setSeed(o.seed);
       this._endLead = null;
 
       if (o.silent && logEl) {
@@ -112,7 +101,7 @@
     },
 
     endRuntime(saved) {
-      Math.random = saved.random;
+      Random.restore(saved.randomState);
       Battle.updateVictoryBar = saved.updateVictoryBar;
       Battle.showResult = saved.showResult;
       State.armyAI.enabled = saved.armyEnabled;
@@ -216,6 +205,7 @@
     opposite(side) { return side === 'blue' ? 'red' : 'blue'; },
 
     issueBothSides() {
+      Simulation.canonicalizeUnitOrder?.();
       const report = { new:0, same:0, none:0, skip:0 };
       for (const u of State.units) {
         if (!u.status.alive) continue;
@@ -278,8 +268,8 @@
       return null;
     },
 
-    collectResult(o, meta, aiRefreshCount, wallMs) {
-      const truncated = !State.battle.ended && State.simTime >= o.maxTime - o.dt * 0.51;
+    collectResult(o, meta, aiRefreshCount, wallMs, driverTime = State.simTime) {
+      const truncated = !State.battle.ended && driverTime >= o.maxTime - 1e-9;
       const timedOut = /Tempo massimo/i.test(this._endLead || '');
       return {
         simVersion: this.version,
@@ -297,6 +287,8 @@
         truncated,
         stuck: truncated && o.maxTime >= CFG.BATTLE_TIME_LIMIT_S,
         simTime: Number(State.simTime.toFixed(3)),
+        driverTime: Number(driverTime.toFixed(3)),
+        fixedDt: Number((CFG.SIM_FIXED_DT || o.dt).toFixed(9)),
         wallMs: Number(wallMs.toFixed(1)),
         speedFactor: wallMs > 0 ? Number((State.simTime / (wallMs / 1000)).toFixed(1)) : null,
         collapse: { ...State.battle.armyCollapse },
@@ -322,27 +314,35 @@
 
       try {
         const meta = this.setupBattle(o);
-        let nextAI = 0;
+        let nextAI = o.aiRefresh;
         let aiRefreshCount = 0;
+        let driverTime = 0;
 
         this.issueBothSides();
         aiRefreshCount++;
-        nextAI = o.aiRefresh;
 
-        while (!State.battle.ended && State.simTime + 1e-9 < o.maxTime) {
-          const dt = Math.min(o.dt, o.maxTime - State.simTime);
-          State.simTime += dt;
+        const previousPreStepHook = Simulation.preStepHook || null;
+        Simulation.setPreStepHook?.(() => {
+          if (State.simTime + 1e-9 < nextAI) return;
+          this.issueBothSides();
+          aiRefreshCount++;
+          while (nextAI <= State.simTime + 1e-9) nextAI += o.aiRefresh;
+        });
 
-          if (State.simTime + 1e-9 >= nextAI) {
-            this.issueBothSides();
-            aiRefreshCount++;
-            while (nextAI <= State.simTime + 1e-9) nextAI += o.aiRefresh;
+        try {
+          const fixedDt = CFG.SIM_FIXED_DT || o.dt;
+          // Stop on canonical simulation time, not on driver elapsed time.
+          // This guarantees the final fixed tick is executed identically at
+          // 20/30/60 Hz (e.g. the battle-limit tick at exactly 600 s).
+          while (!State.battle.ended && State.simTime + fixedDt * 0.5 < o.maxTime) {
+            driverTime += o.dt;
+            Simulation.advance(o.dt);
           }
-
-          Simulation.update(dt);
+        } finally {
+          Simulation.setPreStepHook?.(previousPreStepHook);
         }
 
-        const result = this.collectResult(o, meta, aiRefreshCount, performance.now() - wallStart);
+        const result = this.collectResult(o, meta, aiRefreshCount, performance.now() - wallStart, driverTime);
         this.lastResult = result;
         return result;
       } finally {
@@ -477,7 +477,7 @@
         coreNoTerrain: "await __COFFEE_BATTLES_SIM__.runBatch(100, {points:1000, terrain:false})",
         stop: "__COFFEE_BATTLES_SIM__.stop()",
         export: "__COFFEE_BATTLES_SIM__.exportJSON()",
-        note: 'Il motore usa dt fisso; il loop gira non throttled alla massima velocità CPU. speedFactor misura il rapporto rispetto al realtime.'
+        note: 'La fisica usa CFG.SIM_FIXED_DT fisso; option dt controlla solo la cadenza del driver headless. Il loop gira non throttled alla massima velocità CPU.'
       };
     }
   };

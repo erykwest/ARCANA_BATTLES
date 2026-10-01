@@ -1294,8 +1294,30 @@ const I18n = {
   selectedLabelKeys:Object.freeze({
     'Unità':'selected.unit','Selezione':'selected.selection','Schieramento':'selected.side','Tipo':'selected.type','Ordine':'selected.order','Lock-on':'selected.lock','Attacco terminale':'selected.finalAttack','Target AI':'selected.aiTarget','Path obstacle':'selected.path','Approccio':'selected.approach','Inseguimento':'selected.pursuit','Vita [V]':'selected.health','Energia [E]':'selected.energy','Brain [B]':'selected.brain','Morale':'selected.morale','Shock [S]':'selected.shock','Combattimento [C]':'selected.combat','Armor [AR]':'selected.armor','Stance':'selected.stance','Formazione':'selected.formation','Fronte [F]':'selected.front','Fronte contatto [Fc]':'selected.contactFront','Profondità':'selected.depth','Movimento [M]':'selected.movement','Carica':'selected.charge','Override carica':'selected.chargeOverride','Ritirata/ROUT':'selected.retreatRout','Consumo mov.':'selected.moveCost','Consumo carica':'selected.chargeCost','Mira':'selected.aim','Gittata':'selected.range','Fuoco a volontà':'selected.fireAtWill','Target tiro':'selected.shotTarget','Timer tiro':'selected.shotTimer','Cadenza':'selected.rate','Costo tiro':'selected.shotCost','Manovra':'selected.maneuver','Stato':'selected.status','Ingaggi':'selected.engagements','Slot outbound':'selected.outboundSlot'
   }),
+  storageSafe:{
+    memory:new Map(),
+    get(key){
+      try{
+        const value=localStorage.getItem(key);
+        if(value!==null)this.memory.set(key,value);
+        return value;
+      }catch(_){
+        return this.memory.get(key)??null;
+      }
+    },
+    set(key,value){
+      const text=String(value);
+      this.memory.set(key,text);
+      try{
+        localStorage.setItem(key,text);
+        return true;
+      }catch(_){
+        return false;
+      }
+    }
+  },
   detect(){
-    const saved=localStorage.getItem(this.STORAGE_KEY);
+    const saved=this.storageSafe.get(this.STORAGE_KEY);
     if(saved&&I18N.languages[saved])return saved;
     return 'en';
   },
@@ -1351,7 +1373,7 @@ const I18n = {
   },
   set(lang,persist=true){
     this.current=I18N.languages[lang]?lang:'en';
-    if(persist)localStorage.setItem(this.STORAGE_KEY,this.current);
+    if(persist)this.storageSafe.set(this.STORAGE_KEY,this.current);
     this.apply();
     BattleSetup.sync();
     Deployment.updateUI();
@@ -1527,6 +1549,7 @@ I18n.current=I18n.detect();
     ARMY_AI_REFRESH_S: 5,
     VISION_RANGE_U: 20,
     BATTLE_TIME_LIMIT_S: 600,
+    SIM_FIXED_DT: 1 / 30,
     FORMATIONS: Object.freeze({
       base:   Object.freeze({ label: 'BASE',    front: 3, depth: 2 }),
       column: Object.freeze({ label: 'COLONNA', front: 2, depth: 3 }),
@@ -1589,6 +1612,61 @@ I18n.current=I18n.detect();
     })
   });
 
+
+  // ============================================================
+  // GAMEPLAY RNG — explicit runtime-owned random source
+  // ============================================================
+  const Random = {
+    _systemSource: Math.random.bind(Math),
+    _source: null,
+    _seed: null,
+
+    next() {
+      return (this._source || this._systemSource)();
+    },
+
+    create(seed = 1) {
+      let a = (Number(seed) || 1) >>> 0;
+      return function mulberry32() {
+        a |= 0;
+        a = a + 0x6D2B79F5 | 0;
+        let t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    },
+
+    setSeed(seed = 1) {
+      const normalized = (Number(seed) || 1) >>> 0;
+      this._seed = normalized;
+      this._source = this.create(normalized);
+      return normalized;
+    },
+
+    useSystem() {
+      this._seed = null;
+      this._source = this._systemSource;
+    },
+
+    capture() {
+      return { source: this._source, seed: this._seed };
+    },
+
+    restore(snapshot = null) {
+      if (snapshot && typeof snapshot.source === 'function') {
+        this._source = snapshot.source;
+        this._seed = snapshot.seed ?? null;
+      } else {
+        this.useSystem();
+      }
+    },
+
+    get seed() {
+      return this._seed;
+    }
+  };
+  Random.useSystem();
+
   const worldPx = () => ({ w: CFG.WORLD_W_U * CFG.U, h: CFG.WORLD_H_U * CFG.U });
   const battlefieldPx = () => ({
     x: CFG.BORDER_U * CFG.U,
@@ -1606,6 +1684,7 @@ I18n.current=I18n.detect();
     primaryId: null,
     selectedSide: 'blue',
     simTime: 0,
+    simAccumulator: 0,
     lastFrameAt: performance.now(),
     timeScale: 1,
     combatClocks: new Map(),
@@ -1717,9 +1796,32 @@ I18n.current=I18n.detect();
       return State.battle.playerSide || State.selectedSide || 'blue';
     },
 
+    _visibilityPairCache:new Map(),
+    _visibilityStats:{ pairChecks:0, cacheHits:0, cacheMisses:0, losChecks:0 },
+
+    resetVisibilityCache(resetStats = false) {
+      this._visibilityPairCache.clear();
+      if (resetStats) {
+        this._visibilityStats = { pairChecks:0, cacheHits:0, cacheMisses:0, losChecks:0 };
+      }
+    },
+
+    visibilityStats() {
+      const s = this._visibilityStats;
+      return {
+        pairChecks:s.pairChecks,
+        cacheHits:s.cacheHits,
+        cacheMisses:s.cacheMisses,
+        losChecks:s.losChecks,
+        cacheSize:this._visibilityPairCache.size,
+        hitRate:s.pairChecks ? s.cacheHits / s.pairChecks : 0
+      };
+    },
+
     reset() {
       State.intel.blue = new Map();
       State.intel.red = new Map();
+      this.resetVisibilityCache(true);
       this.update();
     },
 
@@ -1729,14 +1831,48 @@ I18n.current=I18n.detect();
       return Units.alive(side);
     },
 
+    viewerCanSee(viewer, enemy) {
+      const vc = Geometry.center(viewer);
+      const ec = Geometry.center(enemy);
+      const key = viewer.id + '>' + enemy.id;
+      const cached = this._visibilityPairCache.get(key);
+      const stats = this._visibilityStats;
+      stats.pairChecks++;
+
+      // Visibility depends on the two current geometric centers and static
+      // battlefield terrain. Geometry.center already captures HP/formations,
+      // including transitions that evolve with State.simTime.
+      if (cached &&
+          cached.vx === vc.x && cached.vy === vc.y &&
+          cached.ex === ec.x && cached.ey === ec.y) {
+        stats.cacheHits++;
+        return cached.visible;
+      }
+
+      stats.cacheMisses++;
+      const d = Math.hypot(vc.x - ec.x, vc.y - ec.y) / CFG.U;
+      let visible = false;
+      if (d <= CFG.VISION_RANGE_U) {
+        if (d <= 1.5) {
+          visible = true;
+        } else {
+          stats.losChecks++;
+          visible = Terrain.lineOfSight(viewer, enemy);
+        }
+      }
+
+      this._visibilityPairCache.set(key, {
+        vx:vc.x, vy:vc.y, ex:ec.x, ey:ec.y, visible
+      });
+      return visible;
+    },
+
     canSeeNow(side, enemy) {
       if (!enemy?.status?.alive) return false;
       if (!this.active() || enemy.side === side) return true;
 
       for (const viewer of this.sources(side)) {
-        const d = Geometry.distanceUnits(viewer, enemy);
-        if (d > CFG.VISION_RANGE_U) continue;
-        if (d <= 1.5 || Terrain.lineOfSight(viewer, enemy)) return true;
+        if (this.viewerCanSee(viewer, enemy)) return true;
       }
       return false;
     },
@@ -3950,7 +4086,7 @@ I18n.current=I18n.detect();
 
 
   const Terrain = {
-    rand(min, max) { return min + Math.random() * (max - min); },
+    rand(min, max) { return min + Random.next() * (max - min); },
 
     makeBlob(rx, ry, points = 18, jitter = 0.18) {
       const pts = [];
@@ -4033,7 +4169,7 @@ I18n.current=I18n.detect();
           if (d >= minPerimeterPoints) pairs.push([anchors[i], anchors[j]]);
         }
       }
-      const pair = pairs[Math.floor(Math.random() * pairs.length)];
+      const pair = pairs[Math.floor(Random.next() * pairs.length)];
       return {
         start: { ...pair[0] },
         end: { ...pair[1] },
@@ -4230,7 +4366,7 @@ I18n.current=I18n.detect();
       for(let x=z.minX+2*CFG.U;x<=z.maxX-2*CFG.U;x+=1.5*CFG.U) xs.push(x);
       for(let y=z.minY+2*CFG.U;y<=z.maxY-2*CFG.U;y+=1.5*CFG.U) ys.push(y);
       // Ordine pseudocasuale ma ogni cella viene provata.
-      xs.sort(()=>Math.random()-.5); ys.sort(()=>Math.random()-.5);
+      xs.sort(()=>Random.next()-.5); ys.sort(()=>Random.next()-.5);
       for(const y of ys) for(const x of xs) {
         for(let a=0;a<8;a++) {
           const t=factory({x,y},a*Math.PI/8);
@@ -4732,9 +4868,9 @@ I18n.current=I18n.detect();
     GENERATION_PHASES: Object.freeze(['Coast','Orography','Hydrology','Settlement','Buildings','Roads','Crossings','Tactical','Fields']),
 
     labels: null,
-    rand(min, max) { return min + Math.random() * (max - min); },
+    rand(min, max) { return min + Random.next() * (max - min); },
     randi(min, max) { return Math.floor(this.rand(min, max + 1)); },
-    pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; },
+    pick(arr) { return arr[Math.floor(Random.next() * arr.length)]; },
     clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); },
     COAST_MAX_LANDING_DEPTH_U: CFG.DEPLOYMENT_DEPTH_U * .5,
 
@@ -4821,7 +4957,7 @@ I18n.current=I18n.detect();
     makeWatercourse(type = 'stream', id = null) {
       const b = Geometry.worldBounds();
       const bw = b.maxX - b.minX, bh = b.maxY - b.minY;
-      const horizontal = type === 'river' ? true : Math.random() < .5;
+      const horizontal = type === 'river' ? true : Random.next() < .5;
       const controls = [];
       if (horizontal) {
         const y0 = this.rand(b.minY + bh * .38, b.minY + bh * .62);
@@ -4901,7 +5037,7 @@ makeField(id,x,y,wU,hU,angle=0){return{id,type:'field',x,y,angle,w:wU*CFG.U,h:hU
 makeFieldWalls(field){
   const hw=field.w/2,hh=field.h/2;
   const adjacent=[[0,1],[1,2],[2,3],[3,0]],opposite=[[0,2],[1,3]];
-  const chosen=Math.random()<.72?this.pick(adjacent):this.pick(opposite);
+  const chosen=Random.next()<.72?this.pick(adjacent):this.pick(opposite);
   const defs=[
     {p:{x:0,y:-hh},len:field.w,a:field.angle},
     {p:{x:hw,y:0},len:field.h,a:field.angle+Math.PI/2},
@@ -5005,13 +5141,13 @@ makeLandingShips(sea,count){
 
 makeCoastScenario(){
   const forced=State.battleSetup.coastMode;
-  const mode=(forced==='gulf'||forced==='landing')?forced:(Math.random()<.5?'gulf':'landing');
+  const mode=(forced==='gulf'||forced==='landing')?forced:(Random.next()<.5?'gulf':'landing');
   const b=Geometry.battlefieldBounds(),wb=Geometry.worldBounds(),U=CFG.U,phase=this.rand(0,Math.PI*2);
   const coast=[];
   let points=[],side=null,attackerSide=null;
 
   if(mode==='gulf'){
-    side=Math.random()<.5?'left':'right';
+    side=Random.next()<.5?'left':'right';
     const n=16;
     for(let i=0;i<=n;i++){
       const y=wb.minY+(wb.maxY-wb.minY)*(i/n);
@@ -5070,7 +5206,7 @@ edgePointsThrough(point,angle){
   hits.sort((a,b)=>a.t-b.t); return hits.length>=2?[hits[0],hits[hits.length-1]]:[{x:b.minX,y:point.y},{x:b.maxX,y:point.y}];
 },
 makeVillagePlan(spawn){
-  const baseAngle=this.rand(-Math.PI,Math.PI),topology=Math.random()<.5?'cross':'T',branchSign=Math.random()<.5?-1:1;
+  const baseAngle=this.rand(-Math.PI,Math.PI),topology=Random.next()<.5?'cross':'T',branchSign=Random.next()<.5?-1:1;
   const junctionDelta=this.rand(40,60)*Math.PI/180;
   const branchAngle=Geometry.normalizeAngle(baseAngle+branchSign*junctionDelta);
   return {spawn:{...spawn},baseAngle,branchAngle,topology,branchSign,junctionAngleDeg:junctionDelta*180/Math.PI};
@@ -5336,7 +5472,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     },
 
     generateHydrology(ctx) {
-      if(ctx.biome==='plains'&&Math.random()<.45)ctx.placed.push(this.makeWatercourseAvoiding(ctx.placed,'stream','stream-1'));
+      if(ctx.biome==='plains'&&Random.next()<.45)ctx.placed.push(this.makeWatercourseAvoiding(ctx.placed,'stream','stream-1'));
       else if(ctx.biome==='valley'||ctx.biome==='forest'||ctx.biome==='mountains')ctx.placed.push(this.makeWatercourseAvoiding(ctx.placed,'stream','stream-1'));
       else if(ctx.biome==='river'){
         ctx.river=this.makeWatercourseAvoiding(ctx.placed,'river','river-1');
@@ -5425,7 +5561,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       for(let i=0;i<count;i++){
         let field=null;
         for(let tries=0;tries<320;tries++){
-          const p=this.randomCenter(0),swap=Math.random()<.5;
+          const p=this.randomCenter(0),swap=Random.next()<.5;
           const a=this.rand(4,10),b=this.rand(6,12),wU=swap?b:a,hU=swap?a:b;
           const candidate=this.makeField(`field-${i+1}`,p.x,p.y,wU,hU,this.rand(-Math.PI,Math.PI));
           if(!this.fitsZone(candidate)) continue;
@@ -6630,7 +6766,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     BATTLE_DIE_FACES: Object.freeze([1,2,2,3,3,3,4,4,4,5,5,6]),
 
     battleDie() {
-      return this.BATTLE_DIE_FACES[Math.floor(Math.random() * this.BATTLE_DIE_FACES.length)];
+      return this.BATTLE_DIE_FACES[Math.floor(Random.next() * this.BATTLE_DIE_FACES.length)];
     },
 
     effectiveCombat(u, pair = null) {
@@ -6681,7 +6817,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
 
     attackCountFromRate(rate) {
       const whole = Math.floor(rate);
-      return whole + (Math.random() < rate - whole ? 1 : 0);
+      return whole + (Random.next() < rate - whole ? 1 : 0);
     },
 
     resolveContests(a, b, pair, count, canDamageA = true, canDamageB = true) {
@@ -8280,6 +8416,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       State.deployment.drag = null;
       State.deployment.snapshot = null;
       State.simTime = 0;
+      State.simAccumulator = 0;
       State.combatClocks.clear();
       State.projectiles = [];
       State.view = { scale: 1, x: 0, y: 0 };
@@ -8504,15 +8641,15 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       })
     }),
 
-    rand(min, max) { return min + Math.random() * (max - min); },
+    rand(min, max) { return min + Random.next() * (max - min); },
     clamp01(v) { return Math.max(0, Math.min(1, v)); },
 
     weightedPick(items, weightFn) {
       if (!items.length) return null;
       const weights = items.map(x => Math.max(0, Number(weightFn(x)) || 0));
       const total = weights.reduce((a,b) => a+b, 0);
-      if (total <= 0) return items[Math.floor(Math.random() * items.length)];
-      let r = Math.random() * total;
+      if (total <= 0) return items[Math.floor(Random.next() * items.length)];
+      let r = Random.next() * total;
       for (let i = 0; i < items.length; i++) {
         r -= weights[i];
         if (r <= 0) return items[i];
@@ -8580,7 +8717,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
           const affordable = entries.filter(x => spent + x.spec.cost <= budget); if (!affordable.length) break;
           const currentLineShare = spent > 0 ? lineSpend/spent : 0;
           const pick = this.weightedPick(affordable, x => { const newType = counts[x.type] ? 1 : 1.45; const lineNeed = currentLineShare < minLineShare && this.roleValue(x.spec,'line') >= 0.5 ? 2.6 : 1; const saturation = 1 / (1 + counts[x.type]*0.22); return newType * lineNeed * saturation * this.rand(0.72,1.28); });
-          if (!pick) break; counts[pick.type]++; spent += pick.spec.cost; lineSpend += pick.spec.cost*this.roleValue(pick.spec,'line'); count++; if (spent >= budget*0.92 && Math.random() < 0.18) break;
+          if (!pick) break; counts[pick.type]++; spent += pick.spec.cost; lineSpend += pick.spec.cost*this.roleValue(pick.spec,'line'); count++; if (spent >= budget*0.92 && Random.next() < 0.18) break;
         }
         addCandidate(counts);
       }
@@ -8722,7 +8859,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     },
 
     deployComposition(side, types, chosen, battleRole) {
-      const strongFlank = Math.random() < 0.5 ? 'left' : 'right';
+      const strongFlank = Random.next() < 0.5 ? 'left' : 'right';
       const slots = this.gridSlots(side);
       const used = new Set();
       const sorted = [...types].sort((a,b) => {
@@ -8740,7 +8877,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
           .filter(slot => !used.has(slot.key))
           .map(slot => {
             const roleDepthBias = battleRole === 'attack' ? slot.frontness * 0.20 : (1-slot.frontness) * 0.20;
-            return { slot, score:this.slotScore(chosen.id, spec, slot, strongFlank) + roleDepthBias + Math.random()*0.03 };
+            return { slot, score:this.slotScore(chosen.id, spec, slot, strongFlank) + roleDepthBias + Random.next()*0.03 };
           })
           .sort((a,b) => b.score - a.score);
 
@@ -8786,7 +8923,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
 
       // I ruoli vengono risolti dal setup partita. Fallback solo per chiamate DEV dirette.
       if (!State.doctrine.roles.blue || !State.doctrine.roles.red) {
-        const attacker = Math.random() < 0.5 ? 'blue' : 'red';
+        const attacker = Random.next() < 0.5 ? 'blue' : 'red';
         State.doctrine.roles = {
           blue: attacker === 'blue' ? 'attack' : 'defend',
           red: attacker === 'red' ? 'attack' : 'defend'
@@ -8846,7 +8983,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
 
     resolveRoles() {
       let blueRole = State.battleSetup.role;
-      if (blueRole === 'random') blueRole = Math.random() < 0.5 ? 'attack' : 'defend';
+      if (blueRole === 'random') blueRole = Random.next() < 0.5 ? 'attack' : 'defend';
       const redRole = blueRole === 'attack' ? 'defend' : 'attack';
       State.doctrine.roles = { blue:blueRole, red:redRole };
       State.battle.playerSide = 'blue';
@@ -9646,6 +9783,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         State.primaryId = 'blue-1';
       }
       State.simTime = 0;
+      State.simAccumulator = 0;
       State.combatClocks.clear();
       State.projectiles = [];
       State.view = { scale: 1, x: 0, y: 0 };
@@ -9705,7 +9843,26 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       }
     },
 
-    update(dt) {
+    preStepHook: null,
+
+    canonicalizeUnitOrder() {
+      State.units.sort((a, b) => {
+        const ai = String(a?.id ?? '');
+        const bi = String(b?.id ?? '');
+        return ai < bi ? -1 : ai > bi ? 1 : 0;
+      });
+    },
+
+    setPreStepHook(fn = null) {
+      this.preStepHook = typeof fn === 'function' ? fn : null;
+      return this.preStepHook;
+    },
+
+    fixedStep(dt = CFG.SIM_FIXED_DT) {
+      // Canonical order makes pair resolution independent from insertion/reversal order.
+      this.canonicalizeUnitOrder();
+      if (this.preStepHook) this.preStepHook(dt);
+
       Intel.update();
       ArmyAI.update();
       State.units.forEach(Formations.update);
@@ -9737,12 +9894,34 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       Battle.checkTimeLimit();
     },
 
+    advance(elapsedDt) {
+      const elapsed = Math.max(0, Number(elapsedDt) || 0);
+      if (elapsed <= 0 || State.battle.ended) return 0;
+
+      const step = CFG.SIM_FIXED_DT;
+      State.simAccumulator += elapsed;
+      let steps = 0;
+
+      while (!State.battle.ended && State.simAccumulator + 1e-12 >= step) {
+        State.simAccumulator -= step;
+        if (Math.abs(State.simAccumulator) < 1e-12) State.simAccumulator = 0;
+        State.simTime += step;
+        this.fixedStep(step);
+        steps++;
+      }
+      return steps;
+    },
+
+    // Compatibility entry point for debug tooling. Physics remains fixed-step.
+    update(dt) {
+      return this.advance(dt);
+    },
+
     frame(now) {
       const realDt = Math.min(0.05, (now - State.lastFrameAt) / 1000);
       State.lastFrameAt = now;
       const dt = realDt * State.timeScale;
-      State.simTime += dt;
-      if (dt > 0) Simulation.update(dt);
+      if (dt > 0) Simulation.advance(dt);
       UI.updateSelectedInfo();
       Battle.updateVictoryBar();
       Renderer.draw();
@@ -9764,7 +9943,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
   Simulation.reset();
   View.resize();
   BattleSetup.open(true);
-  window.__COFFEE_BATTLES_DEBUG__ = { State, Units, Intel, Geometry, Terrain, AI, ArmyAI, Movement, Orders, Engagements, Collision, Simulation, Selection, CFG, Pathfinder, Combat, Morale, Resources, Battle, BattleSetup, Deployment, DoctrineEngine };
+  window.__COFFEE_BATTLES_DEBUG__ = { State, Random, Units, Intel, Geometry, Terrain, AI, ArmyAI, Movement, Orders, Engagements, Collision, Simulation, Selection, CFG, Pathfinder, Combat, Morale, Resources, Battle, BattleSetup, Deployment, DoctrineEngine };
   requestAnimationFrame(Simulation.frame);
 })();
 
