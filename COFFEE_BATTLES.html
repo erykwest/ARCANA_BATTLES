@@ -5781,6 +5781,79 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       }
     },
 
+    safeDrawFallback(error = null) {
+      if (error) {
+        console.error('[MAP RENDER] Terrain.draw failed, using safe fallback', error);
+        window.__CB_MAP_RENDER_ERROR__ = String(error?.stack || error?.message || error);
+      }
+      const all = Array.isArray(State.terrain) ? State.terrain : [];
+      for (const t of all) {
+        if (!t || !t.type) continue;
+        try {
+          ctx.save();
+          if (t.type === 'road' || t.type === 'river' || t.type === 'stream') {
+            const pts = t.samples || [];
+            if (pts.length > 1) {
+              ctx.lineCap = 'round';
+              ctx.lineJoin = 'round';
+              ctx.beginPath();
+              ctx.moveTo(pts[0].x, pts[0].y);
+              for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+              ctx.strokeStyle = t.edge || 'rgba(220,200,160,.9)';
+              ctx.lineWidth = (Number(t.width) || CFG.U) + (t.type === 'river' ? 5 : 3);
+              ctx.stroke();
+              ctx.strokeStyle = t.fill || '#806b4b';
+              ctx.lineWidth = Number(t.width) || CFG.U;
+              ctx.stroke();
+            }
+          } else if (t.type === 'sea' && Array.isArray(t.points) && t.points.length > 2) {
+            ctx.beginPath();
+            t.points.forEach((p,i) => i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y));
+            ctx.closePath();
+            ctx.fillStyle = t.fill || '#23505a';
+            ctx.fill();
+            ctx.strokeStyle = t.edge || '#86b3b5';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          } else if (['wall','field','building','bridge','ford','ship'].includes(t.type)) {
+            ctx.translate(Number(t.x)||0, Number(t.y)||0);
+            ctx.rotate(Number(t.angle)||0);
+            ctx.fillStyle = t.fill || 'rgba(140,120,90,.7)';
+            ctx.strokeStyle = t.edge || 'rgba(230,215,190,.9)';
+            ctx.lineWidth = 2;
+            const w = Math.max(1, Number(t.w)||CFG.U);
+            const h = Math.max(1, Number(t.h)||CFG.U);
+            ctx.fillRect(-w/2,-h/2,w,h);
+            ctx.strokeRect(-w/2,-h/2,w,h);
+          } else if ((t.type === 'hill' || t.type === 'rough') && Number.isFinite(t.rx) && Number.isFinite(t.ry)) {
+            ctx.beginPath();
+            ctx.ellipse(Number(t.x)||0, Number(t.y)||0, Math.max(1,t.rx), Math.max(1,t.ry), Number(t.angle)||0, 0, Math.PI*2);
+            ctx.fillStyle = t.fill || '#75603d';
+            ctx.strokeStyle = t.edge || '#aa8b57';
+            ctx.lineWidth = 2;
+            ctx.fill(); ctx.stroke();
+          } else if (['forest','pond','mountain','hill'].includes(t.type)) {
+            const pts = t.smoothBlob || t.blob || [];
+            if (pts.length > 2) {
+              ctx.translate(Number(t.x)||0, Number(t.y)||0);
+              ctx.rotate(Number(t.angle)||0);
+              ctx.beginPath();
+              pts.forEach((p,i) => i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y));
+              ctx.closePath();
+              ctx.fillStyle = t.fill || '#51603b';
+              ctx.strokeStyle = t.edge || '#82906a';
+              ctx.lineWidth = 2;
+              ctx.fill(); ctx.stroke();
+            }
+          }
+          ctx.restore();
+        } catch (itemError) {
+          try { ctx.restore(); } catch {}
+          console.error('[MAP RENDER] skipped terrain item', t?.id, t?.type, itemError);
+        }
+      }
+    },
+
     installTerrainAdapters() {
       if (Terrain.__mapEngineInstalled) return;
       Terrain.__mapEngineInstalled=true;
@@ -8586,7 +8659,11 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       ctx.translate(State.view.x, State.view.y);
       ctx.scale(State.view.scale, State.view.scale);
       this.battlefield(w, h);
-      Terrain.draw();
+      try {
+        Terrain.draw();
+      } catch (terrainError) {
+        MapEngine.safeDrawFallback(terrainError);
+      }
       this.grid(w, h);
       this.deploymentOverlay();
       const viewSide = Intel.viewSide();
