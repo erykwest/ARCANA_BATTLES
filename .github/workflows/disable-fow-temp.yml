@@ -1,0 +1,64 @@
+name: Temporarily disable FOW
+
+on:
+  push:
+    paths:
+      - '.github/workflows/disable-fow-temp.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Disable FOW
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('COFFEE_BATTLES.html')
+          s=p.read_text(encoding='utf-8')
+          old="""    active() {
+      // Deployment is a separate information phase: never render or query battle FOW here.
+      return !!State.battle.active &&
+        !State.deployment.active &&
+        !document.body.classList.contains('deployment-active');
+    },"""
+          new="""    active() {
+      // TEMP DEBUG: FOW disabled globally while multiplayer placement/map regressions are isolated.
+      return false;
+    },"""
+          if s.count(old)!=1:
+              raise SystemExit(f'Intel.active anchor mismatch: {s.count(old)}')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Validate
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('COFFEE_BATTLES.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>([\s\S]*?)</script>',s)
+          Path('/tmp/coffee-battles.js').write_text('\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/coffee-battles.js
+          grep -q "TEMP DEBUG: FOW disabled globally" COFFEE_BATTLES.html
+
+      - name: Commit
+        shell: bash
+        run: |
+          rm -f .github/workflows/disable-fow-temp.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add COFFEE_BATTLES.html .github/workflows/disable-fow-temp.yml
+          git commit -m "debug: temporarily disable fog of war"
+          git push origin main
