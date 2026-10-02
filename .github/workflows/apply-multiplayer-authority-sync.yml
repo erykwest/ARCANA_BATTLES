@@ -45,3 +45,5 @@ jobs:
           git add COFFEE_BATTLES.html .github/workflows
           git commit -m "fix: restore FOW and sync multiplayer battle authority"
           git push origin main
+
+# rerun after patch script added
