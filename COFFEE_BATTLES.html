@@ -8889,7 +8889,29 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       State.simTime = 0;
       State.combatClocks.clear();
       State.projectiles = [];
-      State.view = { scale: 1, x: 0, y: 0 };
+
+      // Deployment camera: fit the whole world instead of opening at raw 1:1.
+      // On shorter screens raw 1:1 cropped the player's deployment band off-screen,
+      // which looked like a missing deploy zone / empty generated battlefield.
+      const world = worldPx();
+      const stageW = Math.max(1, DOM.stage?.clientWidth || world.w);
+      const stageH = Math.max(1, DOM.stage?.clientHeight || world.h);
+      const pad = 12;
+      const fitScale = Math.min(
+        1,
+        Math.max(CFG.MIN_SCALE, (stageW - pad * 2) / world.w),
+        Math.max(CFG.MIN_SCALE, (stageH - pad * 2) / world.h)
+      );
+      State.view = {
+        scale: fitScale,
+        x: (stageW - world.w * fitScale) / 2,
+        y: (stageH - world.h * fitScale) / 2
+      };
+      if (DOM.stage) {
+        DOM.stage.scrollLeft = 0;
+        DOM.stage.scrollTop = 0;
+      }
+
       if (this.multiplayerActive() && Number.isFinite(Number(window.__CB_MULTIPLAYER_SETUP__?.map_seed))) {
         const originalRandom = Math.random;
         let t = (Number(window.__CB_MULTIPLAYER_SETUP__.map_seed) >>> 0) || 1;
@@ -8904,6 +8926,14 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       } else {
         MapEngine.generate(State.battleSetup.biome);
       }
+      console.info('[DEPLOYMENT MAP]', {
+        multiplayer:this.multiplayerActive(),
+        side:this.multiplayerSide(),
+        biome:State.battleSetup.resolvedBiome,
+        terrainCount:State.terrain.length,
+        mapSeed:window.__CB_MULTIPLAYER_SETUP__?.map_seed ?? null,
+        view:{...State.view}
+      });
       Battle.reset(false);
       if (this.multiplayerActive()) {
         State.battle.playerSide = this.multiplayerSide();
@@ -9026,7 +9056,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     beginCatalogDrag(type, e) {
       if (!State.deployment.active || this.multiplayerLocked()) return;
       const side = State.selectedSide;
-      if (State.battleSetup.mode === 'auto' && side !== 'blue') return;
+      if (State.battleSetup.mode === 'auto' && side !== 'blue' && !this.multiplayerActive()) return;
       const spec = this.spec(type);
       this.recount();
       if ((State.battleSetup.mirrorArmy && side === 'red') || State.deployment.spent[side] + spec.cost > State.battleSetup.points) return;
@@ -9040,7 +9070,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     beginUnitDrag(u, e) {
       if (!State.deployment.active || !u || this.multiplayerLocked()) return;
       if (this.multiplayerActive() && u.side !== this.multiplayerSide()) return;
-      if (State.battleSetup.mode === 'auto' && u.side !== 'blue') return;
+      if (State.battleSetup.mode === 'auto' && u.side !== 'blue' && !this.multiplayerActive()) return;
       if (State.battleSetup.mirrorDeployment && u.side === 'red' && u.deployPairId) {
         State.selectedSide = 'red';
         Selection.clear();
