@@ -67,6 +67,13 @@
   #timeControls button.active{
     background:var(--accent);color:var(--accent-ink);border-color:var(--accent);
   }
+  #battleTimer{
+    min-width:74px;height:42px;padding:0 12px;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--line-strong);border-radius:10px;background:rgba(23,15,12,.94);
+    color:var(--text);font:900 18px/1 ui-monospace,SFMono-Regular,Consolas,monospace;
+    letter-spacing:.04em;box-shadow:0 3px 12px rgba(0,0,0,.28);pointer-events:none
+  }
+  #battleTimer.urgent{color:#ffb08f;border-color:#a65136}
 
   #victoryBar{
     position:absolute;
@@ -452,7 +459,8 @@
   body.deployment-active #deploymentUI{display:flex;flex-direction:column}
   body.deployment-active #commandPanel{display:none}
   body.deployment-active #timeControls,body.deployment-active #victoryBar{display:none}
-  body.multiplayer-active #timeControls{display:none!important}
+  body.multiplayer-active #timeControls{display:flex!important}
+  body.multiplayer-active #timeControls button{display:none!important}
   body.deployment-active.deploy-top #deploymentUI{top:72px;bottom:12px}
   #deploymentTop{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
   .deploy-title{font:800 22px/1 var(--font-display);letter-spacing:.04em;text-transform:uppercase;color:var(--text);margin-right:auto}
@@ -882,6 +890,7 @@
   </div>
   <div id="timeControls">
     <button id="pauseBtn" title="Pausa" data-i18n-title="time.pause" aria-label="Pause"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+    <div id="battleTimer" title="Tempo rimanente">10:00</div>
     <button id="speed1Btn" title="Tempo 1×" data-i18n-title="time.x1" aria-label="1×"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z"/></svg></button>
     <button id="speed2Btn" title="Tempo 2×" data-i18n-title="time.x2" aria-label="2×"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6l8 6-8 6zM12 6l8 6-8 6z"/></svg></button>
     <button id="speed3Btn" title="Tempo 3×" data-i18n-title="time.x3" aria-label="3×"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 7l6 5-6 5zM9 7l6 5-6 5zM16 7l6 5-6 5z"/></svg></button>
@@ -3959,16 +3968,29 @@ I18n.current=I18n.detect();
       if (len <= 1e-6) return false;
 
       let scale = 1;
+      let allowed = len;
       if (u.status.routing) {
-        const allowed = this.routedPushBudget(u, len);
+        allowed = this.routedPushBudget(u, len);
         if (allowed <= 1e-6) return false;
         scale = allowed / len;
-        u.motion.routSeparationUsed = (u.motion.routSeparationUsed || 0) + allowed;
       }
 
+      const old = { x:u.pose.x, y:u.pose.y };
       u.pose.x += dx * scale;
       u.pose.y += dy * scale;
       Geometry.clampToWorld(u);
+
+      // Global collision separation is not allowed to shove a regiment into
+      // sea or any other hard terrain. This was the remaining route-to-sea leak.
+      if (Terrain.placementBlocked(u)) {
+        u.pose.x = old.x;
+        u.pose.y = old.y;
+        return false;
+      }
+
+      if (u.status.routing) {
+        u.motion.routSeparationUsed = (u.motion.routSeparationUsed || 0) + allowed;
+      }
       return true;
     },
 
@@ -4000,24 +4022,16 @@ I18n.current=I18n.detect();
               continue;
             }
 
-            changed = true;
             const aa = this.isAnchored(a);
             const ba = this.isAnchored(b);
             if (aa && !ba) {
-              b.pose.x -= mtv.x;
-              b.pose.y -= mtv.y;
-              Geometry.clampToWorld(b);
+              changed = this.pushWithRoutBudget(b, -mtv.x, -mtv.y) || changed;
             } else if (ba && !aa) {
-              a.pose.x += mtv.x;
-              a.pose.y += mtv.y;
-              Geometry.clampToWorld(a);
+              changed = this.pushWithRoutBudget(a, mtv.x, mtv.y) || changed;
             } else {
-              a.pose.x += mtv.x * 0.5;
-              a.pose.y += mtv.y * 0.5;
-              b.pose.x -= mtv.x * 0.5;
-              b.pose.y -= mtv.y * 0.5;
-              Geometry.clampToWorld(a);
-              Geometry.clampToWorld(b);
+              const movedA = this.pushWithRoutBudget(a, mtv.x * 0.5, mtv.y * 0.5);
+              const movedB = this.pushWithRoutBudget(b, -mtv.x * 0.5, -mtv.y * 0.5);
+              changed = movedA || movedB || changed;
             }
           }
         }
@@ -6743,6 +6757,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       State.battle.result = null;
       State.battle.playerSide = 'blue';
       State.battle.armyCollapse = { blue: false, red: false };
+      this.allRoutingSince = { blue: null, red: null };
       State.armyAI.lastRefreshAt = -Infinity;
       State.armyAI.refreshCount = 0;
       Intel.reset();
@@ -6959,6 +6974,51 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const result = winnerSide === State.battle.playerSide ? 'victory' : 'defeat';
       const label = I18n.side(winnerSide);
       this.showResult(result, `${reason} · ${I18n.tf('battle.winner',{side:label})}`);
+    },
+
+    updateTimer() {
+      const el = document.getElementById('battleTimer');
+      if (!el) return;
+      const remaining = Math.max(0, CFG.BATTLE_TIME_LIMIT_S - State.simTime);
+      const whole = Math.ceil(remaining);
+      const mm = Math.floor(whole / 60);
+      const ss = whole % 60;
+      el.textContent = `${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+      el.classList.toggle('urgent', remaining <= 60);
+    },
+
+    checkAllRouting() {
+      if (!State.battle.active || State.battle.ended || State.deployment.active) return;
+      if (!this.allRoutingSince) this.allRoutingSince = { blue:null, red:null };
+
+      const expired = [];
+      for (const side of ['blue','red']) {
+        const alive = Units.alive(side);
+        const allRouting = alive.length > 0 && alive.every(u => u.status.routing);
+
+        if (!allRouting) {
+          this.allRoutingSince[side] = null;
+          continue;
+        }
+
+        if (this.allRoutingSince[side] === null) {
+          this.allRoutingSince[side] = State.simTime;
+          Log.add(`⚠ ${side.toUpperCase()}: tutte le unità sono in fuga · resa automatica tra 30s se nessuna si riprende.`);
+        }
+
+        if (State.simTime - this.allRoutingSince[side] >= 30) expired.push(side);
+      }
+
+      if (expired.length === 2) {
+        this.showResult('draw', 'Entrambe le armate sono interamente in fuga da 30 secondi.');
+        return;
+      }
+      if (expired.length === 1) {
+        const loser = expired[0];
+        const winner = loser === 'blue' ? 'red' : 'blue';
+        Log.add(`🏳 ${loser.toUpperCase()}: tutte le unità in fuga da 30s → partita terminata.`);
+        this.showSideWinner(winner, `Tutte le unità ${I18n.side(loser)} sono in fuga da 30 secondi`);
+      }
     },
 
     checkTimeLimit() {
@@ -10566,6 +10626,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       Intel.update();
       Battle.checkArmyCollapse();
       Battle.checkOutcome();
+      Battle.checkAllRouting();
       Battle.checkTimeLimit();
     },
 
@@ -10610,6 +10671,7 @@ makeMountainSectorChain(minLen=3,maxLen=6){
 
       UI.updateSelectedInfo();
       Battle.updateVictoryBar();
+      Battle.updateTimer();
       Renderer.draw();
       requestAnimationFrame(Simulation.frame);
     }
