@@ -186,3 +186,5 @@ jobs:
           git add COFFEE_BATTLES.html .github/workflows/fix-multiplayer-deployment-rendering.yml
           git commit -m "fix: restore multiplayer deployment zone and isolate FOW"
           git push origin main
+
+# trigger
