@@ -1823,7 +1823,10 @@ I18n.current=I18n.detect();
   // ============================================================
   const Intel = {
     active() {
-      return !!State.battle.active && !State.deployment.active;
+      // Deployment is a separate information phase: never render or query battle FOW here.
+      return !!State.battle.active &&
+        !State.deployment.active &&
+        !document.body.classList.contains('deployment-active');
     },
 
     viewSide() {
@@ -8178,30 +8181,54 @@ makeMountainSectorChain(minLen=3,maxLen=6){
 
     deploymentOverlay() {
       if (!State.deployment.active) return;
-      const multiplayer = Deployment.multiplayerActive();
-      const playerSide = Deployment.multiplayerSide();
-      const bz = Deployment.zone('blue');
-      const rz = Deployment.zone('red');
-      ctx.save();
 
-      const drawZone = side => {
-        const z = side === 'blue' ? bz : rz;
+      const multiplayer = Deployment.multiplayerActive();
+      const playerSide = multiplayer ? Deployment.multiplayerSide() : State.selectedSide;
+      const sides = multiplayer
+        ? [playerSide]
+        : (Deployment.enemyHiddenDuringSetup() ? ['blue'] : ['blue','red']);
+
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-over';
+
+      for (const side of sides) {
+        const z = Deployment.zone(side);
         const blue = side === 'blue';
-        ctx.fillStyle = blue ? 'rgba(91,143,209,.12)' : 'rgba(217,86,58,.12)';
+        const fill = blue ? 'rgba(91,143,209,.24)' : 'rgba(217,86,58,.24)';
+        const stroke = blue ? 'rgba(150,196,255,.96)' : 'rgba(255,145,118,.96)';
+        const hatch = blue ? 'rgba(150,196,255,.22)' : 'rgba(255,145,118,.22)';
+
+        ctx.fillStyle = fill;
         ctx.fillRect(z.x, z.y, z.w, z.h);
-        ctx.setLineDash([7,6]);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = blue ? 'rgba(128,170,224,.70)' : 'rgba(232,120,92,.70)';
+
+        // Light hatch makes the valid deployment band unmistakable over any biome.
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(z.x, z.y, z.w, z.h);
+        ctx.clip();
+        ctx.strokeStyle = hatch;
+        ctx.lineWidth = 1;
+        const step = 3 * CFG.U;
+        for (let x = z.x - z.h; x < z.x + z.w + z.h; x += step) {
+          ctx.beginPath();
+          ctx.moveTo(x, z.y + z.h);
+          ctx.lineTo(x + z.h, z.y);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        ctx.setLineDash([8,6]);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = stroke;
         ctx.strokeRect(z.x, z.y, z.w, z.h);
         ctx.setLineDash([]);
-        ctx.font = 'bold 13px Segoe UI, Arial';
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = blue ? 'rgba(176,204,238,.88)' : 'rgba(246,184,160,.88)';
-        ctx.fillText(I18n.t(blue ? 'deploy.zoneBlue' : 'deploy.zoneRed'), z.x + 8, z.y + 8);
-      };
 
-      if (multiplayer) drawZone(playerSide);
-      else { drawZone('blue'); if (!Deployment.enemyHiddenDuringSetup()) drawZone('red'); }
+        ctx.font = '900 15px Segoe UI, Arial';
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = blue ? '#d9eaff' : '#ffd8cd';
+        ctx.fillText(I18n.t(blue ? 'deploy.zoneBlue' : 'deploy.zoneRed'), z.x + 10, z.y + 10);
+      }
 
       const d = State.deployment.drag;
       if (d?.kind === 'catalog' && d.ghost) {
@@ -8565,7 +8592,8 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       this.grid(w, h);
       this.deploymentOverlay();
       const viewSide = Intel.viewSide();
-      this.fogOverlay(w, h, viewSide);
+      // FOW begins only after both deployments have been closed.
+      if (!State.deployment.active) this.fogOverlay(w, h, viewSide);
       const visibleUnits = State.units.filter(u => Intel.renderVisible(viewSide, u));
       visibleUnits.filter(u => u.side === State.battle.playerSide && (DEBUG || Selection.isSelected(u))).forEach(u => this.orders(u));
       const p = Selection.primary();
@@ -8851,7 +8879,10 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       State.units = [];
       State.selectedIds.clear();
       State.primaryId = null;
-      State.selectedSide = 'blue';
+      State.selectedSide = window.__CB_MULTIPLAYER_ACTIVE__
+        ? (window.__CB_MULTIPLAYER_SIDE__ === 'red' ? 'red' : 'blue')
+        : 'blue';
+      State.battle.playerSide = State.selectedSide;
       State.deployment.active = true;
       State.deployment.spent = { blue: 0, red: 0 };
       State.deployment.counters = { blue: 0, red: 0 };
@@ -8876,6 +8907,10 @@ makeMountainSectorChain(minLen=3,maxLen=6){
         MapEngine.generate(State.battleSetup.biome);
       }
       Battle.reset(false);
+      if (this.multiplayerActive()) {
+        State.battle.playerSide = this.multiplayerSide();
+        State.selectedSide = this.multiplayerSide();
+      }
       UI.setTimeScale(0);
       document.body.classList.add('deployment-active');
       this.updateUI();
