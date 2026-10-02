@@ -1823,10 +1823,8 @@ I18n.current=I18n.detect();
   // ============================================================
   const Intel = {
     active() {
-      // Deployment is a separate information phase: never render or query battle FOW here.
-      return !!State.battle.active &&
-        !State.deployment.active &&
-        !document.body.classList.contains('deployment-active');
+      // TEMP DEBUG: FOW disabled globally while multiplayer regressions are isolated.
+      return false;
     },
 
     viewSide() {
