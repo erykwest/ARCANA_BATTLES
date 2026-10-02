@@ -22,29 +22,34 @@
 
   const monetizationCss = `
 <style id="monetizationStyles">
+  /* Supporto: pillola secondaria nella palette espresso. Non deve competere
+     con l'azione principale (CONTINUE / NUOVA PARTITA). */
   .bmc-support{
-    display:flex;align-items:center;justify-content:center;gap:9px;
-    width:100%;min-height:48px;padding:11px 16px;
-    border:1px solid #d7ba00;border-radius:999px;
-    background:#ffdd00;color:#111!important;text-decoration:none!important;
-    font:900 14px/1 var(--font-body,Inter,Segoe UI,Arial,sans-serif);letter-spacing:.05em;
-    box-shadow:0 5px 16px rgba(0,0,0,.22);cursor:pointer;
-    transition:transform .12s ease,filter .12s ease,box-shadow .12s ease;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    width:100%;height:52px;padding:0 20px;box-sizing:border-box;
+    border:2px solid var(--line-strong,#4f3b2e);border-radius:999px;
+    background:transparent;color:var(--text,#f2e6d3)!important;text-decoration:none!important;
+    font:700 15px/1 var(--font-body,Barlow,Segoe UI,sans-serif);letter-spacing:.08em;text-transform:uppercase;
+    cursor:pointer;transition:background .12s ease,border-color .12s ease,color .12s ease;
   }
-  .bmc-support:hover{filter:brightness(1.04);transform:translateY(-1px);box-shadow:0 7px 19px rgba(0,0,0,.28)}
-  .bmc-support:active{transform:translateY(0)}
-  .bmc-support .bmc-cup{font-size:20px;line-height:1}
-  .bmc-support-wrap{margin-top:12px}
-  .bmc-support-note{margin-top:7px;text-align:center;color:var(--muted,#b9a690);font-size:10px;line-height:1.35}
-  #battleEndBmcWrap{margin-top:12px}
+  .bmc-support:hover{background:var(--btn,#33251d);border-color:var(--accent,#e08a3c)}
+  .bmc-support:focus-visible{outline:2px solid var(--accent,#e08a3c);outline-offset:2px}
+  .bmc-support .bmc-cup{width:22px;height:22px;flex:0 0 auto;color:var(--accent,#e08a3c)}
+  .bmc-support-wrap{margin-top:0}
+  @media (max-height:800px) and (min-width:901px){
+    #splashBmcWrap .bmc-support{height:42px;font-size:14px}
+    #splashBmcWrap .bmc-support-note{display:none}
+  }
+  .bmc-support-note{margin-top:8px;text-align:center;color:var(--muted,#b9a690);font:400 13px/1.4 var(--font-body,Barlow,Segoe UI,sans-serif)}
+  #battleEndBmcWrap{margin-top:10px}
+  #battleEndBmcWrap .bmc-support{height:48px}
 
   .ad-rail{
     width:160px;height:600px;max-height:calc(100vh - 48px);
     display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;
-    border:1px dashed rgba(224,138,60,.55);border-radius:18px;
-    background:rgba(23,15,12,.72);color:var(--muted,#b9a690);
+    border:1px solid var(--line,#3d2d24);border-radius:20px;
+    background:var(--sunken,#170f0c);color:var(--muted,#b9a690);
     text-align:center;pointer-events:none;user-select:none;overflow:hidden;
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
   }
   .ad-rail .ad-kicker{font:800 10px/1 var(--font-body,Inter,Segoe UI,Arial,sans-serif);letter-spacing:.18em;color:var(--accent,#e08a3c)}
   .ad-rail .ad-icon{font-size:34px;line-height:1;opacity:.75}
@@ -69,8 +74,8 @@
   }
 
   @media (max-width:700px){
-    .bmc-support{min-height:46px;font-size:12px}
-    .bmc-support-note{font-size:9px}
+    .bmc-support{height:48px;font-size:14px}
+    .bmc-support-note{font-size:12px}
   }
 </style>`;
 
@@ -88,7 +93,9 @@
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
     a.setAttribute('aria-label', 'Support COFFEE BATTLES on Buy Me a Coffee');
-    a.innerHTML = '<span class="bmc-cup" aria-hidden="true">☕</span><span>BUY ME A COFFEE</span>';
+    a.innerHTML = '<svg class="bmc-cup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17"/>' +
+      '<path d="M8 2.5c-.8 1 .8 2-.1 3.3M12 2.5c-.8 1 .8 2-.1 3.3"/></svg><span>Buy me a coffee</span>';
     return a;
   }
 
@@ -115,12 +122,17 @@
     return rail;
   }
 
+  // Gli spazi sponsor restano nascosti finche' non c'e' un annuncio vero:
+  // un riquadro "AD SPACE" vuoto in produzione sembra un sito non finito.
+  // Per vederli in anteprima: /play?ads
+  const showAdRails = new URLSearchParams(location.search).has('ads');
+
   const setupOverlay = document.getElementById('battleSetupOverlay');
   const setupActions = document.querySelector('#battleSetupOverlay .setup-actions');
   if (setupActions && !document.getElementById('splashBmcSupport')) {
     setupActions.after(makeBmcWrap('splashBmcWrap', 'splashBmcSupport', true));
   }
-  if (setupOverlay && !setupOverlay.querySelector('.ad-rail')) {
+  if (showAdRails && setupOverlay && !setupOverlay.querySelector('.ad-rail')) {
     setupOverlay.classList.add('monetization-layout');
     setupOverlay.prepend(makeAdRail('left', 'setup'));
     setupOverlay.append(makeAdRail('right', 'setup'));
@@ -131,7 +143,7 @@
   if (endActions && !document.getElementById('battleEndBmcSupport')) {
     endActions.after(makeBmcWrap('battleEndBmcWrap', 'battleEndBmcSupport', false));
   }
-  if (endOverlay && !endOverlay.querySelector('.ad-rail')) {
+  if (showAdRails && endOverlay && !endOverlay.querySelector('.ad-rail')) {
     endOverlay.prepend(makeAdRail('left', 'battle-end'));
     endOverlay.append(makeAdRail('right', 'battle-end'));
   }

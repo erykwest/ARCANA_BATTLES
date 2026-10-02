@@ -333,7 +333,7 @@
   .setup-panel{
     min-height:0;overflow:auto;margin:clamp(12px,4vh,40px) clamp(12px,3vw,48px) clamp(12px,4vh,40px) 0;
     padding:clamp(24px,4vh,40px) 40px;background:var(--panel);border-radius:28px;
-    display:flex;flex-direction:column;gap:clamp(18px,3vh,28px);
+    display:flex;flex-direction:column;gap:clamp(16px,2.3vh,26px);
   }
   .setup-top{display:flex;align-items:center;justify-content:space-between;gap:16px}
   .setup-steps{display:flex;gap:18px;margin:0;padding:0;list-style:none;counter-reset:step;
@@ -361,7 +361,7 @@
   #customPointsInput:focus{border-style:solid;border-color:var(--accent)}
   #mapBiomeSelect{height:50px;padding:0 18px;border:0;border-radius:999px;background:var(--btn);
     color:var(--text);font:600 17px var(--font-body);cursor:pointer}
-  .setup-pair{display:grid;grid-template-columns:1fr;gap:clamp(18px,3vh,28px)}
+  .setup-pair{display:grid;grid-template-columns:1fr;gap:inherit}
   .setup-modes{display:flex;gap:8px}
   .setup-note{margin:-6px 0 0;min-height:2.8em;font:400 16px/1.4 var(--font-body);color:var(--muted)}
   .setup-actions{margin-top:auto;display:flex;align-items:center;gap:24px}
@@ -373,7 +373,7 @@
   :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .active:focus-visible,#createBattleBtn:focus-visible{outline-color:var(--text)}
   @media (prefers-reduced-motion:reduce){#battleSetupOverlay{transition:none}}
-  @media (max-height:800px) and (min-width:901px){
+  @media (max-height:980px) and (min-width:901px){
     .setup-panel{gap:14px;padding:22px 32px}
     #battleSetupTitle{font-size:44px}
     .point-presets button,.setup-modes button,#customPointsInput,#mapBiomeSelect{height:44px}
@@ -381,8 +381,22 @@
     .setup-note{margin:0;min-height:0}
     #createBattleBtn{height:56px;font-size:26px}
   }
+  @media (max-height:800px) and (min-width:901px){
+    .setup-panel{gap:10px;padding:18px 28px}
+    #battleSetupTitle{font-size:38px}
+    .point-presets button,.setup-modes button,#customPointsInput,#mapBiomeSelect{height:40px}
+    .setup-field{gap:6px}
+    .setup-label{font-size:14px}
+    .setup-note{font-size:14px}
+    /* il blocco multiplayer e' definito piu' in basso: serve specificita' */
+    .setup-panel .cbmp-lobby-card{padding:10px 12px 10px 16px}
+    .setup-panel #randomMatchBtn{height:42px}
+    #createBattleBtn{height:50px;font-size:24px}
+  }
   @media (max-width:900px){
-    #battleSetupOverlay{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);overflow:auto}
+    /* Impilato, non a griglia: la griglia schiacciava il pannello all'altezza
+       dello schermo e il suo sfondo finiva a meta' del contenuto. */
+    #battleSetupOverlay{display:block;overflow:auto}
     .setup-cup{display:none}
     .setup-brand-copy{position:static;padding:20px 20px 4px;gap:8px}
     .setup-wordmark{font-size:56px}
@@ -417,7 +431,7 @@
   #battleEndTitle.victory{color:#82d98c}
   #battleEndTitle.defeat{color:#ef7b72}
   #battleEndTitle.draw{color:var(--accent)}
-  #battleEndLead{font-size:12px;color:var(--muted);margin-bottom:18px}
+  #battleEndLead{font:400 14px/1.4 var(--font-body);color:var(--muted);margin-bottom:18px}
   .battle-damage-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .battle-damage-side{background:var(--sunken);border:1px solid var(--line);border-radius:11px;padding:10px}
   .battle-damage-side h3{margin:0 0 8px;font-size:12px;letter-spacing:.08em}
@@ -427,9 +441,10 @@
   .battle-damage-table th{font-size:9px;letter-spacing:.06em;color:var(--muted)}
   .battle-damage-table tfoot th{border-top:1px solid var(--line-strong);border-bottom:0;color:var(--text);font-size:10px;padding-top:8px}
   .battle-unit-state{display:block;font-size:8px;color:var(--muted);margin-top:2px}
-  .battle-end-actions{display:flex;gap:8px;margin-top:14px}
-  .battle-end-actions button{height:44px}
-  #battleEndNewBattleBtn{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .battle-end-actions{display:flex;gap:10px;margin-top:16px}
+  .battle-end-actions button{height:52px;border:0;border-radius:999px;font:700 16px/1 var(--font-body);letter-spacing:.04em;text-transform:uppercase}
+  #battleEndNewBattleBtn{background:var(--accent);color:var(--accent-ink);font:900 24px/1 var(--font-display);letter-spacing:.04em}
+  #battleEndNewBattleBtn:hover{background:var(--accent-hover)}
   @media (max-width:700px){
     #battleEndOverlay{padding:9px}
     .battle-end-panel{padding:16px}
@@ -542,9 +557,9 @@
    MULTIPLAYER SHELL — Supabase guest lobby + random 1v1
    ============================================================ */
 #onlineUsersBadge{
-  display:flex;align-items:center;gap:6px;flex:0 0 auto;
-  padding:5px 8px;border:1px solid var(--line-strong);border-radius:999px;background:var(--btn);
-  font:800 10px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.06em;color:var(--text-2);
+  display:flex;align-items:center;gap:7px;flex:0 0 auto;box-sizing:border-box;
+  height:34px;padding:0 12px;border:1px solid var(--line-strong);border-radius:9px;background:var(--btn);
+  font:700 12px/1 var(--font-body);letter-spacing:.08em;color:var(--text-2);
 }
 #onlineUsersBadge .cbmp-dot,.cbmp-lobby-title .cbmp-dot{
   width:7px;height:7px;border-radius:50%;background:#72665d;box-shadow:0 0 0 2px rgba(114,102,93,.15)
@@ -554,11 +569,11 @@
 }
 .cbmp-lobby-card{
   display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
-  margin:0 0 14px;padding:12px 14px;border:1px solid var(--line-strong);border-radius:14px;background:var(--sunken)
+  margin:0;padding:14px 16px 14px 20px;border:0;border-radius:24px;background:var(--sunken)
 }
-.cbmp-lobby-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
-.cbmp-lobby-meta{margin-top:5px;font-size:11px;color:var(--muted);line-height:1.35}
-#randomMatchBtn{width:auto;min-width:190px;height:46px;padding:0 16px;background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:900}
+.cbmp-lobby-title{display:flex;align-items:center;gap:8px;font:700 14px/1 var(--font-body);letter-spacing:.08em;text-transform:uppercase}
+.cbmp-lobby-meta{margin-top:6px;font:400 13px/1.35 var(--font-body);color:var(--muted)}
+#randomMatchBtn{width:auto;min-width:200px;height:50px;padding:0 22px;border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font:800 15px/1 var(--font-body);letter-spacing:.06em;text-transform:uppercase}
 #randomMatchBtn:hover{background:var(--accent-hover)}
 #randomMatchBtn:disabled{opacity:.42;cursor:not-allowed}
 #matchmakingOverlay,#aiFallbackOverlay{
@@ -573,20 +588,21 @@
   width:min(520px,100%);background:var(--panel);border:1px solid var(--line-strong);border-radius:18px;
   box-shadow:0 24px 80px rgba(0,0,0,.62);padding:24px;text-align:center
 }
-.cbmp-kicker{font-size:10px;letter-spacing:.18em;color:var(--muted);font-weight:900;margin-bottom:9px}
+.cbmp-kicker{font:700 12px/1 var(--font-body);letter-spacing:.18em;color:var(--muted);margin-bottom:12px}
 #matchmakingTitle,#aiFallbackTitle{margin:0 0 8px;font:900 30px/1 var(--font-display);letter-spacing:.04em;text-transform:uppercase}
-#matchmakingStatus,#aiFallbackText{font-size:12px;line-height:1.5;color:var(--muted);min-height:36px}
+#matchmakingStatus,#aiFallbackText{font:400 15px/1.45 var(--font-body);color:var(--muted);min-height:36px}
 .cbmp-searchline{display:flex;justify-content:center;align-items:center;gap:12px;margin:20px 0}
 .cbmp-spinner{width:24px;height:24px;border:3px solid var(--line-strong);border-top-color:var(--accent);border-radius:50%;animation:cbmpSpin .75s linear infinite}
 @keyframes cbmpSpin{to{transform:rotate(360deg)}}
-#matchmakingElapsed{font:900 28px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--accent);letter-spacing:.05em}
+#matchmakingElapsed{font:900 34px/1 var(--font-display);font-variant-numeric:tabular-nums;color:var(--accent);letter-spacing:.05em}
 #matchSideBadge{display:none;margin:18px auto 7px;width:max-content;padding:10px 16px;border-radius:10px;font-size:20px;font-weight:950;letter-spacing:.12em}
 #matchSideBadge.blue{display:block;background:rgba(91,143,209,.18);border:1px solid #5b8fd1;color:#a9c9f4}
 #matchSideBadge.red{display:block;background:rgba(217,86,58,.18);border:1px solid #d9563a;color:#ffb1a0}
 #matchIdText{font:700 9px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted);overflow-wrap:anywhere;margin:7px 0 0}
-.cbmp-actions{display:flex;gap:8px;margin-top:18px}
-.cbmp-actions button{height:44px}
-#continueMatchedBtn,#playAiFallbackBtn{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:900}
+.cbmp-actions{display:flex;gap:10px;margin-top:20px}
+.cbmp-actions button{height:52px;border:0;border-radius:999px;font:700 16px/1 var(--font-body);letter-spacing:.04em;text-transform:uppercase}
+#continueMatchedBtn,#playAiFallbackBtn{background:var(--accent);color:var(--accent-ink);font:900 22px/1 var(--font-display);letter-spacing:.04em}
+#continueMatchedBtn:hover,#playAiFallbackBtn:hover{background:var(--accent-hover)}
 #continueMatchedBtn[hidden]{display:none}
 .cbmp-note{margin-top:10px;font-size:9px;color:var(--muted);line-height:1.4}
 @media (max-width:700px){
@@ -758,7 +774,7 @@
       <button id="cancelMatchBtn" type="button">CANCEL</button>
       <button id="continueMatchedBtn" type="button" hidden>CONTINUE · DEV</button>
     </div>
-    <div id="matchmakingDevNote" class="cbmp-note">MVP: guest auth + queue + BLUE/RED pairing. Shared deployment and battle-state sync come next.</div>
+    <div id="matchmakingDevNote" class="cbmp-note dbg-only">MVP: guest auth + queue + BLUE/RED pairing. Shared deployment and battle-state sync come next.</div>
   </div>
 </div>
 
