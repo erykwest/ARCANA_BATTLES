@@ -1,0 +1,48 @@
+name: Move multiplayer authority to Supabase
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-supabase-lockstep.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Apply Supabase lockstep patch
+        shell: bash
+        run: |
+          python3 .github/workflows/patch_supabase_lockstep.py
+
+      - name: Validate JavaScript
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('COFFEE_BATTLES.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>',s)
+          Path('/tmp/coffee-battles.js').write_text('\\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/coffee-battles.js
+          grep -q "ensure_lockstep_started" COFFEE_BATTLES.html
+          grep -q "submit_match_command" COFFEE_BATTLES.html
+          grep -q "__CB_LOCKSTEP_APPLY_TICK__" COFFEE_BATTLES.html
+
+      - name: Commit Supabase authority
+        shell: bash
+        run: |
+          rm -f .github/workflows/apply-supabase-lockstep.yml .github/workflows/patch_supabase_lockstep.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add COFFEE_BATTLES.html .github/workflows
+          git commit -m "feat: move multiplayer authority to Supabase lockstep"
+          git push origin main
