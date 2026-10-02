@@ -11015,7 +11015,13 @@ makeMountainSectorChain(minLen=3,maxLen=6){
     if (dbg?.State) {
       dbg.State.simTime = 0;
       dbg.State.lastFrameAt = performance.now();
+      dbg.State.timeScale = 1;
+      dbg.UI?.setTimeScale?.(1);
     }
+
+    // Multiplayer never has a player pause state: once lockstep is ready,
+    // simulation is live immediately and remains fixed at 1x.
+    document.body.classList.add('multiplayer-active');
 
     console.info('[LOCKSTEP] Supabase authority ready', {
       match:activeMatch.id,
