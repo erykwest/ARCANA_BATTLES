@@ -8324,6 +8324,25 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       ctx.restore();
     },
 
+    grid(w, h) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(242,230,211,0.045)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= w; x += CFG.U) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= h; y += CFG.U) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    },
+
     orders(u) {
       if (!u.status.alive || !u.order.target) return;
       const ap = u.order.approach;
