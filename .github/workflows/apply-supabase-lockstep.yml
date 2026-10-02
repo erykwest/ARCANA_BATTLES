@@ -20,7 +20,8 @@ jobs:
       - name: Apply Supabase lockstep patch
         shell: bash
         run: |
-          python3 .github/workflows/patch_supabase_lockstep.py
+          base64 -d .github/workflows/patch_supabase_lockstep.py.gz.b64 | gzip -d > /tmp/patch_supabase_lockstep.py
+          python3 /tmp/patch_supabase_lockstep.py
 
       - name: Validate JavaScript
         shell: bash
@@ -29,8 +30,8 @@ jobs:
           from pathlib import Path
           import re
           s=Path('COFFEE_BATTLES.html').read_text(encoding='utf-8')
-          scripts=re.findall(r'<script(?:\\s[^>]*)?>([\\s\\S]*?)</script>',s)
-          Path('/tmp/coffee-battles.js').write_text('\\n'.join(scripts),encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>([\s\S]*?)</script>',s)
+          Path('/tmp/coffee-battles.js').write_text('\n'.join(scripts),encoding='utf-8')
           PY
           node --check /tmp/coffee-battles.js
           grep -q "ensure_lockstep_started" COFFEE_BATTLES.html
@@ -40,9 +41,11 @@ jobs:
       - name: Commit Supabase authority
         shell: bash
         run: |
-          rm -f .github/workflows/apply-supabase-lockstep.yml .github/workflows/patch_supabase_lockstep.py
+          rm -f .github/workflows/apply-supabase-lockstep.yml .github/workflows/patch_supabase_lockstep.py.gz.b64
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add COFFEE_BATTLES.html .github/workflows
           git commit -m "feat: move multiplayer authority to Supabase lockstep"
           git push origin main
+
+# rerun after compressed patch was added
