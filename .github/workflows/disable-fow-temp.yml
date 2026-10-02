@@ -24,19 +24,16 @@ jobs:
           from pathlib import Path
           p=Path('COFFEE_BATTLES.html')
           s=p.read_text(encoding='utf-8')
-          old="""    active() {
-      // Deployment is a separate information phase: never render or query battle FOW here.
-      return !!State.battle.active &&
-        !State.deployment.active &&
-        !document.body.classList.contains('deployment-active');
-    },"""
-          new="""    active() {
-      // TEMP DEBUG: FOW disabled globally while multiplayer placement/map regressions are isolated.
+          intel=s.index('  const Intel = {')
+          a=s.index('    active() {', intel)
+          b=s.index('    viewSide() {', a)
+          replacement="""    active() {
+      // TEMP DEBUG: FOW disabled globally while multiplayer regressions are isolated.
       return false;
-    },"""
-          if s.count(old)!=1:
-              raise SystemExit(f'Intel.active anchor mismatch: {s.count(old)}')
-          s=s.replace(old,new,1)
+    },
+
+"""
+          s=s[:a]+replacement+s[b:]
           p.write_text(s,encoding='utf-8')
           PY
 
@@ -62,3 +59,5 @@ jobs:
           git add COFFEE_BATTLES.html .github/workflows/disable-fow-temp.yml
           git commit -m "debug: temporarily disable fog of war"
           git push origin main
+
+# retry
