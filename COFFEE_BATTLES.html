@@ -443,27 +443,30 @@
      DEPLOYMENT BUILDER — STEP 2
      ============================================================ */
   #deploymentUI{
-    position:fixed;left:50%;bottom:12px;transform:translateX(-50%);
-    z-index:2200;width:min(900px,calc(100vw - 28px));
-    display:none;pointer-events:auto;
+    position:fixed;left:12px;top:72px;bottom:12px;transform:none;
+    z-index:2200;width:320px;max-height:calc(100vh - 84px);
+    display:none;pointer-events:auto;overflow:hidden;
     background:rgba(27,19,15,.96);border:1px solid var(--line-strong);border-radius:14px;
     box-shadow:0 10px 34px rgba(0,0,0,.5);padding:10px;
   }
-  body.deployment-active #deploymentUI{display:block}
+  body.deployment-active #deploymentUI{display:flex;flex-direction:column}
   body.deployment-active #commandPanel{display:none}
   body.deployment-active #timeControls,body.deployment-active #victoryBar{display:none}
   body.multiplayer-active #timeControls{display:none!important}
-  body.deployment-active.deploy-top #deploymentUI{top:66px;bottom:auto}
-  #deploymentTop{display:flex;align-items:center;gap:10px;margin-bottom:9px;flex-wrap:wrap}
+  body.deployment-active.deploy-top #deploymentUI{top:72px;bottom:12px}
+  #deploymentTop{display:flex;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap}
   .deploy-title{font:800 22px/1 var(--font-display);letter-spacing:.04em;text-transform:uppercase;color:var(--text);margin-right:auto}
-  .deploy-budget{font:800 13px ui-monospace,SFMono-Regular,Consolas,monospace;padding:7px 10px;border-radius:8px;background:var(--sunken);border:1px solid var(--line-strong)}
+  .deploy-budget{font:800 12px ui-monospace,SFMono-Regular,Consolas,monospace;padding:7px 8px;border-radius:8px;background:var(--sunken);border:1px solid var(--line-strong)}
   .deploy-budget b{color:var(--accent)}
   .deploy-side-toggle{display:flex;gap:4px}
   .deploy-side-toggle button{width:74px;height:34px;padding:0;font-size:11px}
   .deploy-side-toggle button.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-  #deploymentCards{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 5px;touch-action:none}
+  #deploymentCards{
+    display:flex;flex:1 1 auto;min-height:0;flex-direction:column;gap:7px;
+    overflow-y:auto;overflow-x:hidden;padding:2px 3px 5px 2px;touch-action:none
+  }
   .unit-card{
-    flex:0 0 176px;min-height:88px;display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center;
+    flex:0 0 auto;width:100%;min-height:76px;display:grid;grid-template-columns:52px 1fr;gap:10px;align-items:center;
     border:1px solid var(--line-strong);background:var(--btn);color:var(--text);border-radius:10px;padding:7px;
     cursor:grab;user-select:none;touch-action:none;text-align:left;
   }
@@ -479,19 +482,26 @@
   .unit-card-copy strong{display:block;font-size:12px;line-height:1.1;margin-bottom:6px}
   .unit-card-copy span{display:block;font-size:12px;line-height:1.25;color:var(--muted)}
   .unit-card-copy .cost{font-weight:900;color:var(--accent);font-size:11px;margin-top:4px}
-  #deploymentActions{display:flex;gap:7px;margin-top:7px}
-  #deploymentActions button{height:36px;padding:0 12px;width:auto;font-size:11px}
+  #deploymentActions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+  #deploymentActions button{height:36px;padding:0 10px;width:100%;font-size:11px}
   #removeDeployUnitBtn{background:#4a2a22;border-color:#7a3b2e}
-  #deploymentActions #startBattleFromDeployBtn{height:44px;margin-left:auto;background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font:900 20px/1 var(--font-display);letter-spacing:.04em;text-transform:uppercase;min-width:180px;border-radius:999px}
-  #deployHint{font-size:14px;color:var(--muted);margin-top:8px;line-height:1.4}
+  #deploymentActions #startBattleFromDeployBtn{
+    grid-column:1 / -1;height:48px;margin:0;background:var(--accent);border-color:var(--accent);
+    color:var(--accent-ink);font:900 20px/1 var(--font-display);letter-spacing:.04em;text-transform:uppercase;
+    min-width:0;border-radius:999px
+  }
+  #deployHint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.35}
   body.deployment-active canvas{touch-action:none}
 
   @media (max-width:700px){
-    #deploymentUI{bottom:7px;width:calc(100vw - 14px);padding:8px}
+    #deploymentUI{
+      left:7px;right:7px;top:auto;bottom:7px;width:auto;max-height:54vh;transform:none;padding:8px
+    }
+    body.deployment-active.deploy-top #deploymentUI{top:auto;bottom:7px}
     .deploy-title{width:100%;margin-right:0}
-    .unit-card{flex-basis:156px;min-height:80px}
-    body.deployment-active.deploy-top #deploymentUI{top:54px}
-    #deploymentActions{flex-wrap:wrap}
+    #deploymentCards{flex-direction:row;overflow-x:auto;overflow-y:hidden}
+    .unit-card{flex:0 0 156px;width:156px;min-height:80px}
+    #deploymentActions{display:flex;flex-wrap:wrap}
     #deploymentActions #startBattleFromDeployBtn{margin-left:0;flex:1 1 100%}
   }
 
@@ -1823,8 +1833,8 @@ I18n.current=I18n.detect();
   // ============================================================
   const Intel = {
     active() {
-      // TEMP DEBUG: FOW disabled globally while multiplayer regressions are isolated.
-      return false;
+      // FOW is a battle-phase rule: deployment stays fully readable, battle does not.
+      return !!State.battle.active && !State.deployment.active;
     },
 
     viewSide() {
@@ -1919,7 +1929,9 @@ I18n.current=I18n.detect();
 
     renderVisible(side, unit) {
       if (!unit) return false;
-      if (!Deployment.visibleInDeployment(unit)) return false;
+      // Before START, only the side currently being deployed is renderable.
+      if (State.deployment.active) return Deployment.visibleInDeployment(unit);
+      // From START onward, FOW decides whether enemy units are renderable.
       return unit.side === side || this.isVisible(side, unit);
     },
 
@@ -8993,14 +9005,16 @@ makeMountainSectorChain(minLen=3,maxLen=6){
       const stageW = Math.max(1, DOM.stage?.clientWidth || world.w);
       const stageH = Math.max(1, DOM.stage?.clientHeight || world.h);
       const pad = 12;
+      const sideRail = window.innerWidth > 700 ? 344 : 0;
+      const usableW = Math.max(1, stageW - sideRail);
       const fitScale = Math.min(
         1,
-        Math.max(CFG.MIN_SCALE, (stageW - pad * 2) / world.w),
+        Math.max(CFG.MIN_SCALE, (usableW - pad * 2) / world.w),
         Math.max(CFG.MIN_SCALE, (stageH - pad * 2) / world.h)
       );
       State.view = {
         scale: fitScale,
-        x: (stageW - world.w * fitScale) / 2,
+        x: sideRail + (usableW - world.w * fitScale) / 2,
         y: (stageH - world.h * fitScale) / 2
       };
       if (DOM.stage) {
