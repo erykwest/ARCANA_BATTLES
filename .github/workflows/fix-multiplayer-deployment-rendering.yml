@@ -1,0 +1,188 @@
+name: Fix multiplayer deployment rendering
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-multiplayer-deployment-rendering.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Fix deployment phase rendering
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('COFFEE_BATTLES.html')
+          s=p.read_text(encoding='utf-8')
+
+          def one(old,new,label):
+              global s
+              n=s.count(old)
+              if n != 1:
+                  raise SystemExit(f'{label}: expected 1 anchor, found {n}')
+              s=s.replace(old,new,1)
+
+          one(
+          """    active() {
+      return !!State.battle.active && !State.deployment.active;
+    },""",
+          """    active() {
+      // Deployment is a separate information phase: never render or query battle FOW here.
+      return !!State.battle.active &&
+        !State.deployment.active &&
+        !document.body.classList.contains('deployment-active');
+    },""",
+          'Intel.active'
+          )
+
+          start=s.index("    deploymentOverlay() {")
+          end=s.index("    orders(u) {", start)
+          new_overlay="""    deploymentOverlay() {
+      if (!State.deployment.active) return;
+
+      const multiplayer = Deployment.multiplayerActive();
+      const playerSide = multiplayer ? Deployment.multiplayerSide() : State.selectedSide;
+      const sides = multiplayer
+        ? [playerSide]
+        : (Deployment.enemyHiddenDuringSetup() ? ['blue'] : ['blue','red']);
+
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-over';
+
+      for (const side of sides) {
+        const z = Deployment.zone(side);
+        const blue = side === 'blue';
+        const fill = blue ? 'rgba(91,143,209,.24)' : 'rgba(217,86,58,.24)';
+        const stroke = blue ? 'rgba(150,196,255,.96)' : 'rgba(255,145,118,.96)';
+        const hatch = blue ? 'rgba(150,196,255,.22)' : 'rgba(255,145,118,.22)';
+
+        ctx.fillStyle = fill;
+        ctx.fillRect(z.x, z.y, z.w, z.h);
+
+        // Light hatch makes the valid deployment band unmistakable over any biome.
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(z.x, z.y, z.w, z.h);
+        ctx.clip();
+        ctx.strokeStyle = hatch;
+        ctx.lineWidth = 1;
+        const step = 3 * CFG.U;
+        for (let x = z.x - z.h; x < z.x + z.w + z.h; x += step) {
+          ctx.beginPath();
+          ctx.moveTo(x, z.y + z.h);
+          ctx.lineTo(x + z.h, z.y);
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        ctx.setLineDash([8,6]);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = stroke;
+        ctx.strokeRect(z.x, z.y, z.w, z.h);
+        ctx.setLineDash([]);
+
+        ctx.font = '900 15px Segoe UI, Arial';
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = blue ? '#d9eaff' : '#ffd8cd';
+        ctx.fillText(I18n.t(blue ? 'deploy.zoneBlue' : 'deploy.zoneRed'), z.x + 10, z.y + 10);
+      }
+
+      const d = State.deployment.drag;
+      if (d?.kind === 'catalog' && d.ghost) {
+        const pts = Geometry.corners(d.ghost);
+        ctx.beginPath();
+        pts.forEach((p,i) => i ? ctx.lineTo(p.x,p.y) : ctx.moveTo(p.x,p.y));
+        ctx.closePath();
+        ctx.fillStyle = d.valid ? 'rgba(94,200,113,.30)' : 'rgba(218,75,75,.30)';
+        ctx.strokeStyle = d.valid ? 'rgba(126,239,145,.95)' : 'rgba(255,116,116,.95)';
+        ctx.lineWidth = 2;
+        ctx.fill(); ctx.stroke();
+        const dms = Geometry.dims(d.ghost);
+        const nx = -Math.sin(d.ghost.pose.angle), ny = Math.cos(d.ghost.pose.angle);
+        ctx.beginPath();
+        ctx.moveTo(d.ghost.pose.x - nx * dms.front/2, d.ghost.pose.y - ny * dms.front/2);
+        ctx.lineTo(d.ghost.pose.x + nx * dms.front/2, d.ghost.pose.y + ny * dms.front/2);
+        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.font = 'bold 11px Segoe UI, Arial';
+        ctx.fillStyle = '#fff'; ctx.textAlign='center'; ctx.textBaseline='bottom';
+        ctx.fillText(`${I18n.unit(d.type)} · ${Deployment.spec(d.type).cost} PT`, d.ghost.pose.x, d.ghost.pose.y - 12);
+      }
+      ctx.restore();
+    },
+
+"""
+          s=s[:start]+new_overlay+s[end:]
+
+          one(
+          """      this.deploymentOverlay();
+      const viewSide = Intel.viewSide();
+      this.fogOverlay(w, h, viewSide);""",
+          """      this.deploymentOverlay();
+      const viewSide = Intel.viewSide();
+      // FOW begins only after both deployments have been closed.
+      if (!State.deployment.active) this.fogOverlay(w, h, viewSide);""",
+          'Renderer FOW phase'
+          )
+
+          one(
+          """      State.selectedSide = 'blue';
+      State.deployment.active = true;""",
+          """      State.selectedSide = window.__CB_MULTIPLAYER_ACTIVE__
+        ? (window.__CB_MULTIPLAYER_SIDE__ === 'red' ? 'red' : 'blue')
+        : 'blue';
+      State.battle.playerSide = State.selectedSide;
+      State.deployment.active = true;""",
+          'deployment initial side'
+          )
+
+          one(
+          """      Battle.reset(false);
+      UI.setTimeScale(0);
+      document.body.classList.add('deployment-active');""",
+          """      Battle.reset(false);
+      if (this.multiplayerActive()) {
+        State.battle.playerSide = this.multiplayerSide();
+        State.selectedSide = this.multiplayerSide();
+      }
+      UI.setTimeScale(0);
+      document.body.classList.add('deployment-active');""",
+          'deployment side after battle reset'
+          )
+
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Validate
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('COFFEE_BATTLES.html').read_text(encoding='utf-8')
+          scripts=re.findall(r'<script(?:\s[^>]*)?>([\s\S]*?)</script>',s)
+          Path('/tmp/coffee-battles.js').write_text('\n'.join(scripts),encoding='utf-8')
+          PY
+          node --check /tmp/coffee-battles.js
+          grep -q "Deployment is a separate information phase" COFFEE_BATTLES.html
+          grep -q "Light hatch makes the valid deployment band unmistakable" COFFEE_BATTLES.html
+
+      - name: Commit fix
+        shell: bash
+        run: |
+          rm -f .github/workflows/fix-multiplayer-deployment-rendering.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add COFFEE_BATTLES.html .github/workflows/fix-multiplayer-deployment-rendering.yml
+          git commit -m "fix: restore multiplayer deployment zone and isolate FOW"
+          git push origin main
